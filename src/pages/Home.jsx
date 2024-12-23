@@ -63,7 +63,7 @@ const Home = () => {
             
             {/* AI brain */}
             <div className="flex items-center">
-              <img src={image1} alt="AI Brain" className="relative w-40 md:w-64 -top-12 h-auto md:left-72 left-8" />
+              <img src={image1} alt="AI Brain" className="relative w-40 md:w-64 -top-6 h-auto md:left-72 left-8" />
             </div>
           </div>
         </div>

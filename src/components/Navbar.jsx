@@ -61,7 +61,7 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           {isMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 right-0 bg-white mt-4 rounded-2xl shadow-lg py-4 px-6">
+            <div className="md:hidden absolute top-full left-0 right-0 bg-white mt-4 rounded-2xl shadow-lg py-4 px-6 z-50">
               <div className="flex flex-col space-y-4">
                 <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">How It Works</a>
                 <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">Our Work</a>

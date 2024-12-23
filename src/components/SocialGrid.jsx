@@ -6,14 +6,14 @@ import e4 from '../assets/e4.png';
 
 const SocialGrid = () => {
   return (
-    <section className="bg-black py-12 md:py-20">
+    <section className="bg-black -py-0 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
         {/* Grid of Images */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-32 md:mb-0">
-          {/* Column 1 */}
-          <div className="w-120">
-            <img src={e1} alt="Social Posts Column 1" className="w-120 rounded-2xl shadow-lg" />
-          </div>
+        {/* Column 1 */}
+      <div className="w-72 md:w-120">  {/* w-96 is 24rem */}
+        <img src={e1} alt="Social Posts Column 1" className="w-72 rounded-2xl shadow-lg" />
+      </div>
           
           {/* Column 2 */}
           <div className="w-full">
@@ -32,7 +32,7 @@ const SocialGrid = () => {
         </div>
 
         {/* CTA Banner */}
-        <div className="bg-[#FF5341] rounded-2xl p-6 md:p-8 absolute left-4 right-4 bottom-0 md:bottom-20">
+        <div className="bg-[#FF5341] rounded-2xl p-4  md:p-8 absolute left-4 right-4 -bottom-6 md:bottom-20">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center md:space-y-0">
             <div className="w-full md:w-auto">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">

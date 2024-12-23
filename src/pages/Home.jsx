@@ -58,7 +58,7 @@ const Home = () => {
           <div className="flex justify-center">
     {/* Growth chart */}
     <div className="flex items-center">
-      <img src={image2} alt="Growth Chart" className="w-32 h-auto md:w-52 md:relative md:left-40 md:-top-8" />
+      <img src={image2} alt="Growth Chart" className="w-32 h-auto md:w-52 md:relative md:left-44 md:-top-8" />
     </div>
 
     {/* AI brain */}

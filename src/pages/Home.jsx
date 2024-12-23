@@ -46,7 +46,7 @@ const Home = () => {
                   AI-Powered
                 </span>
                 <span 
-                  className="absolute inset-0 bg-[#FF5341] transform -rotate-2"
+                  className="absolute top-0.5 inset-0 bg-[#FF5341] transform -rotate-2"
                   style={{ borderRadius: '4px' }}
                 ></span>
               </span>

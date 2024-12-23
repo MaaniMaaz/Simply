@@ -56,16 +56,16 @@ const Home = () => {
 
           {/* Bottom illustrations - Modified for mobile */}
           <div className="flex justify-center">
-            {/* Growth chart */}
-            <div className="flex items-center">
-              <img src={image2} alt="Growth Chart" className="relative md:left-40 -top-8 w-32 md:w-52 h-auto" />
-            </div>
-            
-            {/* AI brain */}
-            <div className="flex items-center">
-              <img src={image1} alt="AI Brain" className="relative w-40 md:w-64 -top-6 h-auto md:left-72 left-8" />
-            </div>
-          </div>
+    {/* Growth chart */}
+    <div className="flex items-center">
+      <img src={image2} alt="Growth Chart" className="w-32 h-auto md:w-52 md:relative md:left-40 md:-top-8" />
+    </div>
+
+    {/* AI brain */}
+    <div className="flex items-center">
+      <img src={image1} alt="AI Brain" className="w-40 h-auto md:w-64 md:relative md:left-72 md:-top-6" />
+    </div>
+  </div>
         </div>
       </main>
 

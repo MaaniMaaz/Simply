@@ -1,8 +1,8 @@
 import React from 'react';
-import e1 from '../assets/e1.png';
-import e2 from '../assets/e2.png';
-import e3 from '../assets/e3.png';
-import e4 from '../assets/e4.png';
+import e1 from '../../assets/e1.png';
+import e2 from '../../assets/e2.png';
+import e3 from '../../assets/e3.png';
+import e4 from '../../assets/e4.png';
 
 const SocialGrid = () => {
   return (

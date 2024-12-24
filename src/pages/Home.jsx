@@ -1,7 +1,7 @@
 // src/pages/Home.jsx
 import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Navbar from '../components/Shared/Navbar';
+import Footer from '../components/Shared/Footer';
 import image1 from '../assets/1.svg';
 import image2 from '../assets/2.svg';
 import image3 from '../assets/3.svg';
@@ -12,9 +12,9 @@ import image7 from '../assets/i2.png';
 import image8 from '../assets/i3.png';
 import complianceCheck from '../assets/h1.svg';  // Add your actual SVG filename
 import secureContent from '../assets/h2.svg';  
-import PricingSection from '../components/PricingSection';
-import FAQSection from '../components/FAQSection';
-import SocialGrid from '../components/SocialGrid';
+import PricingSection from '../components/HomeComponents/PricingSection';
+import FAQSection from '../components/HomeComponents/FAQSection';
+import SocialGrid from '../components/HomeComponents/SocialGrid';
 
 const Home = () => {
   return (

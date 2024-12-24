@@ -11,12 +11,12 @@ const SocialGrid = () => {
         {/* Grid of Images */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-32 md:mb-0">
         {/* Column 1 */}
-      <div className="w-72 md:w-120">  {/* w-96 is 24rem */}
+      <div className="w-72 hidden md:block md:w-120">  {/* w-96 is 24rem */}
         <img src={e1} alt="Social Posts Column 1" className="w-72 rounded-2xl shadow-lg" />
       </div>
           
           {/* Column 2 */}
-          <div className="w-full">
+          <div className="w-full mt-16 md:mt-0">
             <img src={e2} alt="Social Posts Column 2" className="w-full rounded-2xl shadow-lg" />
           </div>
           
@@ -26,7 +26,7 @@ const SocialGrid = () => {
           </div>
           
           {/* Column 4 */}
-          <div className="w-full">
+          <div className="w-full -mt-36 md:-mt-0">
             <img src={e4} alt="Social Posts Column 4" className="w-full rounded-2xl shadow-lg" />
           </div>
         </div>

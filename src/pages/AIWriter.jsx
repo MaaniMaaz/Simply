@@ -1,18 +1,32 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Shared/Sidebar';
 import { Search, Bell, ArrowRight } from 'lucide-react';
 
-const TemplateCard = ({ title, description }) => (
-  <div className="bg-[#FF5341] rounded-xl p-4 text-white">
-    <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
-      <h3 className="text-base md:text-lg font-medium">{title}</h3>
-      <button className="text-white">
-        <ArrowRight className="w-5 h-5" />
-      </button>
+const TemplateCard = ({ title, description }) => {
+  const navigate = useNavigate();
+
+  const handleTemplateClick = () => {
+    // Convert title to URL-friendly format
+    const templateUrl = title.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/ai-writer/template/${templateUrl}`);
+  };
+
+  return (
+    <div 
+      className="bg-[#FF5341] rounded-xl p-4 text-white cursor-pointer hover:bg-[#FF5341]/90 transition-colors"
+      onClick={handleTemplateClick}
+    >
+      <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
+        <h3 className="text-base md:text-lg font-medium">{title}</h3>
+        <button className="text-white">
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+      <p className="text-xs md:text-sm text-white/90">{description}</p>
     </div>
-    <p className="text-xs md:text-sm text-white/90">{description}</p>
-  </div>
-);
+  );
+};
 
 const AIWriter = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/Shared/Sidebar';
 import { Search, Bell, Zap, Clock, FileText, Download, ArrowRight } from 'lucide-react';
 import ai1 from '../assets/ai1.svg';
+
 
 const StatCard = ({ title, value, icon: Icon }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4">
@@ -25,13 +26,21 @@ const ArticleCard = ({ title, date }) => (
 );
 
 const Dashboard = () => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <div className="flex-1 bg-white overflow-y-auto">
+    <div className="flex min-h-screen">
+      {/* Fixed Sidebar */}
+      <div className="fixed left-0 h-screen">
+        <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
+      </div>
+
+      {/* Main Content with dynamic margin based on sidebar state */}
+      <div className={`flex-1 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'} transition-all duration-300`}>
         <div className="p-4 md:p-8">
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
+
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
             <div>
               <h1 className="text-xl md:text-2xl font-semibold mb-1">
                 Good Morning, Zay{' '}
@@ -63,8 +72,8 @@ const Dashboard = () => {
             <StatCard title="Total Documents Saved" value="13" icon={Download} />
           </div>
 
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+         {/* Feature Cards */}
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
             {/* Current Plan Card */}
             <div className="bg-[#FF5341] rounded-xl p-4 md:p-6 text-white">
               <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm mb-4">

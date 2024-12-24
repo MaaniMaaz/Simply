@@ -13,8 +13,7 @@ import logo from '../../assets/logo.png';
 import profile from '../../assets/profile.png';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const Navigate = useNavigate();
 
   const mainMenuItems = [
@@ -34,9 +33,11 @@ const Sidebar = () => {
     <div className={`h-screen bg-[#FFFAF3] border-r border-[#D3D3D3] transition-all duration-300 ${
       isCollapsed ? 'w-20' : 'w-64'
     }`}>
-      {/* Header with Logo and Toggle */}
+      {/* Rest of the Sidebar component remains the same */}
       <div className="flex items-center justify-between px-4 py-5">
-      <button onClick={() => Navigate('/')}><img src={logo} alt="Simply Logo" className={`h-6 ${isCollapsed ? 'hidden' : 'block'}`} /> </button>  
+        <button onClick={() => Navigate('/')}>
+          <img src={logo} alt="Simply Logo" className={`h-6 ${isCollapsed ? 'hidden' : 'block'}`} />
+        </button>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           className="p-1.5 rounded-lg hover:bg-gray-100"
@@ -51,19 +52,19 @@ const Sidebar = () => {
           Main Menu
         </p>
         <nav className="space-y-1">
-          {mainMenuItems.map((item, index) => (
-            <a
+        {mainMenuItems.map((item, index) => (
+            <button
               key={index}
-              href={item.link}
-              className={`flex items-center px-3 py-2 text-sm rounded-lg ${
-                index === 0 
+              onClick={() => Navigate(item.link)}
+              className={`flex items-center w-full px-3 py-2 text-sm rounded-lg ${
+                window.location.pathname === item.link 
                   ? 'bg-[#FF5341] text-white hover:bg-[#FF5341]/90' 
                   : 'text-gray-800 hover:bg-gray-200'
               }`}
             >
               {item.icon}
               <span className={`ml-3 ${isCollapsed ? 'hidden' : 'block'}`}>{item.label}</span>
-            </a>
+            </button>
           ))}
         </nav>
       </div>

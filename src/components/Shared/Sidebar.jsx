@@ -11,9 +11,11 @@ import {
 } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import profile from '../../assets/profile.png';
+import { Navigate, useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const Navigate = useNavigate();
 
   const mainMenuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', link: '/dashboard' },
@@ -34,7 +36,7 @@ const Sidebar = () => {
     }`}>
       {/* Header with Logo and Toggle */}
       <div className="flex items-center justify-between px-4 py-5">
-        <img src={logo} alt="Simply Logo" className={`h-6 ${isCollapsed ? 'hidden' : 'block'}`} />
+      <button onClick={() => Navigate('/')}><img src={logo} alt="Simply Logo" className={`h-6 ${isCollapsed ? 'hidden' : 'block'}`} /> </button>  
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)} 
           className="p-1.5 rounded-lg hover:bg-gray-100"

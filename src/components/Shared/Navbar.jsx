@@ -45,7 +45,7 @@ const Navbar = () => {
 
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">How It Works</a>
+              <a href="/dashboard" className="text-gray-600 hover:text-gray-900 text-sm">How It Works</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Our Work</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Pricing</a>
               <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">About Us</a>

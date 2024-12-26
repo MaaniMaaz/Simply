@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Shared/Sidebar';
-import { Search, Bell, Zap, Clock, FileText, Download, ArrowRight } from 'lucide-react';
+import { Search, Bell, Zap, WholeWord, FileText, Download, ArrowRight } from 'lucide-react';
 import ai1 from '../assets/ai1.svg';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 
 const StatCard = ({ title, value, icon: Icon }) => (
@@ -18,6 +20,16 @@ const StatCard = ({ title, value, icon: Icon }) => (
   </div>
 );
 
+const wordGenerationData = [
+  { date: '1 Dec', words: 2400 },
+  { date: '5 Dec', words: 1398 },
+  { date: '10 Dec', words: 3800 },
+  { date: '15 Dec', words: 3908 },
+  { date: '20 Dec', words: 4800 },
+  { date: '25 Dec', words: 3800 },
+  { date: '30 Dec', words: 4300 },
+];
+
 const ArticleCard = ({ title, date }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4 hover:shadow-md transition-shadow border border-gray-400">
     <h3 className="font-medium mb-2 text-sm md:text-base">{title}</h3>
@@ -27,6 +39,8 @@ const ArticleCard = ({ title, date }) => (
 
 const Dashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const navigate = useNavigate();
+
 
   return (
     <div className="flex min-h-screen">
@@ -67,7 +81,7 @@ const Dashboard = () => {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
             <StatCard title="Total Credits Left" value="1400" icon={Zap} />
-            <StatCard title="Total Time Saved" value="2 Hours" icon={Clock} />
+            <StatCard title="Total Words Generated" value="550" icon={WholeWord} />
             <StatCard title="Total Templates Run" value="30" icon={FileText} />
             <StatCard title="Total Documents Saved" value="13" icon={Download} />
           </div>
@@ -83,7 +97,7 @@ const Dashboard = () => {
               <p className="text-sm md:text-base mb-4">You An Active Subscription</p>
               <div className="flex justify-between items-center">
                 <button className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
-                  See Plans
+                  Manage Plans
                 </button>
                 <span className="text-xl md:text-2xl font-semibold">$19/Month</span>
               </div>
@@ -93,12 +107,12 @@ const Dashboard = () => {
             <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
               <div className="flex flex-col md:flex-row md:justify-between space-y-4 md:space-y-0">
                 <div className="flex-1">
-                  <h2 className="text-lg md:text-xl font-semibold mb-2">Generate Creative AI Content On One Click</h2>
+                  <h2 className="text-lg md:text-xl font-semibold mb-2">Create Template On One Click</h2>
                   <p className="text-xs md:text-sm text-gray-600 mb-4">
-                    Effortlessly Generate Precise, Engaging, And SEO-Optimized Content In Just One Go With Our Powerful AI Model!
+                    Effortlessly Create Precise, Engaging, And SEO-Optimized Template In Just One Go With Our Powerful AI Model!
                   </p>
                   <button className="flex items-center text-[#FF5341] font-medium hover:opacity-90 text-sm md:text-base">
-                    Generate Now <ArrowRight className="w-4 h-4 ml-1" />
+                    Create Now <ArrowRight className="w-4 h-4 ml-1" />
                   </button>
                 </div>
                 <div className="w-full md:w-1/3">
@@ -112,7 +126,7 @@ const Dashboard = () => {
           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 -mb-2">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
               <div>
-                <h2 className="text-base md:text-lg font-semibold">SEO Articles Generated</h2>
+                <h2 className="text-base md:text-lg font-semibold">Most Recent Documents Generated</h2>
                 <p className="text-xs md:text-sm text-gray-600">Manage Your Generated Articles here</p>
               </div>
               <button className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
@@ -130,32 +144,110 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-        </div>
-        <div className="p-4 md:p-8">
-          {/* Favourite Template Section */}
-          <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
-            <h2 className="text-lg md:text-xl font-semibold mb-1">Favourite Template</h2>
-            <p className="text-xs md:text-sm text-gray-600 mb-6">Choose Your Favourite Template & Generate Accurate Content</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { title: 'Content Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-                { title: 'LinkedIn Post', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-                { title: 'Web Developer', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-                { title: 'Blog Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-              ].map((template, index) => (
-                <div key={index} className="bg-[#FF5341] rounded-xl p-4 text-white">
-                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
-                    <h3 className="text-base md:text-lg font-medium">{template.title}</h3>
-                    <button className="text-white">
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <p className="text-xs md:text-sm text-white/90">{template.desc}</p>
-                </div>
-              ))}
+
+
+
+           {/* Words Generation Graph */}
+           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mt-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
+              <div>
+                <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
+                <p className="text-xs md:text-sm text-gray-600">Monthly word generation statistics</p>
+              </div>
+            </div>
+
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={wordGenerationData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickFormatter={(value) => `${value}`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '8px',
+                      padding: '8px'
+                    }}
+                    labelStyle={{ color: '#374151', fontWeight: 500 }}
+                    itemStyle={{ color: '#FF5341' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="words"
+                    stroke="#FF5341"
+                    strokeWidth={2}
+                    dot={{ fill: '#FF5341', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#FF5341' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+              <div>
+                <p className="text-sm text-gray-600">Total Words</p>
+                <p className="text-xl font-semibold">24,598</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Average/Day</p>
+                <p className="text-xl font-semibold">793</p>
+              </div>
+              <div className="col-span-2 md:col-span-1">
+                <p className="text-sm text-gray-600">Peak Generation</p>
+                <p className="text-xl font-semibold">4,800</p>
+              </div>
             </div>
           </div>
+
+
+        </div>
+        <div className="p-4 md:p-8">
+     {/* Favourite Template Section */}
+<div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
+  <div className="flex justify-between items-center mb-6">
+    <div>
+      <h2 className="text-lg md:text-xl font-semibold mb-1">Favourite Template</h2>
+      <p className="text-xs md:text-sm text-gray-600">Choose Your Favourite Template & Generate Accurate Content</p>
+    </div>
+    <button
+      onClick={() => navigate('/ai-writer')}
+      className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base"
+    >
+      View All <ArrowRight className="w-4 h-4 ml-1" />
+    </button>
+  </div>
+  
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    {[
+      { title: 'Content Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
+      { title: 'LinkedIn Post', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
+      { title: 'Web Developer', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
+      { title: 'Blog Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
+    ].map((template, index) => (
+      <div key={index} className="bg-[#FF5341] rounded-xl p-4 text-white">
+        <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
+          <h3 className="text-base md:text-lg font-medium">{template.title}</h3>
+          <button className="text-white">
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-xs md:text-sm text-white/90">{template.desc}</p>
+      </div>
+    ))}
+  </div>
+</div>
+
 
           {/* Document History Section */}
           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">

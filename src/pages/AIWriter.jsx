@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Shared/Sidebar';
 import { Search, Bell, ArrowRight } from 'lucide-react';
@@ -30,7 +30,22 @@ const TemplateCard = ({ title, description }) => {
 
 const AIWriter = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  useEffect(() => {
+      const handleResize = () => {
+          if (window.innerWidth >= 768) {
+              setIsSidebarCollapsed(false);
+          } else {
+              setIsSidebarCollapsed(true);
+          }
+      };
+  
+      handleResize();
+      window.addEventListener('resize', handleResize);
+  
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const categories = ['All', 'Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'];
   

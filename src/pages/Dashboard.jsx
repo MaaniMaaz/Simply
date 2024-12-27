@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Sidebar from '../components/Shared/Sidebar';
 import { Search, Bell, Zap, WholeWord, FileText, Download, ArrowRight } from 'lucide-react';
 import ai1 from '../assets/ai1.svg';
@@ -38,7 +38,22 @@ const ArticleCard = ({ title, date }) => (
 );
 
 const Dashboard = () => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  useEffect(() => {
+      const handleResize = () => {
+          if (window.innerWidth >= 768) {
+              setIsSidebarCollapsed(false);
+          } else {
+              setIsSidebarCollapsed(true);
+          }
+      };
+  
+      handleResize();
+      window.addEventListener('resize', handleResize);
+  
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const navigate = useNavigate();
 
 

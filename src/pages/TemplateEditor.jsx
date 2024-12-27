@@ -6,6 +6,7 @@ import {
   ChevronDown, 
   Settings, 
   Download, 
+  Zap,
   Share2, 
   Link2, 
   Table, 
@@ -243,9 +244,11 @@ const [mediumEditor, shortEditor] = [
                 Turn A Title & Outline Into A Fully Complete High Quality {formatTemplateName(templateId)} In Seconds
               </p>
 
-              <div className="bg-[#FF5341] text-white rounded-lg p-3 mb-6">
+              <div className="bg-[#FF5341] text-white rounded-lg p-3 mb-6 flex items-center">
+                <Zap className="w-5 h-5 mr-2" />
                 Your Balance Is 3000 Credits
               </div>
+              
 
               {/* Form Fields */}
               <div className="space-y-4">

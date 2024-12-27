@@ -1,10 +1,11 @@
+// src/components/Shared/Navbar.jsx
 import React, { useState } from 'react';
 import logo from '../../assets/logo.png';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className="w-full bg-[#FDF8F6] py-4">
@@ -13,7 +14,7 @@ const Navbar = () => {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <div className="flex items-center">
-            <button onClick={() => Navigate('/')}><img src={logo} alt="Simply Logo" className="h-6" /></button>
+              <button onClick={() => navigate('/')}><img src={logo} alt="Simply Logo" className="h-6" /></button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -55,7 +56,10 @@ const Navbar = () => {
 
             {/* Desktop Sign In Button */}
             <div className="hidden md:block">
-              <button onClick={() => Navigate('/dashboard')} className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-800">
+              <button 
+                onClick={() => navigate('/login')} 
+                className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-800"
+              >
                 Sign In
               </button>
             </div>
@@ -69,7 +73,10 @@ const Navbar = () => {
                 <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">Our Work</a>
                 <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">Pricing</a>
                 <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">About Us</a>
-                <button  onClick={() => Navigate('/dashboard')} className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-800 w-full">
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-800 w-full"
+                >
                   Sign In
                 </button>
               </div>

@@ -4,6 +4,9 @@ import { Search, Bell, Zap, WholeWord, FileText, Download, ArrowRight } from 'lu
 import ai1 from '../assets/ai1.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
 
 
 const StatCard = ({ title, value, icon: Icon }) => (
@@ -39,6 +42,12 @@ const ArticleCard = ({ title, date }) => (
 
 const Dashboard = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+
+    const filteredData = wordGenerationData.filter(
+      (data) => new Date(data.date).toLocaleDateString() === selectedDate.toLocaleDateString()
+    );
+    
   
   useEffect(() => {
       const handleResize = () => {
@@ -161,69 +170,76 @@ const Dashboard = () => {
           </div>
 
 
+{/* Words Generation Graph */}
+<div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mt-8">
+  <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
+    <div>
+      <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
+      <p className="text-xs md:text-sm text-gray-600">Select a date to view statistics</p>
+    </div>
+    <div>
+      <DatePicker
+        selected={selectedDate}
+        onChange={(date) => setSelectedDate(date)}
+        className="border rounded-lg px-2 py-1"
+      />
+    </div>
+  </div>
 
-           {/* Words Generation Graph */}
-           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mt-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
-              <div>
-                <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
-                <p className="text-xs md:text-sm text-gray-600">Monthly word generation statistics</p>
-              </div>
-            </div>
+  <div className="h-64">
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={filteredData.length ? filteredData : wordGenerationData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+        <XAxis
+          dataKey="date"
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          tickLine={false}
+          axisLine={{ stroke: '#E5E7EB' }}
+        />
+        <YAxis
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          tickLine={false}
+          axisLine={{ stroke: '#E5E7EB' }}
+          tickFormatter={(value) => `${value}`}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E5E7EB',
+            borderRadius: '8px',
+            padding: '8px',
+          }}
+          labelStyle={{ color: '#374151', fontWeight: 500 }}
+          itemStyle={{ color: '#FF5341' }}
+        />
+        <Line
+          type="monotone"
+          dataKey="words"
+          stroke="#FF5341"
+          strokeWidth={2}
+          dot={{ fill: '#FF5341', strokeWidth: 2 }}
+          activeDot={{ r: 6, fill: '#FF5341' }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
 
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={wordGenerationData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#E5E7EB' }}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#E5E7EB' }}
-                    tickFormatter={(value) => `${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      padding: '8px'
-                    }}
-                    labelStyle={{ color: '#374151', fontWeight: 500 }}
-                    itemStyle={{ color: '#FF5341' }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="words"
-                    stroke="#FF5341"
-                    strokeWidth={2}
-                    dot={{ fill: '#FF5341', strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: '#FF5341' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+    <div>
+      <p className="text-sm text-gray-600">Total Words</p>
+      <p className="text-xl font-semibold">24,598</p>
+    </div>
+    <div>
+      <p className="text-sm text-gray-600">Average/Day</p>
+      <p className="text-xl font-semibold">793</p>
+    </div>
+    <div className="col-span-2 md:col-span-1">
+      <p className="text-sm text-gray-600">Peak Generation</p>
+      <p className="text-xl font-semibold">4,800</p>
+    </div>
+  </div>
+</div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-              <div>
-                <p className="text-sm text-gray-600">Total Words</p>
-                <p className="text-xl font-semibold">24,598</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Average/Day</p>
-                <p className="text-xl font-semibold">793</p>
-              </div>
-              <div className="col-span-2 md:col-span-1">
-                <p className="text-sm text-gray-600">Peak Generation</p>
-                <p className="text-xl font-semibold">4,800</p>
-              </div>
-            </div>
-          </div>
 
 
         </div>

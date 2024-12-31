@@ -1,6 +1,7 @@
 // src/pages/Profile.jsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Shared/Sidebar';
+import { PlanCard, BillingHistory, CurrentPlan } from '../components/ProfileComponents/Plans'
 import { 
   Bell, 
   MenuIcon, 
@@ -12,7 +13,8 @@ import {
   Shield,
   Key,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  X
 } from 'lucide-react';
 import profile from '../assets/profile.png';
 import { useNavigate } from 'react-router-dom';
@@ -34,8 +36,31 @@ const ProfileCard = ({ icon: Icon, title, description }) => (
   </div>
 );
 
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto py-8">
+      <div className="relative bg-white rounded-xl p-6 max-w-lg w-full mx-4 my-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold text-lg">{title}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Profile = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -76,6 +101,39 @@ const Profile = () => {
       setProfileData(prev => ({ ...prev, image: previewImage }));
     }
     setIsEditing(false);
+  };
+
+  const currentPlan = {
+    name: 'Professional Plan',
+    price: '$19/month',
+    renewalDate: 'Apr 01, 2024',
+    creditsUsed: 15000,
+    totalCredits: 25000
+  };
+
+  const transactions = [
+    { plan: 'Professional Plan', date: 'Mar 01, 2024', amount: '$19.00', status: 'Paid' },
+    { plan: 'Professional Plan', date: 'Feb 01, 2024', amount: '$19.00', status: 'Paid' },
+    { plan: 'Starter Plan', date: 'Jan 01, 2024', amount: '$0.00', status: 'Free' }
+  ];
+
+  const handleUpgrade = (plan) => {
+    setSelectedPlan(plan);
+    setIsUpgradeModalOpen(true);
+  };
+
+  const handleCancelPlan = () => {
+    setIsCancelModalOpen(true);
+  };
+
+  const confirmCancellation = () => {
+    // Handle plan cancellation
+    setIsCancelModalOpen(false);
+  };
+
+  const confirmUpgrade = () => {
+    // Handle plan upgrade
+    setIsUpgradeModalOpen(false);
   };
 
   return (
@@ -225,6 +283,15 @@ const Profile = () => {
 
             {/* Right Column - Additional Settings */}
             <div className="md:col-span-2 space-y-6">
+
+
+               {/* Current Plan Section */}
+            <CurrentPlan
+              plan={currentPlan}
+              onManage={() => setIsUpgradeModalOpen(true)}
+              onCancel={handleCancelPlan}
+            />
+
               {/* Profile Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[#FFFAF3] rounded-xl p-6">
@@ -258,12 +325,11 @@ const Profile = () => {
                   title="Email Notifications"
                   description="Manage your email preferences and notifications"
                 />
-                <ProfileCard
-                  icon={Shield}
-                  title="Privacy Settings"
-                  description="Control your privacy and data sharing preferences"
-                />
+                
               </div>
+
+              {/* Billing History */}
+            <BillingHistory transactions={transactions} />
 
               {/* Danger Zone */}
               <div className="bg-red-50 rounded-xl p-6 border border-red-100">
@@ -284,6 +350,66 @@ const Profile = () => {
             </div>
           </div>
         </div>
+
+        {/* Cancel Plan Modal */}
+      <Modal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        title="Cancel Subscription"
+      >
+        <div className="mb-6">
+          <p className="text-gray-600 mb-4">
+            Are you sure you want to cancel your subscription? You'll lose access to:
+          </p>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              Premium features and templates
+            </li>
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              Increased credit allowance
+            </li>
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              Team collaboration tools
+            </li>
+          </ul>
+        </div>
+        <div className="flex space-x-4">
+          <button
+            onClick={confirmCancellation}
+            className="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Confirm Cancellation
+          </button>
+          <button
+            onClick={() => setIsCancelModalOpen(false)}
+            className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
+          >
+            Keep Subscription
+          </button>
+        </div>
+      </Modal>
+
+      {/* Upgrade Plan Modal */}
+      <Modal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        title="Choose a Plan"
+      >
+        <div className="space-y-4">
+          {['Starter', 'Professional', 'Enterprise'].map((plan) => (
+            <PlanCard
+              key={plan}
+              plan={plan}
+              isActive={currentPlan.name === `${plan} Plan`}
+              onUpgrade={handleUpgrade}
+            />
+          ))}
+        </div>
+      </Modal>
+
       </div>
     </div>
   );

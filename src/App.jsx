@@ -12,6 +12,7 @@ import ComplianceAI from './pages/ComplianceAI';
 import Translation from './pages/Translation';
 import Profile from './pages/Profile';
 import HelpCenter from './pages/HelpCenter';
+import DocumentManagement from './pages/DocumentManagement';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/seo-writer" element={<SEOWriter />} />  
         <Route path="/compliance" element={<ComplianceAI />} /> 
         <Route path="/translation" element={<Translation />} />
+        <Route path="/documents" element={<DocumentManagement />} />
         <Route path="/help" element={<HelpCenter />} />  
         <Route path="/profile" element={<Profile />} />
         <Route path="/ai-writer/template/:templateId" element={<TemplateEditor />} />

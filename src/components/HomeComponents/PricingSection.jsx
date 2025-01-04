@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 
 const PricingSection = () => {
-  const [selectedPlan, setSelectedPlan] = useState('individual');
+ 
 
   return (
-    <section className="bg-[#FFFAF3] py-12 md:py-20">
+    <section id="pricing" className="bg-[#FFFAF3] py-12 md:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-left mb-8 md:mb-12">
@@ -24,27 +24,9 @@ const PricingSection = () => {
           </h2>
 
           {/* Plan Toggle */}
-          <div className="inline-flex bg-white rounded-lg p-1 border border-black">
-            <button
-              className={`px-4 md:px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedPlan === 'individual'
-                  ? 'bg-[#FF5341] text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setSelectedPlan('individual')}
-            >
-              Individual
-            </button>
-            <button
-              className={`px-4 md:px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedPlan === 'business'
-                  ? 'bg-[#FF5341] text-white'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setSelectedPlan('business')}
-            >
-              Business
-            </button>
+          <div className="">
+            
+           
           </div>
         </div>
 

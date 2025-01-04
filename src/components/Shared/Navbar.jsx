@@ -48,10 +48,10 @@ const Navbar = () => {
 
             {/* Desktop Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">How It Works</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Our Work</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">Pricing</a>
-              <a href="#" className="text-gray-600 hover:text-gray-900 text-sm">About Us</a>
+              <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm">What We Offer</a>
+              <a href="#usecase" className="text-gray-600 hover:text-gray-900 text-sm">Use Case</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm">Pricing</a>
+              <a href="#faq" className="text-gray-600 hover:text-gray-900 text-sm">FAQ's</a>
             </div>
 
             {/* Desktop Sign In Button */}
@@ -69,10 +69,10 @@ const Navbar = () => {
           {isMenuOpen && (
             <div className="md:hidden absolute top-full left-0 right-0 bg-white mt-4 rounded-2xl shadow-lg py-4 px-6 z-50">
               <div className="flex flex-col space-y-4">
-                <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">How It Works</a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">Our Work</a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">Pricing</a>
-                <a href="#" className="text-gray-600 hover:text-gray-900 text-sm py-2">About Us</a>
+                <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm py-2">What We Offer</a>
+                <a href="#usecase" className="text-gray-600 hover:text-gray-900 text-sm py-2">Use Case</a>
+                <a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm py-2">Pricing</a>
+                <a href="#faq" className="text-gray-600 hover:text-gray-900 text-sm py-2">FAQ's</a>
                 <button 
                   onClick={() => navigate('/login')} 
                   className="bg-black text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-800 w-full"

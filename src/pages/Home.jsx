@@ -70,7 +70,7 @@ const Home = () => {
       </main>
 
       {/* Black Features Section */}
-      <section className="bg-black py-12 md:py-20">
+      <section id="features" className="bg-black py-12 md:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-6 md:gap-0 mb-8 md:mb-16">
             <h2 className="text-white text-3xl md:text-4xl font-bold max-w-md">
@@ -183,7 +183,7 @@ const Home = () => {
       </section>
 
        {/* Solutions Section */}
-       <section className="bg-white py-12 md:py-20">
+       <section id="usecase" className="bg-white py-12 md:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-6 md:gap-0 mb-8 md:mb-16">

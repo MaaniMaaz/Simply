@@ -299,14 +299,10 @@ const Profile = () => {
                 <ProfileCard
                   icon={Key}
                   title="Password & Security"
-                  description="Change password, enable 2FA, and manage security preferences"
+                  description="Change password for security purpose"
                 />
                 
-                <ProfileCard
-                  icon={Mail}
-                  title="Email Notifications"
-                  description="Manage your email preferences and notifications"
-                />
+              
                 
               </div>
 
@@ -320,9 +316,7 @@ const Profile = () => {
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
                 <div className="flex space-x-4">
-                  <button className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
-                    Delete Account
-                  </button>
+               
                   <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
                     <LogOut className="w-4 h-4 inline-block mr-2" />
                     Sign Out

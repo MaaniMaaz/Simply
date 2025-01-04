@@ -36,7 +36,7 @@ const FAQSection = () => {
   ];
 
   return (
-    <section className="bg-white py-12 md:py-20">
+    <section id="faq" className="bg-white py-12 md:py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
           {/* Left side - Illustration */}

@@ -195,7 +195,7 @@ const Dashboard = () => {
       <DatePicker
         selected={selectedDate}
         onChange={(date) => setSelectedDate(date)}
-        className="border rounded-lg px-2 py-1 pl-10" // Extra padding for the icon
+        className="border w-40 rounded-lg px-2 py-1 pl-10" // Extra padding for the icon
       />
       {/* Calendar Icon */}
       <div className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">

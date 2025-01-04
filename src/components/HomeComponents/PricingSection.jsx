@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 
 const PricingSection = () => {
  
+  const navigate = useNavigate();
 
   return (
     <section id="pricing" className="bg-[#FFFAF3] py-12 md:py-20">
@@ -36,7 +38,9 @@ const PricingSection = () => {
           <div className="bg-white rounded-3xl p-8 border border-black">
             <h3 className="text-lg font-medium mb-2">Starter Plan</h3>
             <div className="text-4xl font-bold mb-8">Free</div>
-            <button className="w-full border border-black text-gray-900 py-3 rounded-lg mb-8 hover:bg-gray-50">
+            <button 
+            onClick={() => navigate('/signup')}
+            className="w-full border border-black text-gray-900 py-3 rounded-lg mb-8 hover:bg-gray-50">
               Get Started
             </button>
             
@@ -71,7 +75,9 @@ const PricingSection = () => {
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-black">
             <h3 className="text-lg font-medium mb-2">Professional Plan</h3>
             <div className="text-4xl font-bold mb-8">$19 / Month</div>
-            <button className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90">
+            <button 
+            onClick={() => navigate('/signup')}
+            className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90">
               Select Plan
             </button>
             
@@ -132,7 +138,9 @@ const PricingSection = () => {
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-black">
             <h3 className="text-lg font-medium mb-2">Enterprise Plan</h3>
             <div className="text-4xl font-bold mb-8">$49 / Month</div>
-            <button className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90">
+            <button 
+            onClick={() => navigate('/signup')}
+            className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90">
               Contact Sales
             </button>
             

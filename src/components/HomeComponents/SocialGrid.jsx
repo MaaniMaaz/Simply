@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import e1 from '../../assets/e1.png';
 import e2 from '../../assets/e2.png';
 import e3 from '../../assets/e3.png';
 import e4 from '../../assets/e4.png';
 
 const SocialGrid = () => {
+  const navigate = useNavigate();
   return (
     <section className="bg-black -py-0 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
@@ -62,10 +64,14 @@ const SocialGrid = () => {
               {/* Buttons container */}
               <div className="w-full md:w-auto md:relative md:-bottom-9 md:-left-5">
                 <div className="flex flex-col md:flex-row gap-4 w-full">
-                  <button className="w-full md:w-auto bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-opacity-90">
+                  <button 
+                  onClick={() => navigate('/signup')}
+                  className="w-full md:w-auto bg-white text-black px-6 py-3 rounded-lg font-medium hover:bg-opacity-90">
                     Start Free Trial
                   </button>
-                  <button className="w-full md:w-auto border border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:bg-opacity-10">
+                  <button 
+                  onClick={() => navigate('/signup')}
+                  className="w-full md:w-auto border border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:bg-opacity-10">
                     Get A Demo
                   </button>
                 </div>

@@ -1,5 +1,5 @@
-// src/pages/Home.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Shared/Navbar';
 import Footer from '../components/Shared/Footer';
 import image1 from '../assets/1.svg';
@@ -10,13 +10,16 @@ import image5 from '../assets/5.svg';
 import image6 from '../assets/i1.png';
 import image7 from '../assets/i2.png';
 import image8 from '../assets/i3.png';
-import complianceCheck from '../assets/h1.svg';  // Add your actual SVG filename
-import secureContent from '../assets/h2.svg';  
+import complianceCheck from '../assets/h1.svg'; // Add your actual SVG filename
+import secureContent from '../assets/h2.svg';
 import PricingSection from '../components/HomeComponents/PricingSection';
 import FAQSection from '../components/HomeComponents/FAQSection';
 import SocialGrid from '../components/HomeComponents/SocialGrid';
 
 const Home = () => {
+
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FFFAF3]">
       <Navbar />
@@ -80,7 +83,9 @@ const Home = () => {
               <p className="text-white opacity-80 mb-4">
                 All the features you need to take a secure, controlled & impactful approach to AI.
               </p>
-              <button className="bg-[#FF5341] text-white px-6 py-2 rounded-sm flex items-center group hover:bg-opacity-90 border border-white w-full md:w-auto justify-center md:justify-start">
+              <button
+                 onClick={() => navigate('/signup')}
+              className="bg-[#FF5341] text-white px-6 py-2 rounded-sm flex items-center group hover:bg-opacity-90 border border-white w-full md:w-auto justify-center md:justify-start">
                 Learn More
                 <svg className="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M5 12h14M12 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -194,7 +199,9 @@ const Home = () => {
               <p className="text-gray-600 mb-4">
                 A library of Solutions for all you needs. Custom Solutions on demand
               </p>
-              <button className="border border-gray-300 px-5 py-2 rounded-sm text-gray-900 hover:bg-gray-50 border border-black w-full md:w-auto">
+              <button 
+              onClick={() => navigate('/signup')}
+              className="border border-gray-300 px-5 py-2 rounded-sm text-gray-900 hover:bg-gray-50 border border-black w-full md:w-auto">
                 Explore the Blog
               </button>
             </div>
@@ -210,7 +217,9 @@ const Home = () => {
                 <p className="text-gray-600 mb-4">
                   Uplevel product launches, messaging and enablement, all while empowering your team to achieve 10x results
                 </p>
-                <button className="text-gray-900 font-medium flex items-center hover:opacity-80">
+                <button 
+                onClick={() => navigate('/signup')}
+                className="text-gray-900 font-medium flex items-center hover:opacity-80">
                   Learn More
                   <svg className="w-4 h-4 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M5 19l14-14m0 0h-14m14 0v14" strokeWidth="1.5"/>
@@ -227,7 +236,9 @@ const Home = () => {
                 <p className="text-gray-600 mb-4">
                   Uplevel product launches, messaging and enablement, all while empowering your team to achieve 10x results
                 </p>
-                <button className="text-gray-900 font-medium flex items-center hover:opacity-80">
+                <button 
+                onClick={() => navigate('/signup')}
+                className="text-gray-900 font-medium flex items-center hover:opacity-80">
                   Get the Template
                   <svg className="w-4 h-4 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M5 19l14-14m0 0h-14m14 0v14" strokeWidth="1.5"/>
@@ -244,7 +255,9 @@ const Home = () => {
                 <p className="text-gray-600 mb-9">
                   Generative AI content program at your company.
                 </p>
-                <button className="text-gray-900 font-medium flex items-center hover:opacity-80">
+                <button 
+                onClick={() => navigate('/signup')}
+                className="text-gray-900 font-medium flex items-center hover:opacity-80">
                   Get the eBook
                   <svg className="w-4 h-4 ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M5 19l14-14m0 0h-14m14 0v14" strokeWidth="1.5"/>
@@ -282,7 +295,9 @@ const Home = () => {
                 <p className="text-gray-600 mb-9">
                   Validate content against uploaded brand guidelines and compliance policies.
                 </p>
-                <button className="border border-gray-300 px-5 py-2 rounded-sm text-gray-900 hover:bg-gray-50 border border-black">
+                <button 
+                onClick={() => navigate('/signup')}
+                className="border border-gray-300 px-5 py-2 rounded-sm text-gray-900 hover:bg-gray-50 border border-black">
                   Explore Features
                 </button>
               </div>
@@ -300,7 +315,9 @@ const Home = () => {
                 <p className="text-gray-600 mb-4 ">
                   Ensure sensitive or restricted terms are flagged before publishing. Maintain compliance with industry-specific policies (e.g., legal, finance).
                 </p>
-                <button className="border border-gray-300 px-5 py-2 rounded-sm text-gray-900 hover:bg-gray-50 border border-black">
+                <button 
+                onClick={() => navigate('/signup')}
+                className="border border-gray-300 px-5 py-2 rounded-sm text-gray-900 hover:bg-gray-50 border border-black">
                   Get Started
                 </button>
               </div>

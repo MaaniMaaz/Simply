@@ -144,9 +144,12 @@ const Dashboard = () => {
                   <p className="text-xs md:text-sm text-gray-600 mb-4">
                     Effortlessly Create Precise, Engaging, And SEO-Optimized Template In Just One Go With Our Powerful AI Model!
                   </p>
-                  <button className="flex items-center text-[#FF5341] font-medium hover:opacity-90 text-sm md:text-base">
-                    Create Now <ArrowRight className="w-4 h-4 ml-1" />
-                  </button>
+                  <button 
+  onClick={() => navigate('/template-builder')}
+  className="flex items-center text-[#FF5341] font-medium hover:opacity-90 text-sm md:text-base"
+>
+  Create Now <ArrowRight className="w-4 h-4 ml-1" />
+</button>
                 </div>
                 <div className="w-full md:w-1/3">
                   <img src={ai1} alt="AI Generation" className="w-full" />

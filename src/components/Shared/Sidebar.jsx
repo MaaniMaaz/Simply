@@ -39,7 +39,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </button>
         <button 
           onClick={() => setIsCollapsed(!isCollapsed)} 
-          className="p-1.5 rounded-lg hover:bg-gray-100"
+          className="p-1.5 mr-2 rounded-lg hover:bg-gray-100"
         >
           <MenuIcon size={20} className="text-gray-600" />
         </button>

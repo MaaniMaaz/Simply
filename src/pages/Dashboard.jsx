@@ -6,6 +6,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+
+<FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-gray-500" />
+
 
 
 
@@ -41,6 +46,7 @@ const ArticleCard = ({ title, date }) => (
 );
 
 const Dashboard = () => {
+
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -64,6 +70,7 @@ const Dashboard = () => {
       return () => window.removeEventListener('resize', handleResize);
   }, []);
   const navigate = useNavigate();
+
 
 
   return (
@@ -181,12 +188,29 @@ const Dashboard = () => {
       <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
       <p className="text-xs md:text-sm text-gray-600">Select a date to view statistics</p>
     </div>
-    <div>
+    <div className="relative">
       <DatePicker
         selected={selectedDate}
         onChange={(date) => setSelectedDate(date)}
-        className="border rounded-lg px-2 py-1"
+        className="border rounded-lg px-2 py-1 pl-10" // Extra padding for the icon
       />
+      {/* Calendar Icon */}
+      <div className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      </div>
     </div>
   </div>
 
@@ -227,8 +251,6 @@ const Dashboard = () => {
       </LineChart>
     </ResponsiveContainer>
   </div>
-
- 
 </div>
 
 
@@ -250,7 +272,7 @@ const Dashboard = () => {
     </button>
   </div>
   
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" >
     {[
       { title: 'Content Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
       { title: 'LinkedIn Post', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
@@ -260,9 +282,6 @@ const Dashboard = () => {
       <div key={index} className="bg-[#FF5341] rounded-xl p-4 text-white">
         <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
           <h3 className="text-base md:text-lg font-medium">{template.title}</h3>
-          <button className="text-white">
-            <ArrowRight className="w-5 h-5" />
-          </button>
         </div>
         <p className="text-xs md:text-sm text-white/90">{template.desc}</p>
       </div>

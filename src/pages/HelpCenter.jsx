@@ -121,21 +121,11 @@ const HelpCenter = () => {
             <p className="text-gray-600 mb-8">
               Search our knowledge base or browse all help topics below
             </p>
-            <div className="max-w-2xl mx-auto relative">
-              <input
-                type="text"
-                placeholder="Search for help..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF5341] focus:border-transparent"
-              />
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
           </div>
 
           {/* Quick Start Guides */}
           <div className="mb-12">
-            <h2 className="text-xl font-semibold mb-6">Quick Start Guides</h2>
+            <h2 className="text-xl font-semibold mb-6 ml-6">Quick Start Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <QuickStartCard 
                 icon={PlayCircle} 

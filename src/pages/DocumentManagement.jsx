@@ -18,6 +18,74 @@ import {
   MoreVertical,
   Plus
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
+
+
+const DocumentModal = ({ document, isOpen, onClose }) => {
+  if (!isOpen) return null;
+  const IconComponent = documentTypeIcons[document.type] || FileText;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl w-full max-w-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between p-6 border-b">
+          <div className="flex items-center space-x-3">
+            <div className="bg-[#FF5341] bg-opacity-10 p-2 rounded-lg">
+              <IconComponent className="w-6 h-6 text-[#FF5341]" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">{document.name}</h3>
+              <p className="text-sm text-gray-500">{document.type}</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-gray-500">Date Created</p>
+              <p className="mt-1">{document.date}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">File Size</p>
+              <p className="mt-1">{document.size}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Document Type</p>
+              <p className="mt-1">{document.type}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 rounded-b-xl">
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 
 // Document type icons mapping
 const documentTypeIcons = {
@@ -136,8 +204,12 @@ const DocumentTypeFilter = ({ types, selectedType, onSelect }) => (
 const DocumentManagement = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const fileInputRef = React.useRef(null);
   const [selectedType, setSelectedType] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [documents, setDocuments] = useState([
+    
     {
       id: 1,
       name: 'How to Build a Successful Startup.docx',
@@ -195,20 +267,58 @@ const DocumentManagement = () => {
   };
 
   const handleUpload = () => {
-    // Handle document upload
+    fileInputRef.current?.click();
   };
 
   const handleView = (document) => {
-    // Handle document view
+    setSelectedDocument(document);
+    setIsModalOpen(true);
   };
 
   const handleDownload = (document) => {
-    // Handle document download
+    // Create PDF with basic content
+    const pdf = new jsPDF();
+    
+    // Add content
+    pdf.setFontSize(16);
+    pdf.text("No Content for now", 20, 20);
+    
+    // Save the PDF
+    pdf.save(`${document.name.split('.')[0]}.pdf`);
   };
 
   const handleDelete = (document) => {
     // Handle document deletion
   };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+  
+    if (file) {
+      const allowedTypes = ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  
+      if (allowedTypes.includes(file.type)) {
+        const newDocument = {
+          id: Date.now(),
+          name: file.name,
+          type: 'Uploaded',
+          date: new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+        };
+  
+        setDocuments((prevDocs) => [newDocument, ...prevDocs]);
+        event.target.value = ''; // Reset input
+      } else {
+        alert('Please upload a .txt, .pdf, or .docx file.');
+      }
+    }
+  };
+  
+
 
   const documentTypes = ['Uploaded', 'SEO Writer', 'AI Writer', 'Custom Template', 'Compliance AI'];
   const filteredDocuments = documents.filter(doc => 
@@ -222,43 +332,62 @@ const DocumentManagement = () => {
       <div className="hidden md:block md:fixed md:left-0 md:h-screen z-50">
         <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       </div>
-
-      {/* Main Content */}
-      <div className={`flex-1 w-full ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300`}>
-        {/* Navbar */}
-        <div className="sticky top-0 w-full bg-[#FDF8F6] py-4 z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="flex justify-between items-center">
-              <button 
-                className="md:hidden flex items-center p-2 rounded-lg hover:bg-gray-100"
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              >
-                <MenuIcon className="h-6 w-6" />
-              </button>
-              <div className="relative ml-auto">
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-              </div>
+       {/* Mobile Sidebar */}
+       {!isSidebarCollapsed && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setIsSidebarCollapsed(true)}>
+            <div className="fixed inset-y-0 left-0 w-64 bg-white" onClick={e => e.stopPropagation()}>
+              <Sidebar isCollapsed={false} setIsCollapsed={setIsSidebarCollapsed} />
             </div>
           </div>
-        </div>
+        )}
+
+      {/* Main Content */}
+         <div className={`flex-1 w-full ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300`}>
+              {/* Navbar */}
+              <div className="sticky top-0 w-full bg-[#FDF8F6] py-4 z-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
+                  <div className="flex justify-between items-center">
+                    <button 
+                      className="md:hidden flex items-center p-2 rounded-lg hover:bg-gray-100"
+                      onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    >
+                      <MenuIcon className="h-6 w-6" />
+                    </button>
+                    <div className="relative ml-auto">
+                      <Bell className="w-6 h-6 text-gray-600" />
+                      <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
         {/* Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+           {/* Header */}
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Document Management</h1>
               <p className="text-gray-600">Manage all your documents in one place</p>
             </div>
-            <button
-              onClick={handleUpload}
-              className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Document
-            </button>
-          </div>
+            <div>
+              {/* Hidden file input */}
+              <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".txt, .pdf, .docx"
+              onChange={handleFileChange}
+              />
+
+              <button
+                onClick={handleUpload}
+                className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Document
+              </button>
+            </div>
+            </div>
 
           {/* Search and Filter */}
           <div className="mb-6 space-y-4">
@@ -295,11 +424,20 @@ const DocumentManagement = () => {
                 onDownload={handleDownload}
                 onDelete={handleDelete}
               />
+
+              
             ))}
           </div>
         </div>
       </div>
-    </div>
+      {/* Add Modal */}
+      <DocumentModal 
+        document={selectedDocument}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </div>    
+
   );
 };
 

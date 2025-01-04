@@ -1,7 +1,7 @@
 // src/pages/Translation.jsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Shared/Sidebar';
-import { Bell, MenuIcon, Play,ThumbsUp,ThumbsDown,Copy,Repeat, ArrowLeftRight } from 'lucide-react';
+import { Bell, MenuIcon, Play,ThumbsUp,ThumbsDown,Copy,Repeat, ArrowLeftRight, Check } from 'lucide-react';
 import Flags from 'country-flag-icons/react/3x2';
 
 const languages = [
@@ -52,6 +52,10 @@ const Translation = () => {
   const [outputText, setOutputText] = useState(dummyText.output);
   const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
   const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -76,8 +80,25 @@ const Translation = () => {
   };
 
   const handleTranslate = () => {
-    // For now, just show dummy translation
+    setShowTranslation(true);
     setOutputText(dummyText.output);
+  };
+
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(outputText);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000); // Hide after 2 seconds
+  };
+  
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+    setIsDisliked(false); // Ensure dislike is off when liking
+  };
+  
+  const handleDislike = () => {
+    setIsDisliked(!isDisliked);
+    setIsLiked(false); // Ensure like is off when disliking
   };
 
   const LanguageSelector = ({ 
@@ -234,49 +255,75 @@ const Translation = () => {
 </div>
 
 
-            {/* Output Card */}
-            <div className="bg-[#FFFAF3] rounded-xl p-6">
-              <LanguageSelector
-                selected={targetLanguage}
-                setSelected={setTargetLanguage}
-                isOpen={isTargetDropdownOpen}
-                setIsOpen={setIsTargetDropdownOpen}
-                label="Language"
-              />
-              <div className="mt-4">
-                <div className="relative mt-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Output Content
-                    </label>
-                  </div>
-                  <textarea
-                    value={outputText}
-                    readOnly
-                    className="w-full h-64 p-4 border rounded-lg bg-white"
-                  />
-                </div>
-              </div>
-               {/* Action Buttons */}
+{/* Output Card */}
+<div className="bg-[#FFFAF3] rounded-xl p-6">
+  <LanguageSelector
+    selected={targetLanguage}
+    setSelected={setTargetLanguage}
+    isOpen={isTargetDropdownOpen}
+    setIsOpen={setIsTargetDropdownOpen}
+    label="Language"
+  />
+  <div className="mt-4">
+    <div className="relative mt-4">
+      <div className="mb-2 flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">
+          Output Content
+        </label>
+      </div>
+      {!showTranslation ? (
+        <div className="w-full h-64 p-4 border rounded-lg bg-white flex items-center justify-center text-gray-500">
+          Click "Run" to see translation
+        </div>
+      ) : (
+        <textarea
+          value={outputText}
+          readOnly
+          className="w-full h-64 p-4 border rounded-lg bg-white"
+        />
+      )}
+    </div>
+  </div>
+  {/* Action Buttons */}
   <div className="flex justify-end space-x-4 mt-6">
-    <button className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300">
-    <Copy className="w-4 h-4 text-gray-700"/>
+    <button 
+      onClick={handleCopy}
+      className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors"
+    >
+      <Copy className="w-4 h-4 text-gray-700"/>
+    </button>
+    <button 
+      onClick={handleLike}
+      className={`p-2 rounded-lg transition-colors ${
+        isLiked ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-200 hover:bg-gray-300'
+      }`}
+    >
+      <ThumbsUp className={`w-4 h-4 ${isLiked ? 'text-white' : 'text-gray-700'}`}/>
+    </button>
+    <button 
+      onClick={handleDislike}
+      className={`p-2 rounded-lg transition-colors ${
+        isDisliked ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-200 hover:bg-gray-300'
+      }`}
+    >
+      <ThumbsDown className={`w-4 h-4 ${isDisliked ? 'text-white' : 'text-gray-700'}`}/>
     </button>
     <button className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300">
-    <ThumbsUp className="w-4 h-4 text-gray-700"/>
-    </button>
-    
-    <button className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300">
-    <ThumbsDown className="w-4 h-4 text-gray-700"/>
-    </button>
-    <button className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300">
-    <Repeat className="w-4 h-4 text-gray-700"/>
+      <Repeat className="w-4 h-4 text-gray-700"/>
     </button>
   </div>
-            </div>
+</div>
+
           </div>
         </div>
       </div>
+      {/* Toast Notification */}
+{showToast && (
+  <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up z-50">
+    <Check className="w-4 h-4" />
+    <span>Copied to clipboard</span>
+  </div>
+)}
     </div>
   );
 };

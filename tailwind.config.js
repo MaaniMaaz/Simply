@@ -7,10 +7,24 @@ export default {
   theme: {
     extend: {
       width: {
-        '120': '13rem',  // Example, assuming 120 means 30rem, adjust as needed
+        '120': '13rem',
+      },
+      keyframes: {
+        'fade-in-up': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(10px)'
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)'
+          },
+        }
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 0.3s ease-out'
       }
     },
   },
   plugins: [],
 }
-

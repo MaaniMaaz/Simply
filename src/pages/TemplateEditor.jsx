@@ -34,6 +34,8 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import { useNavigate } from 'react-router-dom';
 import Flags from 'country-flag-icons/react/3x2';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const languages = [
   { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -67,6 +69,8 @@ const toneOptions = [
 const TemplateEditor = () => {
   const { templateId } = useParams();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
 useEffect(() => {
     const handleResize = () => {
@@ -92,6 +96,9 @@ useEffect(() => {
   const [isToneDropdownOpen, setIsToneDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const [isStarred, setIsStarred] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+const mediumEditorRef = React.useRef(null);
+const shortEditorRef = React.useRef(null);
 
 
   // First, set up the editors at the component level
@@ -109,17 +116,7 @@ const [mediumEditor, shortEditor] = [
         types: ['heading', 'paragraph'],
       }),
     ],
-    content: `<h1>6 Essential Tips for Building a Successful Startup</h1>
-    <p>In today's competitive business landscape, launching a successful startup requires careful planning and execution. Here are six essential tips that every entrepreneur should consider:</p>
-    
-    <h2>1. Conduct Thorough Market Research</h2>
-    <p>Before diving in, understand your target market inside and out. Analyze competitors, identify market gaps, and validate your business idea through customer feedback.</p>
-    
-    <h2>2. Build a Strong Team</h2>
-    <p>Surround yourself with talented individuals who share your vision and complement your skills. A diverse team brings different perspectives and expertise to the table.</p>
-    
-    <h2>3. Focus on Financial Planning</h2>
-    <p>Develop a solid financial plan, including realistic projections and contingency funds. Monitor cash flow carefully and maintain lean operations in the early stages.</p>`,
+    content: '', 
   }),
   useEditor({
     extensions: [
@@ -134,7 +131,29 @@ const [mediumEditor, shortEditor] = [
         types: ['heading', 'paragraph'],
       }),
     ],
-    content: `<h1>6 Essential Startup Success Tips</h1>
+    content: '', 
+  }),
+];
+
+const handleRunSEOWriter = () => {
+  setIsGenerating(true);
+  
+  // Simulate API call with setTimeout
+  setTimeout(() => {
+    // Set content for both editors
+    mediumEditor?.commands.setContent(`<h1>6 Essential Tips for Building a Successful Startup</h1>
+    <p>In today's competitive business landscape, launching a successful startup requires careful planning and execution. Here are six essential tips that every entrepreneur should consider:</p>
+    
+    <h2>1. Conduct Thorough Market Research</h2>
+    <p>Before diving in, understand your target market inside and out. Analyze competitors, identify market gaps, and validate your business idea through customer feedback.</p>
+    
+    <h2>2. Build a Strong Team</h2>
+    <p>Surround yourself with talented individuals who share your vision and complement your skills. A diverse team brings different perspectives and expertise to the table.</p>
+    
+    <h2>3. Focus on Financial Planning</h2>
+    <p>Develop a solid financial plan, including realistic projections and contingency funds. Monitor cash flow carefully and maintain lean operations in the early stages.</p>`);
+
+    shortEditor?.commands.setContent(`<h1>6 Essential Startup Success Tips</h1>
     <p>Launch your startup successfully with these key strategies:</p>
     
     <h2>1. Market Research</h2>
@@ -144,11 +163,34 @@ const [mediumEditor, shortEditor] = [
     <p>Recruit talented individuals who complement your skills.</p>
     
     <h2>3. Financial Planning</h2>
-    <p>Create solid financial projections and monitor cash flow.</p>`,
-  }),
-];
+    <p>Create solid financial projections and monitor cash flow.</p>`);
+
+    setIsGenerating(false);
+    setShowResults(true);
+  }, 2000); // 2 second delay to simulate API call
+};
 
 
+const handleDownload = async (editorRef, title) => {
+  if (!editorRef.current) return;
+  
+  setIsDownloading(true);
+  try {
+    const canvas = await html2canvas(editorRef.current);
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF();
+    
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    pdf.save(`${title.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+  } finally {
+    setIsDownloading(false);
+  }
+};
 
 
   const formatTemplateName = (name) => {
@@ -370,7 +412,8 @@ const [mediumEditor, shortEditor] = [
                   </div>
                 </div>
 
-                <button className="w-full bg-[#FF5341] text-white py-3 rounded-lg hover:bg-[#FF5341]/90 transition-colors mt-6 flex items-center justify-center">
+                <button className="w-full bg-[#FF5341] text-white py-3 rounded-lg hover:bg-[#FF5341]/90 transition-colors mt-6 flex items-center justify-center"
+                onClick={handleRunSEOWriter}>
                 Run SEO Writer
                 <Play className="w-5 h-5 ml-1 text-white fill-white" />
                 </button>   
@@ -379,17 +422,29 @@ const [mediumEditor, shortEditor] = [
               </div>
             </div>
 
-            {/* Right Column - Editor and Results */}
-                {/* Right Column - Full width on mobile, 8 cols on md */}
-                <div className="col-span-1 md:col-span-8 space-y-4 md:space-y-6">
-             
+          {/* Right Column - Editor and Results */}
+    <div className="col-span-1 md:col-span-8 space-y-4 md:space-y-6">
+      {!showResults && !isGenerating && (
+        <div className="bg-[#FFFAF3] rounded-xl p-8 text-center">
+          <p className="text-gray-600 mb-4">
+            Click "Run SEO Writer" to generate your content
+          </p>
+        </div>
+      )}
 
-{/* Results Cards */}
-<div className="space-y-4 md:space-y-6">
-                {[
-                  { editor: mediumEditor, title: "Medium Length Result" },
-                  { editor: shortEditor, title: "Short Length Result" }
-                ].map((card, idx) => (
+      {isGenerating && (
+        <div className="bg-[#FFFAF3] rounded-xl p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5341] mx-auto mb-4"></div>
+          <p className="text-gray-600">Generating content...</p>
+        </div>
+      )}
+
+      {showResults && !isGenerating && (
+        <div className="space-y-4 md:space-y-6">
+          {[
+            { editor: mediumEditor, title: "Medium Length Result" },
+            { editor: shortEditor, title: "Short Length Result" }
+          ].map((card, idx) => (
                   <div key={idx} className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
                     {/* Card Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mb-4">
@@ -398,24 +453,19 @@ const [mediumEditor, shortEditor] = [
                       </div>
                       {/* Action Buttons - Grid on mobile, flex on desktop */}
                       <div className="grid grid-cols-2 md:flex items-center gap-2">
-                        <button className="p-1.5 px-2 bg-blue-600 text-white rounded-lg text-xs md:text-sm">
-                          <span className="flex items-center">
-                            AI <ChevronDown className="w-3 h-3 ml-1" />
-                          </span>
-                        </button>
-          <button className="p-1.5 rounded-lg border">
-            <span className="flex items-center text-sm">
-              <svg width="16" height="16" viewBox="0 0 24 24" className="text-gray-600">
-                <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-              </svg>
-            </span>
-          </button>
-          <button className="p-1.5 rounded-lg text-sm bg-red-500 text-white">
-            <Download className="w-4 h-4" />
-          </button>
-          <button className="p-1.5 rounded-lg text-sm border">
-            <Share2 className="w-4 h-4" />
-          </button>
+                      <button 
+  onClick={() => handleDownload(idx === 0 ? mediumEditorRef : shortEditorRef, card.title)}
+  disabled={isDownloading}
+  className={`p-1.5 rounded-lg text-sm bg-red-500 text-white hover:bg-red-600 transition-colors ${
+    isDownloading ? 'opacity-50 cursor-not-allowed' : ''
+  }`}
+>
+  {isDownloading ? (
+    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+  ) : (
+    <Download className="w-4 h-4" />
+  )}
+</button>
         </div>
       </div>
 
@@ -567,13 +617,16 @@ const [mediumEditor, shortEditor] = [
       </div>
       </div>
 
-      <EditorContent 
-        editor={card.editor} 
-        className="prose max-w-none min-h-[200px] md:min-h-[300px] text-sm md:text-base" 
-       />
+      <div ref={idx === 0 ? mediumEditorRef : shortEditorRef}>
+  <EditorContent 
+    editor={card.editor} 
+    className="prose max-w-none min-h-[200px] md:min-h-[300px] text-sm md:text-base" 
+  />
+</div>
     </div>
   ))}
 </div>
+)}
 </div>
 </div>
 </div>

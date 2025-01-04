@@ -388,23 +388,9 @@ const SEOWriter = () => {
                                     </div>
                                     {/* Action Buttons - Grid on mobile, flex on desktop */}
                                     <div className="grid grid-cols-2 md:flex items-center gap-2">
-                                      <button className="p-1.5 px-2 bg-blue-600 text-white rounded-lg text-xs md:text-sm">
-                                        <span className="flex items-center">
-                                          AI <ChevronDown className="w-3 h-3 ml-1" />
-                                        </span>
-                                      </button>
-                        <button className="p-1.5 rounded-lg border">
-                          <span className="flex items-center text-sm">
-                            <svg width="16" height="16" viewBox="0 0 24 24" className="text-gray-600">
-                              <path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                            </svg>
-                          </span>
-                        </button>
+                                     
                         <button className="p-1.5 rounded-lg text-sm bg-red-500 text-white">
                           <Download className="w-4 h-4" />
-                        </button>
-                        <button className="p-1.5 rounded-lg text-sm border">
-                          <Share2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

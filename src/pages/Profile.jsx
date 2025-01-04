@@ -176,110 +176,96 @@ const Profile = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Left Column - Profile Info */}
-            <div className="md:col-span-1">
-              <div className="bg-[#FFFAF3] rounded-xl p-6 mb-6">
-                <div className="flex flex-col items-center">
-                  <div className="relative mb-4">
-                    <div className="w-24 h-24 rounded-full overflow-hidden">
-                      <img 
-                        src={previewImage || profileData.image} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    {isEditing && (
-                      <label className="absolute bottom-0 right-0 cursor-pointer">
-                        <div className="bg-[#FF5341] p-2 rounded-full">
-                          <Camera className="w-4 h-4 text-white" />
-                        </div>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*"
-                          onChange={handleImageChange}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <h2 className="text-xl font-semibold mb-1">{profileData.name}</h2>
-                  <p className="text-gray-600 text-sm">Professional Plan</p>
-                </div>
-
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      className={`w-full p-2 rounded-lg border ${isEditing ? 'bg-white' : 'bg-gray-50'}`}
-                      value={profileData.name}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      className={`w-full p-2 rounded-lg border ${isEditing ? 'bg-white' : 'bg-gray-50'}`}
-                      value={profileData.email}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                    <input
-                      type="tel"
-                      className={`w-full p-2 rounded-lg border ${isEditing ? 'bg-white' : 'bg-gray-50'}`}
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                      disabled={!isEditing}
-                    />
-                  </div>
-                </div>
-
-                {isEditing ? (
-                  <div className="flex space-x-4 mt-6">
-                    <button
-                      onClick={handleSave}
-                      className="flex-1 bg-[#FF5341] text-white py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors"
-                    >
-                      Save Changes
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setPreviewImage(null);
-                      }}
-                      className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="w-full bg-[#FF5341] text-white py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors mt-6"
-                  >
-                    Edit Profile
-                  </button>
-                )}
-              </div>
-
-              {/* Account Security Card */}
-              <div className="bg-black rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-medium">Account Security</h3>
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <p className="text-gray-400 text-sm mb-4">
-                  Enhance your account security by enabling two-factor authentication
-                </p>
-                <button className="w-full bg-white text-black py-2 rounded-lg hover:bg-opacity-90 transition-colors">
-                  Enable 2FA
-                </button>
-              </div>
+<div className="md:col-span-1">
+  <div className="bg-[#FFFAF3] rounded-xl p-6 mb-6">
+    <div className="flex flex-col items-center">
+      <div className="relative mb-4">
+        <div className="w-24 h-24 rounded-full overflow-hidden">
+          <img 
+            src={previewImage || profileData.image} 
+            alt="Profile" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+        {isEditing && (
+          <label className="absolute bottom-0 right-0 cursor-pointer">
+            <div className="bg-[#FF5341] p-2 rounded-full">
+              <Camera className="w-4 h-4 text-white" />
             </div>
+            <input 
+              type="file" 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+          </label>
+        )}
+      </div>
+      <h2 className="text-xl font-semibold mb-1">{profileData.name}</h2>
+      <p className="text-gray-600 text-sm">Professional Plan</p>
+    </div>
+
+    <div className="mt-6 space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+        <input
+          type="text"
+          className={`w-full p-2 rounded-lg border ${isEditing ? 'bg-white' : 'bg-gray-50'}`}
+          value={profileData.name}
+          onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
+          disabled={!isEditing}
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          type="email"
+          className={`w-full p-2 rounded-lg border ${isEditing ? 'bg-white' : 'bg-gray-50'}`}
+          value={profileData.email}
+          onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
+          disabled={!isEditing}
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+        <input
+          type="tel"
+          className={`w-full p-2 rounded-lg border ${isEditing ? 'bg-white' : 'bg-gray-50'}`}
+          value={profileData.phone}
+          onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+          disabled={!isEditing}
+        />
+      </div>
+    </div>
+
+    {isEditing ? (
+      <div className="flex space-x-4 mt-6">
+        <button
+          onClick={handleSave}
+          className="flex-1 bg-[#FF5341] text-white py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors"
+        >
+          Save Changes
+        </button>
+        <button
+          onClick={() => {
+            setIsEditing(false);
+            setPreviewImage(null);
+          }}
+          className="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      </div>
+    ) : (
+      <button
+        onClick={() => setIsEditing(true)}
+        className="w-full bg-[#FF5341] text-white py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors mt-6"
+      >
+        Edit Profile
+      </button>
+    )}
+  </div>
+</div>
 
             {/* Right Column - Additional Settings */}
             <div className="md:col-span-2 space-y-6">
@@ -315,11 +301,7 @@ const Profile = () => {
                   title="Password & Security"
                   description="Change password, enable 2FA, and manage security preferences"
                 />
-                <ProfileCard
-                  icon={User}
-                  title="Personal Information"
-                  description="Update your personal details and preferences"
-                />
+                
                 <ProfileCard
                   icon={Mail}
                   title="Email Notifications"

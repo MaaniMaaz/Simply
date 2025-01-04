@@ -176,53 +176,63 @@ const Translation = () => {
 
           {/* Translation Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Input Card */}
-            <div className="bg-[#FFFAF3] rounded-xl p-6">
-              <LanguageSelector
-                selected={sourceLanguage}
-                setSelected={setSourceLanguage}
-                isOpen={isSourceDropdownOpen}
-                setIsOpen={setIsSourceDropdownOpen}
-                label="Language"
-              />
-              
-              <div className="mt-4">
-                <div className="relative mt-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Input Content
-                    </label>
-                    <span className="text-sm text-gray-500">
-                      {inputText.length}/800
-                    </span>
-                  </div>
-                  <textarea
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    className="w-full h-64 p-4 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-                    placeholder="Enter text to translate..."
-                    maxLength={800}
-                  />
-                </div>
-                <div className="flex justify-between mt-4">
-                  
-                  <button
-                    onClick={handleTranslate}
-                    className="bg-[#FF5341] text-white px-6 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center"
-                  >
-                    Run
-                    <Play className="w-4 h-4 ml-2 fill-current" />
-                  </button>
-                  <button
-                    onClick={handleSwapLanguages}
-                    className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                  >
-                    <ArrowLeftRight className="w-4 h-4 mr-2" />
-                    Swap
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Input Card */}
+<div className="bg-[#FFFAF3] rounded-xl p-6">
+  <LanguageSelector
+    selected={sourceLanguage}
+    setSelected={setSourceLanguage}
+    isOpen={isSourceDropdownOpen}
+    setIsOpen={setIsSourceDropdownOpen}
+    label="Language"
+  />
+
+  {/* Tone of Voice Option */}
+  <div className="mt-4">
+    <label className="block text-sm font-medium text-gray-700 mb-1">Tone of Voice</label>
+    <input
+      type="text"
+      className="w-full p-2 border rounded-lg"
+      placeholder="E.g., Professional, Friendly, Informative"
+    />
+  </div>
+
+  <div className="mt-4">
+    <div className="relative mt-4">
+      <div className="mb-2 flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">
+          Input Content
+        </label>
+        <span className="text-sm text-gray-500">
+          {inputText.length}/800
+        </span>
+      </div>
+      <textarea
+        value={inputText}
+        onChange={(e) => setInputText(e.target.value)}
+        className="w-full h-64 p-4 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+        placeholder="Enter text to translate..."
+        maxLength={800}
+      />
+    </div>
+    <div className="flex justify-between mt-4">
+      <button
+        onClick={handleTranslate}
+        className="bg-[#FF5341] text-white px-6 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center"
+      >
+        Run
+        <Play className="w-4 h-4 ml-2 fill-current" />
+      </button>
+      <button
+        onClick={handleSwapLanguages}
+        className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+      >
+        <ArrowLeftRight className="w-4 h-4 mr-2" />
+        Swap
+      </button>
+    </div>
+  </div>
+</div>
+
 
             {/* Output Card */}
             <div className="bg-[#FFFAF3] rounded-xl p-6">

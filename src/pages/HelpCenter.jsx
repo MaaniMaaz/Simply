@@ -209,17 +209,7 @@ const HelpCenter = () => {
                 "Account Security"
               ]}
             />
-            <HelpCard
-              icon={MessageSquare}
-              title="Support & Community"
-              description="Get help from our team and community"
-              items={[
-                "Contact Support",
-                "Community Forums",
-                "Feature Requests",
-                "FAQs"
-              ]}
-            />
+           
           </div>
 
           {/* Live Support Banner */}

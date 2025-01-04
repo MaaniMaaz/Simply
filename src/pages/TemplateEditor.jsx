@@ -184,7 +184,7 @@ const [mediumEditor, shortEditor] = [
               className="flex items-center text-gray-600 hover:text-gray-900"
             >
               <ChevronLeft className="w-5 h-5 mr-1" />
-              <span>Back</span>
+              <span></span>
             </button>
             <div className="relative">
               <Bell className="w-6 h-6 text-gray-600" />

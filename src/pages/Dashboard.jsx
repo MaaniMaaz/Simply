@@ -120,7 +120,9 @@ const Dashboard = () => {
               <h2 className="text-xl md:text-2xl font-semibold mb-2">Professional Plus</h2>
               <p className="text-sm md:text-base mb-4">You An Active Subscription</p>
               <div className="flex justify-between items-center">
-                <button className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
+                <button 
+                onClick={() => navigate('/profile')}
+                className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
                   Manage Plans
                 </button>
                 <span className="text-xl md:text-2xl font-semibold">$19/Month</span>
@@ -153,7 +155,9 @@ const Dashboard = () => {
                 <h2 className="text-base md:text-lg font-semibold">Most Recent Documents Generated</h2>
                 <p className="text-xs md:text-sm text-gray-600">Manage Your Generated Articles here</p>
               </div>
-              <button className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
+              <button 
+              onClick={() => navigate('/documents')}
+              className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </button>
             </div>
@@ -224,20 +228,7 @@ const Dashboard = () => {
     </ResponsiveContainer>
   </div>
 
-  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-    <div>
-      <p className="text-sm text-gray-600">Total Words</p>
-      <p className="text-xl font-semibold">24,598</p>
-    </div>
-    <div>
-      <p className="text-sm text-gray-600">Average/Day</p>
-      <p className="text-xl font-semibold">793</p>
-    </div>
-    <div className="col-span-2 md:col-span-1">
-      <p className="text-sm text-gray-600">Peak Generation</p>
-      <p className="text-xl font-semibold">4,800</p>
-    </div>
-  </div>
+ 
 </div>
 
 
@@ -287,7 +278,9 @@ const Dashboard = () => {
                 <h2 className="text-lg md:text-xl font-semibold mb-1">Document History</h2>
                 <p className="text-xs md:text-sm text-gray-600">View Your Recently Generated Documents</p>
               </div>
-              <button className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
+              <button 
+              onClick={() => navigate('/documents')}
+              className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </button>
             </div>
@@ -314,7 +307,9 @@ const Dashboard = () => {
             <p className="text-sm md:text-base text-gray-300 mb-6 max-w-2xl">
               Have Questions? Simply Has You Covered! From AI-Powered Tools To Content Tips, We're Here To Make Content Creation Easy And Hassle-Free.
             </p>
-            <button className="bg-[#FF5341] text-white px-6 py-3 rounded-lg flex items-center text-sm md:text-base hover:bg-opacity-90 transition-colors border border-white">
+            <button 
+            onClick={() => navigate('/help')}
+            className="bg-[#FF5341] text-white px-6 py-3 rounded-lg flex items-center text-sm md:text-base hover:bg-opacity-90 transition-colors border border-white">
               Get Help Now <ArrowRight className="w-4 h-4 ml-2" />
             </button>
           </div>

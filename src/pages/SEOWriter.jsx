@@ -235,6 +235,45 @@ const SEOWriter = () => {
 
               {/* Form Fields */}
               <div className="space-y-4">
+                 {/* Language Dropdown */}
+                 <div className="relative">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                  <button
+                    onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                    className="w-full flex items-center justify-between p-2 border rounded-lg bg-white"
+                  >
+                    {selectedLanguage && (
+                      <span className="flex items-center">
+                        {(() => {
+                          const FlagComponent = Flags[selectedLanguage.country];
+                          return <FlagComponent className="w-5 h-4 mr-2" />;
+                        })()}
+                        {selectedLanguage.name}
+                      </span>
+                    )}
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                  {isLanguageDropdownOpen && (
+                    <div className="absolute w-full mt-1 bg-white border rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
+                      {languages.map((lang) => {
+                        const FlagComponent = Flags[lang.country];
+                        return (
+                          <button
+                            key={lang.code}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center"
+                            onClick={() => {
+                              setSelectedLanguage(lang);
+                              setIsLanguageDropdownOpen(false);
+                            }}
+                          >
+                            <FlagComponent className="w-5 h-4 mr-2" />
+                            {lang.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 {/* Content Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -533,7 +572,7 @@ const SEOWriter = () => {
                   </div>
                 ))}
               </div>
-              {/* Same structure as Template Editor but with empty editors */}
+              
             </div>
           </div>
         </div>

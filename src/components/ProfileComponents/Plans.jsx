@@ -3,7 +3,6 @@ import { CreditCard, Calendar, Check } from 'lucide-react';
 
 const PlanCard = ({ plan, isActive, onUpgrade }) => {
   const features = {
-    Starter: ['5,000 Credits', '3 Collaborative Projects', 'Basic SEO'],
     Professional: ['25,000 Credits', 'Team Collaboration', 'Advanced SEO'],
     Enterprise: ['50,000 Credits', 'Dedicated Support', 'Custom Features']
   };

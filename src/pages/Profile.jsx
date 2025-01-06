@@ -114,7 +114,6 @@ const Profile = () => {
   const transactions = [
     { plan: 'Professional Plan', date: 'Mar 01, 2024', amount: '$19.00', status: 'Paid' },
     { plan: 'Professional Plan', date: 'Feb 01, 2024', amount: '$19.00', status: 'Paid' },
-    { plan: 'Starter Plan', date: 'Jan 01, 2024', amount: '$0.00', status: 'Free' }
   ];
 
   const handleUpgrade = (plan) => {
@@ -375,7 +374,7 @@ const Profile = () => {
         title="Choose a Plan"
       >
         <div className="space-y-4">
-          {['Starter', 'Professional', 'Enterprise'].map((plan) => (
+          {[ 'Professional', 'Enterprise'].map((plan) => (
             <PlanCard
               key={plan}
               plan={plan}

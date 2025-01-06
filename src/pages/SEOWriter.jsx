@@ -31,10 +31,7 @@ import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Flags from 'country-flag-icons/react/3x2';
 
-// Add this near your imports
 const getSuggestedKeywords = (input) => {
-    // Simulated keyword suggestions based on input
-    // This will be replaced with actual API call later
     const dummyKeywordMap = {
       'best ai writers': [
         'top AI content generators',
@@ -61,21 +58,16 @@ const getSuggestedKeywords = (input) => {
         'SEO content writing'
       ]
     };
-  
-    // Convert input to lowercase for matching
+
     const lowerInput = input.toLowerCase();
-  
-    // Find matching keywords
     let suggestions = [];
     
-    // Check for partial matches in the dummy data
     Object.entries(dummyKeywordMap).forEach(([key, values]) => {
       if (lowerInput.includes(key) || key.includes(lowerInput)) {
         suggestions = [...suggestions, ...values];
       }
     });
-  
-    // If no matches found, return generic suggestions
+
     if (suggestions.length === 0) {
       suggestions = [
         'content optimization',
@@ -86,9 +78,9 @@ const getSuggestedKeywords = (input) => {
         'target audience'
       ];
     }
-  
-    return suggestions.slice(0, 6); // Limit to 6 suggestions
-  };
+
+    return suggestions.slice(0, 6);
+};
 
 const languages = [
     { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -100,8 +92,7 @@ const languages = [
     { code: 'pt-BR', name: 'Português', country: 'BR' },
     { code: 'nl-NL', name: 'Nederlands', country: 'NL' },
     { code: 'pl-PL', name: 'Polski', country: 'PL' },
-    { code: 'ru-RU', name: 'Русский', country: 'RU' },
-  // ... other languages
+    { code: 'ru-RU', name: 'Русский', country: 'RU' }
 ];
 
 const aiModels = [
@@ -109,15 +100,6 @@ const aiModels = [
   'GPT-3.5 Turbo',
 ];
 
-// Example suggested keywords (in real app, these would be generated dynamically)
-const suggestedKeywords = [
-  'AI content writers',
-  'content automation tools',
-  'best AI writing software',
-  'automated content generation',
-  'AI SEO optimization',
-  'machine learning content',
-];
 
 const SEOWriter = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -130,18 +112,17 @@ const SEOWriter = () => {
   const [contentDescription, setContentDescription] = useState('');
   const [focusIdeas, setFocusIdeas] = useState('');
   const [suggestedKeywords, setSuggestedKeywords] = useState([]);
+  const [keywordSearch, setKeywordSearch] = useState('');
 
-
-  const handleContentChange = (e) => {
+  const handleKeywordSearch = (e) => {
     const value = e.target.value;
-    setContentDescription(value);
+    setKeywordSearch(value);
     
-    // Only update suggestions if there's input
     if (value.trim()) {
       const suggestions = getSuggestedKeywords(value);
       setSuggestedKeywords(suggestions);
     } else {
-      setSuggestedKeywords([]); // Clear suggestions if input is empty
+      setSuggestedKeywords([]);
     }
   };
 
@@ -210,25 +191,23 @@ const SEOWriter = () => {
 
       {/* Main Content */}
       <div className={`flex-1 w-full ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300`}>
-       {/* Navbar */}
-<div className="sticky top-0 w-full bg-[#FDF8F6] py-4 z-10">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6">
-    <div className="flex justify-between items-center">
-      <button
-        className="md:hidden flex items-center p-2 rounded-lg hover:bg-gray-100"
-        onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      >
-        <MenuIcon className="h-6 w-6" />
-      </button>
-      
-      {/* Move the Bell Icon to the right */}
-      <div className="ml-auto relative">
-        <Bell className="w-6 h-6 text-gray-600" />
-        <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-      </div>
-    </div>
-  </div>
-</div>
+        {/* Navbar */}
+        <div className="sticky top-0 w-full bg-[#FDF8F6] py-4 z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="flex justify-between items-center">
+              <button
+                className="md:hidden flex items-center p-2 rounded-lg hover:bg-gray-100"
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              >
+                <MenuIcon className="h-6 w-6" />
+              </button>
+              <div className="ml-auto relative">
+                <Bell className="w-6 h-6 text-gray-600" />
+                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Mobile Sidebar */}
         {!isSidebarCollapsed && (
@@ -256,24 +235,32 @@ const SEOWriter = () => {
 
               {/* Form Fields */}
               <div className="space-y-4">
-                {/* Language Dropdown */}
-                <div className="relative">
-                  {/* Same as Template Editor */}
+                {/* Content Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Content Description/Brief
+                  </label>
+                  <input
+                    type="text"
+                    value={contentDescription}
+                    onChange={(e) => setContentDescription(e.target.value)}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="Enter your content description"
+                  />
                 </div>
 
-                {/* Content Description */}
-               
+                {/* Keyword Search - New Field */}
                 <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-              Content Description/Brief
-              </label>
-            <input
-                type="text"
-             value={contentDescription}
-             onChange={handleContentChange}
-              className="w-full p-2 border rounded-lg"
-                 placeholder="Enter your content topic (e.g., Best AI writers)"
-                 />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Search Keywords <span className="text-gray-400">(Get keyword suggestions)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={keywordSearch}
+                    onChange={handleKeywordSearch}
+                    className="w-full p-2 border rounded-lg"
+                    placeholder="Search keywords (e.g., SEO optimization)"
+                  />
                 </div>
 
                 {/* Post Focus Idea */}
@@ -292,58 +279,54 @@ const SEOWriter = () => {
 
                 {/* Suggested Keywords */}
                 {suggestedKeywords.length > 0 && (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-      <Tag className="w-4 h-4" />
-      Suggested Keywords
-      <span className="text-xs text-gray-500">(Click to select)</span>
-    </label>
-    <div className="flex flex-wrap gap-2">
-      {suggestedKeywords.map((keyword, index) => (
-        <button
-          key={index}
-          onClick={() => toggleKeyword(keyword)}
-          className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm transition-colors ${
-            selectedKeywords.includes(keyword)
-              ? 'bg-[#FF5341] text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          {keyword}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <Tag className="w-4 h-4" />
+                      Suggested Keywords
+                      <span className="text-xs text-gray-500">(Click to select)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedKeywords.map((keyword, index) => (
+                        <button
+                          key={index}
+                          onClick={() => toggleKeyword(keyword)}
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm transition-colors ${
+                            selectedKeywords.includes(keyword)
+                              ? 'bg-[#FF5341] text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {keyword}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-{selectedKeywords.length > 0 && (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-      Selected Keywords
-    </label>
-    <div className="flex flex-wrap gap-2">
-      {selectedKeywords.map((keyword, index) => (
-        <span
-          key={index}
-          className="inline-flex items-center px-3 py-1.5 rounded-full text-sm bg-[#FF5341] text-white"
-        >
-          {keyword}
-          <button
-            onClick={() => toggleKeyword(keyword)}
-            className="ml-2 hover:opacity-80"
-          >
-            ×
-          </button>
-        </span>
-      ))}
-    </div>
-  </div>
-)}
-
-                {/* AI Model Dropdown */}
-                <div className="relative">
-                  {/* Same as Template Editor */}
-                </div>
+                {/* Selected Keywords */}
+                {selectedKeywords.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Selected Keywords
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedKeywords.map((keyword, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1.5 rounded-full text-sm bg-[#FF5341] text-white"
+                        >
+                          {keyword}
+                          <button
+                            onClick={() => toggleKeyword(keyword)}
+                            className="ml-2 hover:opacity-80"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Result Length */}
                 <div>

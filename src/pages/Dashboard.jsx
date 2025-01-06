@@ -28,15 +28,26 @@ const StatCard = ({ title, value, icon: Icon }) => (
   </div>
 );
 
-const wordGenerationData = [
-  { date: '1 Dec', words: 2400 },
-  { date: '5 Dec', words: 1398 },
-  { date: '10 Dec', words: 3800 },
-  { date: '15 Dec', words: 3908 },
-  { date: '20 Dec', words: 4800 },
-  { date: '25 Dec', words: 3800 },
-  { date: '30 Dec', words: 4300 },
-];
+// First, update the wordGenerationData array to include full dates
+const generateWordData = () => {
+  const data = [];
+  const currentDate = new Date();
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(currentDate.getFullYear() - 3);
+  
+  // Generate sample data for the last 3 years
+  let currentDatePointer = threeYearsAgo;
+  while (currentDatePointer <= currentDate) {
+    data.push({
+      date: new Date(currentDatePointer),
+      words: Math.floor(Math.random() * 5000) + 1000
+    });
+    currentDatePointer.setDate(currentDatePointer.getDate() + 5); // Add data every 5 days
+  }
+  return data;
+};
+
+const wordGenerationData = generateWordData();
 
 const ArticleCard = ({ title, date }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4 hover:shadow-md transition-shadow border border-gray-400">
@@ -45,14 +56,79 @@ const ArticleCard = ({ title, date }) => (
   </div>
 );
 
+
+    // Helper function to format dates based on range
+    const formatDateForAxis = (date, rangeType) => {
+      const d = new Date(date);
+      switch (rangeType) {
+        case 'days':
+          return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+        case 'months':
+          return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        case 'years':
+          return d.getFullYear().toString();
+        default:
+          return d.toLocaleDateString();
+      }
+    };
+
 const Dashboard = () => {
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [selectedDate, setSelectedDate] = useState(new Date());
+    const [dateRange, setDateRange] = useState([new Date(new Date().getTime() - 30*24*60*60*1000), new Date()]);
+    const [startDate, endDate] = dateRange;
 
     const filteredData = wordGenerationData.filter(
       (data) => new Date(data.date).toLocaleDateString() === selectedDate.toLocaleDateString()
     );
+
+
+      // Calculate the range type
+  const getDifferenceInDays = (date1, date2) => {
+    const diffTime = Math.abs(date2 - date1);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const getRangeType = () => {
+    const daysDiff = getDifferenceInDays(startDate, endDate);
+    if (daysDiff <= 31) return 'days';
+    if (daysDiff <= 365) return 'months';
+    return 'years';
+  };
+
+  // Filter and format data based on selected date range
+  const getFilteredData = () => {
+    const rangeType = getRangeType();
+    const filteredData = wordGenerationData.filter(item => 
+      item.date >= startDate && item.date <= endDate
+    );
+
+    // If showing months or years, aggregate the data
+    if (rangeType === 'months') {
+      const monthlyData = {};
+      filteredData.forEach(item => {
+        const key = formatDateForAxis(item.date, 'months');
+        monthlyData[key] = (monthlyData[key] || 0) + item.words;
+      });
+      return Object.entries(monthlyData).map(([date, words]) => ({ date, words }));
+    }
+
+    if (rangeType === 'years') {
+      const yearlyData = {};
+      filteredData.forEach(item => {
+        const key = formatDateForAxis(item.date, 'years');
+        yearlyData[key] = (yearlyData[key] || 0) + item.words;
+      });
+      return Object.entries(yearlyData).map(([date, words]) => ({ date, words }));
+    }
+
+    // For days, just format the dates
+    return filteredData.map(item => ({
+      date: formatDateForAxis(item.date, 'days'),
+      words: item.words
+    }));
+  };
     
   
   useEffect(() => {
@@ -184,77 +260,79 @@ const Dashboard = () => {
           </div>
 
 
-{/* Words Generation Graph */}
-<div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mt-8">
-  <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
-    <div>
-      <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
-      <p className="text-xs md:text-sm text-gray-600">Select a date to view statistics</p>
-    </div>
-    <div className="relative">
-      <DatePicker
-        selected={selectedDate}
-        onChange={(date) => setSelectedDate(date)}
-        className="border w-40 rounded-lg px-2 py-1 pl-10" // Extra padding for the icon
-      />
-      {/* Calendar Icon */}
-      <div className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+  {/* Words Generation Graph */}
+  <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mt-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
+        <div>
+          <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
+          <p className="text-xs md:text-sm text-gray-600">Select date range to view statistics</p>
+        </div>
+        <div className="relative">
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(update) => setDateRange(update)}
+            className="border w-64 rounded-lg px-2 py-1 pl-10"
+            dateFormat="MMM d, yyyy"
           />
-        </svg>
+          <div className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={getFilteredData()}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              tickLine={false}
+              axisLine={{ stroke: '#E5E7EB' }}
+            />
+            <YAxis
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              tickLine={false}
+              axisLine={{ stroke: '#E5E7EB' }}
+              tickFormatter={(value) => `${value}`}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E5E7EB',
+                borderRadius: '8px',
+                padding: '8px',
+              }}
+              labelStyle={{ color: '#374151', fontWeight: 500 }}
+              itemStyle={{ color: '#FF5341' }}
+            />
+            <Line
+              type="monotone"
+              dataKey="words"
+              stroke="#FF5341"
+              strokeWidth={2}
+              dot={{ fill: '#FF5341', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: '#FF5341' }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
-  </div>
-
-  <div className="h-64">
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={filteredData.length ? filteredData : wordGenerationData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis
-          dataKey="date"
-          tick={{ fontSize: 12, fill: '#6B7280' }}
-          tickLine={false}
-          axisLine={{ stroke: '#E5E7EB' }}
-        />
-        <YAxis
-          tick={{ fontSize: 12, fill: '#6B7280' }}
-          tickLine={false}
-          axisLine={{ stroke: '#E5E7EB' }}
-          tickFormatter={(value) => `${value}`}
-        />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E5E7EB',
-            borderRadius: '8px',
-            padding: '8px',
-          }}
-          labelStyle={{ color: '#374151', fontWeight: 500 }}
-          itemStyle={{ color: '#FF5341' }}
-        />
-        <Line
-          type="monotone"
-          dataKey="words"
-          stroke="#FF5341"
-          strokeWidth={2}
-          dot={{ fill: '#FF5341', strokeWidth: 2 }}
-          activeDot={{ r: 6, fill: '#FF5341' }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-</div>
 
 
 

@@ -19,6 +19,72 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+// Quick start guide data
+const quickStartGuides = [
+  { icon: PlayCircle, title: 'Getting Started with Simply' },
+  { icon: Bot, title: 'AI Writing Guide' },
+  { icon: Lightbulb, title: 'Best Practices & Tips' }
+];
+
+// Help categories data
+const helpCategories = [
+  {
+    icon: BookOpen,
+    title: 'Getting Started',
+    description: 'Learn the basics and get up and running with Simply',
+    items: [
+      'Account Setup Guide',
+      'Creating Your First Content',
+      'Understanding Credits System',
+      'Workspace Configuration'
+    ]
+  },
+  {
+    icon: FileText,
+    title: 'Content Creation',
+    description: 'Master content creation with our AI tools',
+    items: [
+      'Using AI Writer Templates',
+      'SEO Optimization Tips',
+      'Content Style Guidelines',
+      'Editing and Formatting'
+    ]
+  },
+  {
+    icon: Code,
+    title: 'Technical Guides',
+    description: 'Technical documentation and API integration help',
+    items: [
+      'API Documentation',
+      'Integration Guides',
+      'Webhook Setup',
+      'Developer Resources'
+    ]
+  },
+  {
+    icon: Users,
+    title: 'Team Collaboration',
+    description: 'Learn how to work effectively with your team',
+    items: [
+      'Team Roles & Permissions',
+      'Sharing & Collaboration',
+      'Project Management',
+      'Team Analytics'
+    ]
+  },
+  {
+    icon: Settings,
+    title: 'Account & Billing',
+    description: 'Manage your account and subscription',
+    items: [
+      'Subscription Plans',
+      'Payment Methods',
+      'Credits Management',
+      'Account Security'
+    ]
+  }
+];
+
 const HelpCard = ({ icon: Icon, title, description, items }) => (
   <div className="bg-white rounded-xl p-6 hover:shadow-md transition-shadow">
     <div className="flex items-start">
@@ -77,6 +143,26 @@ const HelpCenter = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Filter function for help categories
+  const filteredHelpCategories = helpCategories.filter(category => {
+    const search = searchQuery.toLowerCase();
+    if (!search) return true;
+
+    return (
+      category.title.toLowerCase().includes(search) ||
+      category.description.toLowerCase().includes(search) ||
+      category.items.some(item => item.toLowerCase().includes(search))
+    );
+  });
+
+  // Filter function for quick start guides
+  const filteredQuickStartGuides = quickStartGuides.filter(guide => {
+    const search = searchQuery.toLowerCase();
+    if (!search) return true;
+
+    return guide.title.toLowerCase().includes(search);
+  });
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar - Hidden on mobile */}
@@ -118,89 +204,62 @@ const HelpCenter = () => {
           {/* Header & Search */}
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">How can we help you?</h1>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 mb-4">
               Search our knowledge base or browse all help topics below
             </p>
-          </div>
-
-          {/* Quick Start Guides */}
-          <div className="mb-12">
-            <h2 className="text-xl font-semibold mb-6 ml-6">Quick Start Guides</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <QuickStartCard 
-                icon={PlayCircle} 
-                title="Getting Started with Simply" 
+            <div className="max-w-2xl mx-auto relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search help articles..."
+                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5341] focus:border-transparent"
               />
-              <QuickStartCard 
-                icon={Bot} 
-                title="AI Writing Guide" 
-              />
-              <QuickStartCard 
-                icon={Lightbulb} 
-                title="Best Practices & Tips" 
-              />
+              <Search className="w-6 h-6 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             </div>
           </div>
 
+          {/* Quick Start Guides */}
+          {(filteredQuickStartGuides.length > 0 || !searchQuery) && (
+            <div className="mb-12">
+              <h2 className="text-xl font-semibold mb-6 ml-6">Quick Start Guides</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {filteredQuickStartGuides.map((guide, index) => (
+                  <QuickStartCard 
+                    key={index}
+                    icon={guide.icon} 
+                    title={guide.title} 
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Help Categories */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <HelpCard
-              icon={BookOpen}
-              title="Getting Started"
-              description="Learn the basics and get up and running with Simply"
-              items={[
-                "Account Setup Guide",
-                "Creating Your First Content",
-                "Understanding Credits System",
-                "Workspace Configuration"
-              ]}
-            />
-            <HelpCard
-              icon={FileText}
-              title="Content Creation"
-              description="Master content creation with our AI tools"
-              items={[
-                "Using AI Writer Templates",
-                "SEO Optimization Tips",
-                "Content Style Guidelines",
-                "Editing and Formatting"
-              ]}
-            />
-            <HelpCard
-              icon={Code}
-              title="Technical Guides"
-              description="Technical documentation and API integration help"
-              items={[
-                "API Documentation",
-                "Integration Guides",
-                "Webhook Setup",
-                "Developer Resources"
-              ]}
-            />
-            <HelpCard
-              icon={Users}
-              title="Team Collaboration"
-              description="Learn how to work effectively with your team"
-              items={[
-                "Team Roles & Permissions",
-                "Sharing & Collaboration",
-                "Project Management",
-                "Team Analytics"
-              ]}
-            />
-            <HelpCard
-              icon={Settings}
-              title="Account & Billing"
-              description="Manage your account and subscription"
-              items={[
-                "Subscription Plans",
-                "Payment Methods",
-                "Credits Management",
-                "Account Security"
-              ]}
-            />
-           
-          </div>
+          {(filteredHelpCategories.length > 0 || !searchQuery) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredHelpCategories.map((category, index) => (
+                <HelpCard
+                  key={index}
+                  icon={category.icon}
+                  title={category.title}
+                  description={category.description}
+                  items={category.items}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* No Results Message */}
+          {searchQuery && filteredHelpCategories.length === 0 && filteredQuickStartGuides.length === 0 && (
+            <div className="text-center py-12">
+              <FileQuestion className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No results found</h3>
+              <p className="text-gray-600">
+                Try adjusting your search. We suggest checking spelling or using more general terms.
+              </p>
+            </div>
+          )}
 
           {/* Live Support Banner */}
           <div className="mt-12 bg-black rounded-xl p-8 text-white">

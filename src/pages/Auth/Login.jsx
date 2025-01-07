@@ -15,7 +15,13 @@ const Login = () => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    navigate('/dashboard');
+    
+    // Hardcoded admin credentials
+    if (email === 'admin@admin.com' && password === '12345') {
+      navigate('/admin'); // Navigate to admin panel
+    } else {
+      navigate('/dashboard'); // Navigate to user dashboard
+    }
   };
 
   return (

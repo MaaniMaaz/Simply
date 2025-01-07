@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Sidebar from '../components/Shared/Sidebar';
+import Sidebar from '../../components/Shared/Sidebar';
 import { Search, Bell, Zap, WholeWord, FileText, Download, ArrowRight } from 'lucide-react';
-import ai1 from '../assets/ai1.svg';
+import ai1 from '../../assets/ai1.svg';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';

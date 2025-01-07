@@ -1,20 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Shared/Navbar';
-import Footer from '../components/Shared/Footer';
-import image1 from '../assets/1.svg';
-import image2 from '../assets/2.svg';
-import image3 from '../assets/3.svg';
-import image4 from '../assets/4.svg';
-import image5 from '../assets/5.svg';
-import image6 from '../assets/i1.png';
-import image7 from '../assets/i2.png';
-import image8 from '../assets/i3.png';
-import complianceCheck from '../assets/h1.svg'; // Add your actual SVG filename
-import secureContent from '../assets/h2.svg';
-import PricingSection from '../components/HomeComponents/PricingSection';
-import FAQSection from '../components/HomeComponents/FAQSection';
-import SocialGrid from '../components/HomeComponents/SocialGrid';
+import Navbar from '../../components/Shared/Navbar';
+import Footer from '../../components/Shared/Footer';
+import image1 from '../../assets/1.svg';
+import image2 from '../../assets/2.svg';
+import image3 from '../../assets/3.svg';
+import image4 from '../../assets/4.svg';
+import image5 from '../../assets/5.svg';
+import image6 from '../../assets/i1.png';
+import image7 from '../../assets/i2.png';
+import image8 from '../../assets/i3.png';
+import complianceCheck from '../../assets/h1.svg'; // Add your actual SVG filename
+import secureContent from '../../assets/h2.svg';
+import PricingSection from '../../components/UserComponents/HomeComponents/PricingSection';
+import FAQSection from '../../components/UserComponents/HomeComponents/FAQSection';
+import SocialGrid from '../../components/UserComponents/HomeComponents/SocialGrid';
 
 const Home = () => {
 

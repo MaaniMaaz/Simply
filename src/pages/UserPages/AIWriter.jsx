@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Shared/Sidebar';
+import Sidebar from '../../components/Shared/Sidebar';
 import { Search, Bell, ArrowRight } from 'lucide-react';
 
 const TemplateCard = ({ title, description }) => {

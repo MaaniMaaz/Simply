@@ -1,7 +1,7 @@
 // src/pages/Profile.jsx
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Shared/Sidebar';
-import { PlanCard, BillingHistory, CurrentPlan } from '../components/ProfileComponents/Plans'
+import Sidebar from '../../components/Shared/Sidebar';
+import { PlanCard, BillingHistory, CurrentPlan } from '../../components/UserComponents/ProfileComponents/Plans'
 import { 
   Bell, 
   MenuIcon, 
@@ -16,7 +16,7 @@ import {
   ExternalLink,
   X
 } from 'lucide-react';
-import profile from '../assets/profile.png';
+import profile from '../../assets/profile.png';
 import { useNavigate } from 'react-router-dom';
 
 const ProfileCard = ({ icon: Icon, title, description }) => (

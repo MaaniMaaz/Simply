@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import h4 from '../../assets/h4.svg';
+import h4 from '../../../assets/h4.svg';
 
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(0);  // First item open by default

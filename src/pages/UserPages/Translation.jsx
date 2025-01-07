@@ -1,6 +1,6 @@
 // src/pages/Translation.jsx
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Shared/Sidebar';
+import Sidebar from '../../components/Shared/Sidebar';
 import { Bell, MenuIcon, Play,ThumbsUp,ThumbsDown,Copy,Repeat, ArrowLeftRight, Check } from 'lucide-react';
 import Flags from 'country-flag-icons/react/3x2';
 

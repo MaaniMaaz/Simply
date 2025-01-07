@@ -1,19 +1,11 @@
-// src/App.jsx
+// Updated App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Dashboard from './pages/Dashboard';
-import AIWriter from './pages/AIWriter';
-import SEOWriter from './pages/SEOWriter'; 
-import TemplateEditor from './pages/TemplateEditor';
+import Home from './pages/Main/Home';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
-import ComplianceAI from './pages/ComplianceAI';
-import Translation from './pages/Translation';
-import Profile from './pages/Profile';
-import HelpCenter from './pages/HelpCenter';
-import DocumentManagement from './pages/DocumentManagement';
-import TemplateBuilder from './pages/TemplateBuilder';
+import User from './pages/Main/User';
+import Admin from './pages/Main/Admin'
 
 function App() {
   return (
@@ -22,16 +14,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/ai-writer" element={<AIWriter />} />
-        <Route path="/seo-writer" element={<SEOWriter />} />  
-        <Route path="/compliance" element={<ComplianceAI />} /> 
-        <Route path="/translation" element={<Translation />} />
-        <Route path="/documents" element={<DocumentManagement />} />
-        <Route path="/template-builder" element={<TemplateBuilder />} />
-        <Route path="/help" element={<HelpCenter />} />  
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/ai-writer/template/:templateId" element={<TemplateEditor />} />
+        <Route path="/*" element={<User />} />
+        <Route path="/admin/*" element={<Admin />} />  // New admin routes
       </Routes>
     </Router>
   );

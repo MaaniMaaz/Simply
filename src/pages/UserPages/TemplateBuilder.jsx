@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Shared/Sidebar';
+import Sidebar from '../../components/Shared/Sidebar';
 import { 
   Bell, 
   MenuIcon, 
@@ -101,6 +101,8 @@ const InputField = ({ field, onDelete, onUpdate }) => {
   );
 };
 
+const predefinedCategories = ['Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'];
+
 const TemplateBuilder = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -110,6 +112,8 @@ const TemplateBuilder = () => {
   const [fields, setFields] = useState([]);
   const [isFieldTypeModalOpen, setIsFieldTypeModalOpen] = useState(false);
   const [aiInstructions, setAiInstructions] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(''); 
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -147,7 +151,24 @@ const TemplateBuilder = () => {
   };
 
   const handleSave = () => {
-    // Here you would typically save the template
+    if (!name || !selectedCategory || !description) {
+      // Add validation feedback here if needed
+      return;
+    }
+  
+    // Here you would typically save the template with category
+    const templateData = {
+      name,
+      category: selectedCategory,
+      description,
+      aiInstructions,
+      fields,
+      // Add any other relevant data
+    };
+  
+    // API call would go here when backend is integrated
+    console.log('Saving template:', templateData);
+  
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -245,6 +266,26 @@ const TemplateBuilder = () => {
         placeholder="Describe your template..."
       />
     </div>
+
+     {/* Add Category Selection */}
+     <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Category
+      </label>
+      <select
+        value={selectedCategory}
+        onChange={(e) => setSelectedCategory(e.target.value)}
+        className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341] bg-white"
+      >
+        <option value="">Select a category</option>
+        {predefinedCategories.map((category) => (
+          <option key={category} value={category}>
+            {category}
+          </option>
+        ))}
+      </select>
+    </div>
+
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         AI Instructions

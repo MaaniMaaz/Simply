@@ -1,6 +1,6 @@
 // src/pages/DocumentManagement.jsx
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Shared/Sidebar';
+import Sidebar from '../../components/Shared/Sidebar';
 import { 
   Bell, 
   MenuIcon,

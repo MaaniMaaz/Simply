@@ -1,6 +1,7 @@
 // src/pages/SEOWriter.jsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
+import { useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   ChevronDown, 
@@ -113,6 +114,7 @@ const SEOWriter = () => {
   const [focusIdeas, setFocusIdeas] = useState('');
   const [suggestedKeywords, setSuggestedKeywords] = useState([]);
   const [keywordSearch, setKeywordSearch] = useState('');
+  const navigate = useNavigate();
 
   const handleKeywordSearch = (e) => {
     const value = e.target.value;
@@ -202,8 +204,13 @@ const SEOWriter = () => {
                 <MenuIcon className="h-6 w-6" />
               </button>
               <div className="ml-auto relative">
+              <button 
+    onClick={() => navigate('/notifications')}
+    className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+  >
                 <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                </button>
               </div>
             </div>
           </div>

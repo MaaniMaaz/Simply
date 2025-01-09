@@ -9,6 +9,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 
+
 <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-gray-500" />
 
 
@@ -179,9 +180,14 @@ const Dashboard = () => {
                 <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               </div>
               <div className="relative">
+                <button 
+                onClick={() => navigate('/notifications')}
+                className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
                 <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-              </div>
+                <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                </button>
+                </div>
             </div>
           </div>
 

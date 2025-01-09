@@ -10,6 +10,8 @@ import Profile from '../UserPages/Profile';
 import HelpCenter from '../UserPages/HelpCenter';
 import DocumentManagement from '../UserPages/DocumentManagement';
 import TemplateBuilder from '../UserPages/TemplateBuilder';
+import Notifications from '../UserPages/Notifications';
+
 
 const User = () => {
   return (
@@ -24,6 +26,7 @@ const User = () => {
       <Route path="/help" element={<HelpCenter />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/ai-writer/template/:templateId" element={<TemplateEditor />} />
+      <Route path="/notifications" element={<Notifications />} />
     </Routes>
   );
 };

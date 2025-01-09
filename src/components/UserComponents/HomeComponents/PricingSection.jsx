@@ -34,42 +34,6 @@ const PricingSection = () => {
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Starter Plan */}
-          <div className="bg-white rounded-3xl p-8 border border-black">
-            <h3 className="text-lg font-medium mb-2">Starter Plan</h3>
-            <div className="text-4xl font-bold mb-8">Free</div>
-            <button 
-            onClick={() => navigate('/signup')}
-            className="w-full border border-black text-gray-900 py-3 rounded-lg mb-8 hover:bg-gray-50">
-              Get Started
-            </button>
-            
-            <div className="space-y-4">
-              <div className="font-medium">Features</div>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                  <span className="text-gray-600">5,000 Credits</span>
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                  <span className="text-gray-600">Up to 3 Collaborative Content Projects</span>
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                  <span className="text-gray-600">Basic SEO Optimization</span>
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                  <span className="text-gray-600">Save & Organize Documents</span>
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                  <span className="text-gray-600">Standard Compliance Checks</span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Professional Plan */}
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-black">

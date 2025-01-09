@@ -1,6 +1,7 @@
 // src/pages/HelpCenter.jsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
+import { useNavigate } from 'react-router-dom';
 import { 
   Bell, 
   MenuIcon, 
@@ -128,6 +129,7 @@ const QuickStartCard = ({ icon: Icon, title }) => (
 const HelpCenter = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -183,9 +185,14 @@ const HelpCenter = () => {
                 <MenuIcon className="h-6 w-6" />
               </button>
               <div className="relative ml-auto">
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-              </div>
+                              <button 
+                              onClick={() => navigate('/notifications')}
+                              className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                              >
+                              <Bell className="w-6 h-6 text-gray-600" />
+                              <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                              </button>
+                              </div>
             </div>
           </div>
         </div>

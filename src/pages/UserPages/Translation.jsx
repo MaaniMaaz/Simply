@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
 import { Bell, MenuIcon, Play,ThumbsUp,ThumbsDown,Copy,Repeat, ArrowLeftRight, Check } from 'lucide-react';
 import Flags from 'country-flag-icons/react/3x2';
+import { useNavigate } from 'react-router-dom';
 
 const languages = [
   { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -56,6 +57,7 @@ const Translation = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -169,8 +171,13 @@ const Translation = () => {
                 <MenuIcon className="h-6 w-6" />
               </button>
               <div className="relative ml-auto">
+              <button 
+    onClick={() => navigate('/notifications')}
+    className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+  >
                 <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                </button>
               </div>
             </div>
           </div>

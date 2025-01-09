@@ -86,6 +86,7 @@ const AIWriter = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredTemplates, setFilteredTemplates] = useState(templateData);
+  const navigate = useNavigate();
   
   const categories = ['All', 'Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'];
 
@@ -144,10 +145,15 @@ const AIWriter = () => {
                 />
                 <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               </div>
-              <div className="relative ml-4">
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-              </div>
+              <div className="relative">
+                              <button 
+                              onClick={() => navigate('/notifications')}
+                              className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                              >
+                              <Bell className="w-6 h-6 text-gray-600" />
+                              <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                              </button>
+                              </div>
             </div>
           </div>
         </div>

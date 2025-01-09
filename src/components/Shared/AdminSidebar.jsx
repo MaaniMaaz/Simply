@@ -7,7 +7,8 @@ import {
   Settings,
   FileEdit,
   MenuIcon,
-  HelpCircle
+  HelpCircle,
+  Bell
 } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import profile from '../../assets/profile.png';
@@ -23,10 +24,6 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
     { icon: <Settings size={20} />, label: 'Subscription', link: '/admin/subscription' },
     { icon: <BarChart2 size={20} />, label: 'Analytics', link: '/admin/analytics' },
     { icon: <Layout size={20} />, label: 'Frontend', link: '/admin/frontend' },
-  ];
-
-  const otherMenuItems = [
-    { icon: <HelpCircle size={20} />, label: 'Help Center', link: '/admin/help' },
   ];
 
   return (
@@ -68,46 +65,23 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
         </nav>
       </div>
 
-      {/* Divider */}
       <div className="my-4 border-t border-[#D3D3D3]" />
 
-      {/* Other Section */}
+      {/* Notifications Section */}
       <div className="px-4 py-2">
-        <p className={`text-xs font-medium text-gray-500 mb-4 ${isCollapsed ? 'hidden' : 'block'}`}>
-          Other
-        </p>
         <nav className="space-y-1">
-          {otherMenuItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => navigate(item.link)}
-              className="flex items-center w-full px-3 py-2 text-sm text-gray-800 rounded-lg hover:bg-gray-200"
-            >
-              {item.icon}
-              <span className={`ml-3 ${isCollapsed ? 'hidden' : 'block'}`}>{item.label}</span>
-            </button>
-          ))}
+          <button
+            onClick={() => navigate('/admin/notifications')}
+            className={`flex items-center w-full px-3 py-2 text-sm rounded-lg ${
+              window.location.pathname === '/admin/notifications'
+                ? 'bg-[#FF5341] text-white hover:bg-[#FF5341]/90'
+                : 'text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            <Bell size={20} />
+            <span className={`ml-3 ${isCollapsed ? 'hidden' : 'block'}`}>Notifications</span>
+          </button>
         </nav>
-      </div>
-
-      <div className="my-4 border-t border-[#D3D3D3]" />
-
-      {/* Admin Profile Section */}
-      <div className="absolute bottom-0 w-full p-4">
-        <button 
-          onClick={() => navigate('/admin/profile')}
-          className="w-full flex items-center hover:bg-gray-200 p-2 rounded-lg transition-colors"
-        >
-          <img
-            src={profile}
-            alt="Admin Avatar"
-            className="w-8 h-8 rounded-full"
-          />
-          <div className={`ml-3 text-left ${isCollapsed ? 'hidden' : 'block'}`}>
-            <p className="text-sm font-medium text-gray-700">Admin User</p>
-            <p className="text-xs text-gray-500">admin@simply.com</p>
-          </div>
-        </button>
       </div>
     </div>
   );

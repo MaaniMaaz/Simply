@@ -1,5 +1,6 @@
 // src/pages/DocumentManagement.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Shared/Sidebar';
 import { 
   Bell, 
@@ -208,6 +209,7 @@ const DocumentManagement = () => {
   const [selectedType, setSelectedType] = useState(null);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState([
     
     {
@@ -354,8 +356,13 @@ const DocumentManagement = () => {
                       <MenuIcon className="h-6 w-6" />
                     </button>
                     <div className="relative ml-auto">
+                    <button 
+    onClick={() => navigate('/notifications')}
+    className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+  >
                       <Bell className="w-6 h-6 text-gray-600" />
-                      <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                      <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                      </button>
                     </div>
                   </div>
                 </div>

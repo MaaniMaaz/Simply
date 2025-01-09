@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+//src/components/Shared/Sidebar.jsx
+import React from 'react';
 import { 
   LayoutDashboard, 
   Bot, 
@@ -7,11 +8,12 @@ import {
   FileText, 
   Languages,
   HelpCircle,
-  MenuIcon
+  MenuIcon,
+  MessageSquare
 } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import profile from '../../assets/profile.png';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   ];
 
   const otherMenuItems = [
+    { icon: <MessageSquare size={20} />, label: 'Support', link: '/support' },
     { icon: <HelpCircle size={20} />, label: 'Help Center', link: '/help' },
   ];
 
@@ -81,7 +84,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             <button
               key={index}
               onClick={() => navigate(item.link)}
-              className="flex items-center w-full px-3 py-2 text-sm text-gray-800 rounded-lg hover:bg-gray-200"
+              className={`flex items-center w-full px-3 py-2 text-sm rounded-lg ${
+                window.location.pathname === item.link 
+                  ? 'bg-[#FF5341] text-white hover:bg-[#FF5341]/90' 
+                  : 'text-gray-800 hover:bg-gray-200'
+              }`}
             >
               {item.icon}
               <span className={`ml-3 ${isCollapsed ? 'hidden' : 'block'}`}>{item.label}</span>
@@ -90,9 +97,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </nav>
       </div>
 
-      <div className="my-4 border-t border-[#D3D3D3]" />
-
-      {/* User Profile Section - Updated to be clickable */}
+      {/* User Profile Section */}
       <div className="absolute bottom-0 w-full p-4">
         <button 
           onClick={() => navigate('/profile')}

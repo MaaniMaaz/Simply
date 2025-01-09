@@ -117,7 +117,7 @@ const Analytics = () => {
   const [dateRange, setDateRange] = useState('Last 6 months');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-8">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>

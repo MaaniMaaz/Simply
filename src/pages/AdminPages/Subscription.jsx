@@ -95,7 +95,7 @@ const PlanEditor = ({ plan, onSave, onCancel }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 space-y-4">
+    <div className=" bg-white rounded-xl p-6 space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold">{editedPlan.name} Plan Settings</h3>
         <div className="flex space-x-2">
@@ -344,7 +344,7 @@ const Subscription = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-8 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Subscription Management</h1>

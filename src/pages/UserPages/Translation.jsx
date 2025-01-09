@@ -87,21 +87,40 @@ const Translation = () => {
   };
 
 
+  const [modifiedText, setModifiedText] = useState('');
+const [modifiedOutput, setModifiedOutput] = useState('');
+
+const handleModifyContent = () => {
+  if (!modifiedText.trim()) return;
+  setModifiedOutput(outputText);
+  setShowTranslation(false);
+  setTimeout(() => {
+    setOutputText(prevText => {
+      // Simulate modification with target language
+      const modifiedContent = `${prevText}\n\nModified Content:\n${modifiedText}`;
+      return modifiedContent;
+    });
+    setShowTranslation(true);
+    setModifiedText('');
+  }, 1000);
+};
+
+const handleRegenerateContent = () => {
+  setShowTranslation(false);
+  setTimeout(() => {
+    handleTranslate();
+  }, 1000);
+};
+
   const handleCopy = () => {
     navigator.clipboard.writeText(outputText);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000); // Hide after 2 seconds
   };
   
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setIsDisliked(false); // Ensure dislike is off when liking
-  };
+ 
   
-  const handleDislike = () => {
-    setIsDisliked(!isDisliked);
-    setIsLiked(false); // Ensure like is off when disliking
-  };
+  
 
   const LanguageSelector = ({ 
     selected, 
@@ -278,48 +297,67 @@ const Translation = () => {
           Output Content
         </label>
       </div>
-      {!showTranslation ? (
-        <div className="w-full h-64 p-4 border rounded-lg bg-white flex items-center justify-center text-gray-500">
-          Click "Run" to see translation
-        </div>
-      ) : (
-        <textarea
-          value={outputText}
-          readOnly
-          className="w-full h-64 p-4 border rounded-lg bg-white"
+      {showTranslation && (
+  <>
+    <textarea
+      value={outputText}
+      readOnly
+      className="w-full h-64 p-4 border rounded-lg bg-white mb-4"
+    />
+    
+    {/* Content Editor Section */}
+    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-medium">Need to modify specific parts?</h3>
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Enter text to modify..."
+          className="flex-1 p-2 border rounded-lg focus:ring-[#FF5341]"
+          onChange={(e) => setModifiedText(e.target.value)}
         />
-      )}
+        <button 
+          onClick={handleModifyContent}
+          className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90"
+        >
+          Modify
+        </button>
+      </div>
+    </div>
+
+    {/* Action Buttons */}
+    <div className="flex justify-end space-x-4">
+      <button 
+        onClick={handleRegenerateContent}
+        className="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center"
+      >
+        <Repeat className="w-4 h-4 mr-2" />
+        Regenerate
+      </button>
+      <button 
+        onClick={handleCopy}
+        className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 flex items-center"
+      >
+        <Copy className="w-4 h-4 mr-2" />
+        Copy
+      </button>
+    </div>
+  </>
+)}
+      
     </div>
   </div>
   {/* Action Buttons */}
   <div className="flex justify-end space-x-4 mt-6">
-    <button 
-      onClick={handleCopy}
-      className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors"
-    >
-      <Copy className="w-4 h-4 text-gray-700"/>
-    </button>
-    <button 
-      onClick={handleLike}
-      className={`p-2 rounded-lg transition-colors ${
-        isLiked ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-200 hover:bg-gray-300'
-      }`}
-    >
-      <ThumbsUp className={`w-4 h-4 ${isLiked ? 'text-white' : 'text-gray-700'}`}/>
-    </button>
-    <button 
-      onClick={handleDislike}
-      className={`p-2 rounded-lg transition-colors ${
-        isDisliked ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-200 hover:bg-gray-300'
-      }`}
-    >
-      <ThumbsDown className={`w-4 h-4 ${isDisliked ? 'text-white' : 'text-gray-700'}`}/>
-    </button>
-    <button className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300">
-      <Repeat className="w-4 h-4 text-gray-700"/>
-    </button>
+    
+   
+    
+    
   </div>
 </div>
+
+
 
           </div>
         </div>

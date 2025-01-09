@@ -8,10 +8,10 @@ import {
   FileEdit,
   MenuIcon,
   HelpCircle,
-  Bell
+  Bell,
+  MessageSquare
 } from 'lucide-react';
 import logo from '../../assets/logo.png';
-import profile from '../../assets/profile.png';
 import { useNavigate } from 'react-router-dom';
 
 const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -24,6 +24,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
     { icon: <Settings size={20} />, label: 'Subscription', link: '/admin/subscription' },
     { icon: <BarChart2 size={20} />, label: 'Analytics', link: '/admin/analytics' },
     { icon: <Layout size={20} />, label: 'Frontend', link: '/admin/frontend' },
+    { icon: <MessageSquare size={20} />, label: 'Support Tickets', link: '/admin/support' },
   ];
 
   return (
@@ -42,7 +43,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
         </button>
       </div>
 
-      {/* Main Menu Section */}
+      {/* Main Menu */}
       <div className="px-4 py-2">
         <p className={`text-xs font-medium text-gray-500 mb-4 ${isCollapsed ? 'hidden' : 'block'}`}>
           Main Menu
@@ -65,11 +66,10 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
         </nav>
       </div>
 
-      <div className="my-4 border-t border-[#D3D3D3]" />
-
-      {/* Notifications Section */}
+      {/* Notifications */}
       <div className="px-4 py-2">
-        <nav className="space-y-1">
+        <div className="mt-4 border-t border-[#D3D3D3]" />
+        <div className="mt-4">
           <button
             onClick={() => navigate('/admin/notifications')}
             className={`flex items-center w-full px-3 py-2 text-sm rounded-lg ${
@@ -81,7 +81,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
             <Bell size={20} />
             <span className={`ml-3 ${isCollapsed ? 'hidden' : 'block'}`}>Notifications</span>
           </button>
-        </nav>
+        </div>
       </div>
     </div>
   );

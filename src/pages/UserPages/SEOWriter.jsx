@@ -284,7 +284,7 @@ const SEOWriter = () => {
                 {/* Content Description */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Content Description/Brief
+                  What do you want to rank for?
                   </label>
                   <input
                     type="text"

@@ -1,16 +1,31 @@
 // src/pages/AdminPages/Notifications.jsx
 import React, { useState } from 'react';
-import { Send, AlertCircle, Check } from 'lucide-react';
+import { Send, AlertCircle, Check, ChevronDown } from 'lucide-react';
+
+const notificationTypes = [
+  { id: 'general', label: 'General Update' },
+  { id: 'feature', label: 'New Feature' },
+  { id: 'maintenance', label: 'Maintenance' },
+  { id: 'security', label: 'Security Update' },
+  { id: 'maintenance', label: 'Sign in' },
+  { id: 'security', label: 'Security Update' },
+  { id: 'promotion', label: 'Promotion' }
+];
 
 const Notifications = () => {
   const [message, setMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [selectedType, setSelectedType] = useState(notificationTypes[0]);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
   const handleSendNotification = () => {
     if (!message.trim()) return;
 
     // Here we'll integrate with backend later to send notifications
-    console.log('Sending notification:', message);
+    console.log('Sending notification:', {
+      type: selectedType.id,
+      message
+    });
     
     // Show success toast
     setShowToast(true);
@@ -29,6 +44,41 @@ const Notifications = () => {
       {/* Notification Form */}
       <div className="bg-[#FFFAF3] rounded-xl p-6">
         <div className="space-y-6">
+          {/* Notification Type Dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Notification Type
+            </label>
+            <div className="relative">
+              <button
+                onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                className="w-full flex items-center justify-between p-2 border rounded-lg bg-white"
+              >
+                <span>{selectedType.label}</span>
+                <ChevronDown className={`w-5 h-5 transition-transform ${
+                  isTypeDropdownOpen ? 'transform rotate-180' : ''
+                }`} />
+              </button>
+              
+              {isTypeDropdownOpen && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg">
+                  {notificationTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setSelectedType(type);
+                        setIsTypeDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Message Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

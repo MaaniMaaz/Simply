@@ -286,7 +286,7 @@ const EditModal = ({ section, content, isOpen, onClose, onSave }) => {
 
         case 'useCase':
             return (
-              <div className="space-y-4">
+              <div className=" space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Section Title
@@ -480,7 +480,7 @@ const EditModal = ({ section, content, isOpen, onClose, onSave }) => {
       };
     
       return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-y-auto py-8">
+        <div className=" fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-y-auto py-8">
           <div className="bg-white rounded-xl w-full max-w-3xl mx-4 my-auto">
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold">
@@ -566,7 +566,7 @@ const EditModal = ({ section, content, isOpen, onClose, onSave }) => {
       };
     
       return (
-        <div className="space-y-6">
+        <div className="p-4 md:p-8 space-y-6">
           {/* Header */}
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Frontend Management</h1>

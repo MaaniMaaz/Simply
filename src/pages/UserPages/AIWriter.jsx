@@ -1,33 +1,10 @@
+// src/pages/UserPages/AIWriter.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Shared/Sidebar';
-import { Search, Bell, ArrowRight } from 'lucide-react';
+import { Search, Bell, ArrowRight, Star } from 'lucide-react';
 
-const TemplateCard = ({ title, description }) => {
-  const navigate = useNavigate();
-
-  const handleTemplateClick = () => {
-    const templateUrl = title.toLowerCase().replace(/\s+/g, '-');
-    navigate(`/ai-writer/template/${templateUrl}`);
-  };
-
-  return (
-    <div 
-      className="bg-[#FF5341] rounded-xl p-4 text-white cursor-pointer hover:bg-[#FF5341]/90 transition-colors"
-      onClick={handleTemplateClick}
-    >
-      <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
-        <h3 className="text-base md:text-lg font-medium">{title}</h3>
-        <button className="text-white">
-          <ArrowRight className="w-5 h-5" />
-        </button>
-      </div>
-      <p className="text-xs md:text-sm text-white/90">{description}</p>
-    </div>
-  );
-};
-
-// Template data with categories
+// Template data with categories - Move this before any component definitions
 const templateData = [
   { 
     title: 'Content Writing', 
@@ -81,14 +58,53 @@ const templateData = [
   }
 ];
 
+const TemplateCard = ({ title, description, isFavorite, onToggleFavorite }) => {
+  const navigate = useNavigate();
+
+  const handleTemplateClick = () => {
+    const templateUrl = title.toLowerCase().replace(/\s+/g, '-');
+    navigate(`/ai-writer/template/${templateUrl}`);
+  };
+
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation(); // Prevent navigation
+    onToggleFavorite(title);
+  };
+
+  return (
+    <div 
+      className="bg-[#FF5341] rounded-xl p-4 text-white cursor-pointer hover:bg-[#FF5341]/90 transition-colors relative"
+      onClick={handleTemplateClick}
+    >
+      <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
+        <h3 className="text-base md:text-lg font-medium">{title}</h3>
+        <div className="flex items-center space-x-2">
+          <button 
+            onClick={handleFavoriteClick}
+            className="p-1 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <Star 
+              className={`w-5 h-5 ${isFavorite ? 'fill-white' : ''}`} 
+            />
+          </button>
+          <button className="text-white">
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+      <p className="text-xs md:text-sm text-white/90">{description}</p>
+    </div>
+  );
+};
+
 const AIWriter = () => {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredTemplates, setFilteredTemplates] = useState(templateData);
-  const navigate = useNavigate();
+  const [favoriteTemplates, setFavoriteTemplates] = useState([]);
   
-  const categories = ['All', 'Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'];
+  const categories = ['All', 'Favorites', 'Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'];
 
   // Handle window resize for sidebar
   useEffect(() => {
@@ -105,22 +121,28 @@ const AIWriter = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const handleToggleFavorite = (templateTitle) => {
+    setFavoriteTemplates(prev => 
+      prev.includes(templateTitle)
+        ? prev.filter(title => title !== templateTitle)
+        : [...prev, templateTitle]
+    );
+  };
+
   // Filter templates based on search query and selected category
-  useEffect(() => {
-    const filtered = templateData.filter(template => {
-      const matchesSearch = 
-        template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = 
-        selectedCategory === 'All' || 
-        template.categories.includes(selectedCategory);
+  const filteredTemplates = templateData.filter(template => {
+    const matchesSearch = 
+      template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      template.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = 
+      selectedCategory === 'All' || 
+      (selectedCategory === 'Favorites' 
+        ? favoriteTemplates.includes(template.title)
+        : template.categories.includes(selectedCategory));
 
-      return matchesSearch && matchesCategory;
-    });
-
-    setFilteredTemplates(filtered);
-  }, [searchQuery, selectedCategory]);
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="flex min-h-screen">
@@ -146,14 +168,14 @@ const AIWriter = () => {
                 <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               </div>
               <div className="relative">
-                              <button 
-                              onClick={() => navigate('/notifications')}
-                              className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
-                              >
-                              <Bell className="w-6 h-6 text-gray-600" />
-                              <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-                              </button>
-                              </div>
+                <button 
+                  onClick={() => navigate('/notifications')}
+                  className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
+                  <Bell className="w-6 h-6 text-gray-600" />
+                  <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -186,7 +208,9 @@ const AIWriter = () => {
                 <TemplateCard 
                   key={index} 
                   title={template.title} 
-                  description={template.description} 
+                  description={template.description}
+                  isFavorite={favoriteTemplates.includes(template.title)}
+                  onToggleFavorite={handleToggleFavorite}
                 />
               ))
             ) : (

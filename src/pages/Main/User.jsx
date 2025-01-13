@@ -11,6 +11,7 @@ import HelpCenter from '../UserPages/HelpCenter';
 import DocumentManagement from '../UserPages/DocumentManagement';
 import TemplateBuilder from '../UserPages/TemplateBuilder';
 import Notifications from '../UserPages/Notifications';
+import CustomerSupport from '../UserPages/CustomerSupport';
 
 
 const User = () => {
@@ -27,6 +28,7 @@ const User = () => {
       <Route path="/profile" element={<Profile />} />
       <Route path="/ai-writer/template/:templateId" element={<TemplateEditor />} />
       <Route path="/notifications" element={<Notifications />} />
+      <Route path="/support" element={<CustomerSupport />} />
     </Routes>
   );
 };

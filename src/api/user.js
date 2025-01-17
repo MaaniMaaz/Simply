@@ -4,6 +4,10 @@ export const userService = {
     getProfile: async () => {
         try {
             const response = await API.get('/users/me');
+            // Update local storage with latest user data
+            if (response.data.success) {
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
+            }
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

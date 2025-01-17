@@ -8,6 +8,9 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { userService } from '../../api/user';
+import { subscriptionService } from '../../api/subscription';
+import { getTimeBasedGreeting } from '../../utils/helpers';
 
 
 <FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-gray-500" />
@@ -79,6 +82,46 @@ const Dashboard = () => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [dateRange, setDateRange] = useState([new Date(new Date().getTime() - 30*24*60*60*1000), new Date()]);
     const [startDate, endDate] = dateRange;
+    const [userData, setUserData] = useState({
+      name: '',
+      stats: {
+        total_words_generated: 0,
+        credits_left: 0,
+        total_templates_run: 0,
+        total_documents_saved: 0
+      },
+      currentPlan: null
+    });
+
+    // Fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Get user profile
+        const userResponse = await userService.getProfile();
+        const user = userResponse.data.user;
+
+        // Get subscription status
+        const subscriptionResponse = await subscriptionService.getStatus();
+        const subscriptionData = subscriptionResponse.data;
+
+        setUserData({
+          name: user.name,
+          stats: {
+            total_words_generated: user.total_words_generated,
+            credits_left: user.credits_left,
+            total_templates_run: user.total_templates_run,
+            total_documents_saved: user.total_documents_saved
+          },
+          currentPlan: subscriptionData.current_plan
+        });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
     const filteredData = wordGenerationData.filter(
       (data) => new Date(data.date).toLocaleDateString() === selectedDate.toLocaleDateString()
@@ -157,15 +200,13 @@ const Dashboard = () => {
         <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       </div>
 
-      {/* Main Content with dynamic margin based on sidebar state */}
       <div className={`flex-1 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'} transition-all duration-300`}>
         <div className="p-4 md:p-8">
-
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
             <div>
               <h1 className="text-xl md:text-2xl font-semibold mb-1">
-                Good Morning, Zay{' '}
+                {getTimeBasedGreeting()}, {userData.name}{' '}
                 <span role="img" aria-label="wave">👋</span>
               </h1>
               <p className="text-sm md:text-base text-gray-600">Welcome To Simply Dashboard</p>
@@ -191,32 +232,47 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-            <StatCard title="Total Credits Left" value="1400" icon={Zap} />
-            <StatCard title="Total Words Generated" value="550" icon={WholeWord} />
-            <StatCard title="Total Templates Run" value="30" icon={FileText} />
-            <StatCard title="Total Documents Saved" value="13" icon={Download} />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <StatCard title="Total Credits Left" value={userData.stats.credits_left} icon={Zap} />
+            <StatCard title="Total Words Generated" value={userData.stats.total_words_generated} icon={WholeWord} />
+            <StatCard title="Total Templates Run" value={userData.stats.total_templates_run} icon={FileText} />
+            <StatCard title="Total Documents Saved" value={userData.stats.total_documents_saved} icon={Download} />
           </div>
 
-         {/* Feature Cards */}
+         {/* Current Plan Card */}
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
-            {/* Current Plan Card */}
-            <div className="bg-[#FF5341] rounded-xl p-4 md:p-6 text-white">
-              <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm mb-4">
-                Current Plan
-              </span>
-              <h2 className="text-xl md:text-2xl font-semibold mb-2">Professional Plus</h2>
-              <p className="text-sm md:text-base mb-4">You An Active Subscription</p>
-              <div className="flex justify-between items-center">
-                <button 
-                onClick={() => navigate('/profile')}
-                className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
-                  Manage Plans
-                </button>
-                <span className="text-xl md:text-2xl font-semibold">$19/Month</span>
+            {userData.currentPlan ? (
+              <div className="bg-[#FF5341] rounded-xl p-4 md:p-6 text-white">
+                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm mb-4">
+                  Current Plan
+                </span>
+                <h2 className="text-xl md:text-2xl font-semibold mb-2">{userData.currentPlan.name}</h2>
+                <p className="text-sm md:text-base mb-4">You have an active subscription</p>
+                <div className="flex justify-between items-center">
+                  <button 
+                    onClick={() => navigate('/profile')}
+                    className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
+                    Manage Plans
+                  </button>
+                  <span className="text-xl md:text-2xl font-semibold">
+                    ${userData.currentPlan.price}/Month
+                  </span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-[#FF5341] rounded-xl p-4 md:p-6 text-white">
+                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm mb-4">
+                  No Active Plan
+                </span>
+                <p className="text-sm md:text-base mb-4">Subscribe to a plan to get started</p>
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
+                  View Plans
+                </button>
+              </div>
+            )}
 
             {/* Generate AI Content Card */}
             <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">

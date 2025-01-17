@@ -6,21 +6,37 @@ import logo from '../../assets/logo.png';
 import loginSvg1 from '../../assets/s11.svg';
 import loginSvg2 from '../../assets/s12.svg';
 import loginSvg3 from '../../assets/s13.svg';
+import { authService } from '../../api/auth';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    
-    // Hardcoded admin credentials
-    if (email === 'admin@admin.com' && password === '12345') {
-      navigate('/admin'); // Navigate to admin panel
-    } else {
-      navigate('/dashboard'); // Navigate to user dashboard
+    setError('');
+    setLoading(true);
+
+    try {
+      // Check for admin credentials
+      if (email === 'admin@admin.com' && password === '12345') {
+        navigate('/admin');
+        return;
+      }
+
+      // Regular user login
+      const response = await authService.login({ email, password });
+      if (response.success) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      setError(error.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -131,12 +147,18 @@ const Login = () => {
             </div>
 
             <div>
+            {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
               <button
-                type="submit"
-                className="group relative w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-[#FF5341] hover:bg-[#FF5341]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF5341]"
-              >
-                Sign in
-              </button>
+        type="submit"
+        disabled={loading}
+        className={`group relative w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-[#FF5341] hover:bg-[#FF5341]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF5341] ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        {loading ? 'Signing in...' : 'Sign in'}
+      </button>
             </div>
           </form>
 

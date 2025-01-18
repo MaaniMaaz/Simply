@@ -1,9 +1,11 @@
 // src/pages/Translation.jsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
-import { Bell, MenuIcon, Play,ThumbsUp,ThumbsDown,Copy,Repeat, ArrowLeftRight, Check } from 'lucide-react';
+import { Bell, MenuIcon, Play, ThumbsUp, ThumbsDown, Copy, Repeat, ArrowLeftRight, Check, X, Zap } from 'lucide-react';
 import Flags from 'country-flag-icons/react/3x2';
 import { useNavigate } from 'react-router-dom';
+import { translationService } from '../../api/translation';
+import { authService } from '../../api/auth';
 
 const languages = [
   { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -17,46 +19,24 @@ const languages = [
   { code: 'ru-RU', name: 'Russian', country: 'RU' },
 ];
 
-
-// Dummy translation data
-const dummyText = {
-  input: `AI And Data Are Being Increasingly Regulated Around The Globe
-As The Impact Of New Technologies And Business Models Has Been
-Observed Over The Past Decades, Regulators Began Developing Policy
-Solutions To Manage Risks And Enable Positive Innovation. The Push
-Towards Regulating AI Is Visible Globally. Some Examples Of Such Laws
-Include The EU's AI Act, The Digital Services Act.
-
-The EU AI Act Can Be Challenging To Comply With
-The AI Act, Adopted By The EU, Is The World's First Comprehensive
-Regulatory Framework For AI. It Has Come Through A Lengthy Legislative
-Process And Its Requirements Will Come Into Force In Phases Between The
-Years 2024 And 2027.`,
-  output: `La IA Y Los Datos Están Cada Vez Más Regulados En Todo El Mundo
-A Medida Que Se Observó El Impacto De Las Nuevas Tecnologías Y
-Modelos De Negocios Durante Las Últimas Décadas, Los Reguladores
-Comenzaron A Desarrollar Soluciones De Políticas Para Gestionar Los
-Riesgos Y Permitir La Innovación Positiva. La Tendencia Hacia La
-Regulación De La IA Es Visible Globalmente.
-
-Cumplir La Ley De IA De La UE Puede Ser Un Desafío
-La Ley De IA, Adoptada Por La UE, Es El Primer Marco Regulatorio Integral
-Para La IA Del Mundo. Ha Pasado Por Un Largo Proceso Legislativo Y Sus
-Requisitos Entrarán En Vigor Por Fases Entre Los Años 2024 Y 2027.`
-};
-
 const Translation = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [sourceLanguage, setSourceLanguage] = useState(languages[0]);
   const [targetLanguage, setTargetLanguage] = useState(languages[1]);
-  const [inputText, setInputText] = useState(dummyText.input);
-  const [outputText, setOutputText] = useState(dummyText.output);
+  const [inputText, setInputText] = useState('');
+  const [outputText, setOutputText] = useState('');
   const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
   const [isTargetDropdownOpen, setIsTargetDropdownOpen] = useState(false);
   const [showTranslation, setShowTranslation] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [userCredits, setUserCredits] = useState(0);
+  const [toneOfVoice, setToneOfVoice] = useState('');
+  const [error, setError] = useState(null);
+  const [modifiedText, setModifiedText] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,6 +53,19 @@ const Translation = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const user = authService.getUser();
+    if (user) {
+      setUserCredits(user.credits_left || 0);
+    }
+  }, []);
+
+  const showToastMessage = (message) => {
+    setToastMessage(message);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const handleSwapLanguages = () => {
     const tempLang = sourceLanguage;
     setSourceLanguage(targetLanguage);
@@ -81,46 +74,67 @@ const Translation = () => {
     setOutputText(inputText);
   };
 
-  const handleTranslate = () => {
-    setShowTranslation(true);
-    setOutputText(dummyText.output);
+  const handleTranslate = async () => {
+    if (!inputText.trim()) {
+      showToastMessage('Please enter text to translate');
+      return;
+    }
+
+    setIsTranslating(true);
+    setError(null);
+
+    try {
+      const response = await translationService.translate({
+        content: inputText,
+        sourceLanguage,
+        targetLanguage,
+        toneOfVoice: toneOfVoice.trim() || null
+      });
+
+      setOutputText(response.data.translatedContent);
+      setUserCredits(response.data.credits_left);
+      setShowTranslation(true);
+      showToastMessage('Translation completed successfully');
+    } catch (err) {
+      setError(err.message || 'Translation failed');
+      showToastMessage(err.message || 'Translation failed');
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
+  const handleModifyContent = async () => {
+    if (!modifiedText.trim()) return;
+    
+    setIsTranslating(true);
+    try {
+      const response = await translationService.translate({
+        content: modifiedText,
+        sourceLanguage,
+        targetLanguage,
+        toneOfVoice: toneOfVoice.trim() || null
+      });
 
-  const [modifiedText, setModifiedText] = useState('');
-const [modifiedOutput, setModifiedOutput] = useState('');
+      setOutputText(prevText => `${prevText}\n\nModified Content:\n${response.data.translatedContent}`);
+      setUserCredits(response.data.credits_left);
+      setModifiedText('');
+      showToastMessage('Content modified successfully');
+    } catch (err) {
+      showToastMessage(err.message || 'Modification failed');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
-const handleModifyContent = () => {
-  if (!modifiedText.trim()) return;
-  setModifiedOutput(outputText);
-  setShowTranslation(false);
-  setTimeout(() => {
-    setOutputText(prevText => {
-      // Simulate modification with target language
-      const modifiedContent = `${prevText}\n\nModified Content:\n${modifiedText}`;
-      return modifiedContent;
-    });
-    setShowTranslation(true);
-    setModifiedText('');
-  }, 1000);
-};
-
-const handleRegenerateContent = () => {
-  setShowTranslation(false);
-  setTimeout(() => {
-    handleTranslate();
-  }, 1000);
-};
+  const handleRegenerateContent = async () => {
+    setShowTranslation(false);
+    await handleTranslate();
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(outputText);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000); // Hide after 2 seconds
+    showToastMessage('Copied to clipboard');
   };
-  
- 
-  
-  
 
   const LanguageSelector = ({ 
     selected, 
@@ -190,12 +204,12 @@ const handleRegenerateContent = () => {
                 <MenuIcon className="h-6 w-6" />
               </button>
               <div className="relative ml-auto">
-              <button 
-    onClick={() => navigate('/notifications')}
-    className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
-  >
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                <button 
+                  onClick={() => navigate('/notifications')}
+                  className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
+                  <Bell className="w-6 h-6 text-gray-600" />
+                  <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
                 </button>
               </div>
             </div>
@@ -223,152 +237,170 @@ const handleRegenerateContent = () => {
 
           {/* Translation Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Input Card */}
-<div className="bg-[#FFFAF3] rounded-xl p-6">
-  <LanguageSelector
-    selected={sourceLanguage}
-    setSelected={setSourceLanguage}
-    isOpen={isSourceDropdownOpen}
-    setIsOpen={setIsSourceDropdownOpen}
-    label="Language"
-  />
+            {/* Input Card */}
+            <div className="bg-[#FFFAF3] rounded-xl p-6">
+              <div className="bg-[#FF5341] text-white rounded-lg p-3 mb-6 flex items-center">
+                <Zap className="w-5 h-5 mr-2" />
+                Your Balance Is {userCredits} Credits
+              </div>
 
-  {/* Tone of Voice Option */}
-  <div className="mt-4">
-    <label className="block text-sm font-medium text-gray-700 mb-1">Tone of Voice</label>
-    <input
-      type="text"
-      className="w-full p-2 border rounded-lg"
-      placeholder="E.g., Professional, Friendly, Informative"
-    />
-  </div>
+              <LanguageSelector
+                selected={sourceLanguage}
+                setSelected={setSourceLanguage}
+                isOpen={isSourceDropdownOpen}
+                setIsOpen={setIsSourceDropdownOpen}
+                label="Language"
+              />
 
-  <div className="mt-4">
-    <div className="relative mt-4">
-      <div className="mb-2 flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
-          Input Content
-        </label>
-        <span className="text-sm text-gray-500">
-          {inputText.length}/800
-        </span>
-      </div>
-      <textarea
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        className="w-full h-64 p-4 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-        placeholder="Enter text to translate..."
-        maxLength={800}
-      />
-    </div>
-    <div className="flex justify-between mt-4">
-      <button
-        onClick={handleTranslate}
-        className="bg-[#FF5341] text-white px-6 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center"
-      >
-        Run
-        <Play className="w-4 h-4 ml-2 fill-current" />
-      </button>
-      <button
-        onClick={handleSwapLanguages}
-        className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-      >
-        <ArrowLeftRight className="w-4 h-4 mr-2" />
-        Swap
-      </button>
-    </div>
-  </div>
-</div>
+              {/* Tone of Voice Option */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tone of Voice</label>
+                <input
+                  type="text"
+                  value={toneOfVoice}
+                  onChange={(e) => setToneOfVoice(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="E.g., Professional, Friendly, Informative"
+                />
+              </div>
 
+              <div className="mt-4">
+                <div className="relative mt-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Input Content
+                    </label>
+                    <span className="text-sm text-gray-500">
+                      {inputText.length}/800
+                    </span>
+                  </div>
+                  <textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    className="w-full h-64 p-4 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                    placeholder="Enter text to translate..."
+                    maxLength={800}
+                  />
+                </div>
+                {error && (
+                  <div className="mt-2 text-red-600 text-sm">{error}</div>
+                )}
+                <div className="flex justify-between mt-4">
+                  <button
+                    onClick={handleTranslate}
+                    disabled={isTranslating || !inputText.trim()}
+                    className={`bg-[#FF5341] text-white px-6 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center ${
+                      isTranslating || !inputText.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {isTranslating ? (
+                      <>
+                        Translating...
+                        <div className="ml-2 animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      </>
+                    ) : (
+                      <>
+                        Run
+                        <Play className="w-4 h-4 ml-2 fill-current" />
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleSwapLanguages}
+                    className="flex items-center px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                  >
+                    <ArrowLeftRight className="w-4 h-4 mr-2" />
+                    Swap
+                  </button>
+                </div>
+              </div>
+            </div>
 
-{/* Output Card */}
-<div className="bg-[#FFFAF3] rounded-xl p-6">
-  <LanguageSelector
-    selected={targetLanguage}
-    setSelected={setTargetLanguage}
-    isOpen={isTargetDropdownOpen}
-    setIsOpen={setIsTargetDropdownOpen}
-    label="Language"
-  />
-  <div className="mt-4">
-    <div className="relative mt-4">
-      <div className="mb-2 flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
-          Output Content
-        </label>
-      </div>
-      {showTranslation && (
-  <>
-    <textarea
-      value={outputText}
-      readOnly
-      className="w-full h-64 p-4 border rounded-lg bg-white mb-4"
-    />
-    
-    {/* Content Editor Section */}
-    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-medium">Need to modify specific parts?</h3>
-      </div>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="Enter text to modify..."
-          className="flex-1 p-2 border rounded-lg focus:ring-[#FF5341]"
-          onChange={(e) => setModifiedText(e.target.value)}
-        />
-        <button 
-          onClick={handleModifyContent}
-          className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90"
-        >
-          Modify
-        </button>
-      </div>
-    </div>
+            {/* Output Card */}
+            <div className="bg-[#FFFAF3] rounded-xl p-6">
+              <LanguageSelector
+                selected={targetLanguage}
+                setSelected={setTargetLanguage}
+                isOpen={isTargetDropdownOpen}
+                setIsOpen={setIsTargetDropdownOpen}
+                label="Language"
+              />
+              <div className="mt-4">
+                <div className="relative mt-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Output Content
+                    </label>
+                  </div>
+                  {showTranslation && (
+                    <>
+                      <textarea
+                        value={outputText}
+                        readOnly
+                        className="w-full h-64 p-4 border rounded-lg bg-white mb-4"
+                      />
+                      
+                      {/* Content Editor Section */}
+                      <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium">Need to modify specific parts?</h3>
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={modifiedText}
+                            onChange={(e) => setModifiedText(e.target.value)}
+                            placeholder="Enter text to modify..."
+                            className="flex-1 p-2 border rounded-lg focus:ring-[#FF5341]"
+                          />
+                          <button 
+                            onClick={handleModifyContent}
+                            disabled={isTranslating || !modifiedText.trim()}
+                            className={`bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 ${
+                              isTranslating || !modifiedText.trim() ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {isTranslating ? 'Modifying...' : 'Modify'}
+                          </button>
+                        </div>
+                      </div>
 
-    {/* Action Buttons */}
-    <div className="flex justify-end space-x-4">
-      <button 
-        onClick={handleRegenerateContent}
-        className="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center"
-      >
-        <Repeat className="w-4 h-4 mr-2" />
-        Regenerate
-      </button>
-      <button 
-        onClick={handleCopy}
-        className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 flex items-center"
-      >
-        <Copy className="w-4 h-4 mr-2" />
-        Copy
-      </button>
-    </div>
-  </>
-)}
-      
-    </div>
-  </div>
-  {/* Action Buttons */}
-  <div className="flex justify-end space-x-4 mt-6">
-    
-   
-    
-    
-  </div>
-</div>
-
-
-
+                      {/* Action Buttons */}
+                      <div className="flex justify-end space-x-4">
+                        <button 
+                          onClick={handleRegenerateContent}
+                          disabled={isTranslating}
+                          className={`px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center ${
+                            isTranslating ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          <Repeat className="w-4 h-4 mr-2" />
+                          Regenerate
+                        </button>
+                        <button 
+                          onClick={handleCopy}
+                          className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 flex items-center"
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          Copy
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
       {/* Toast Notification */}
-{showToast && (
-  <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up z-50">
-    <Check className="w-4 h-4" />
-    <span>Copied to clipboard</span>
-  </div>
-)}
+      {showToast && (
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up z-50">
+          <Check className="w-4 h-4" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 };

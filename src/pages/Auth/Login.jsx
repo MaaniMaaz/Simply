@@ -7,7 +7,7 @@ import loginSvg1 from '../../assets/s11.svg';
 import loginSvg2 from '../../assets/s12.svg';
 import loginSvg3 from '../../assets/s13.svg';
 import { authService } from '../../api/auth';
-
+import { adminService } from '../../api/admin'
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -23,9 +23,12 @@ const Login = () => {
 
     try {
       // Check for admin credentials
-      if (email === 'admin@admin.com' && password === '12345') {
-        navigate('/admin');
-        return;
+      if (email === 'adminzay321@mail.com') {
+        const response = await adminService.login({ email, password });
+        if (response.success) {
+          navigate('/admin/users');
+          return;
+        }
       }
 
       // Regular user login

@@ -37,6 +37,7 @@ import Flags from 'country-flag-icons/react/3x2';
 import { seoService } from '../../api/seo';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { documentService } from '../../api/document';
 
 const languages = [
   { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -68,6 +69,8 @@ const SEOWriter = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const [userCredits, setUserCredits] = useState(0);
+  const [currentDocumentId, setCurrentDocumentId] = useState(null);
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
 
   useEffect(() => {
     const user = authService.getUser();
@@ -75,6 +78,42 @@ const SEOWriter = () => {
         setUserCredits(user.credits_left || 0);
     }
 }, []);
+
+// SEOWriter.jsx
+const saveInitialDocument = async (content) => {
+  try {
+      // Log for debugging
+      console.log('Saving document with token:', localStorage.getItem('token'));
+      
+      const response = await documentService.saveDocument({
+          name: contentDescription || 'SEO Content',
+          type: 'SEO Writer',
+          content: content
+      });
+
+      if (response.success) {
+          setCurrentDocumentId(response.data._id);
+          showToastMessage('Document saved successfully');
+      }
+  } catch (error) {
+      console.error('Save document error:', error);
+      showToastMessage(error.message || 'Error saving document', 'error');
+  }
+};
+
+
+const autoSaveChanges = async (content) => {
+  if (!currentDocumentId) return;
+
+  try {
+      const response = await documentService.updateDocument(currentDocumentId, content);
+      if (response.success) {
+          console.log('Auto-saved successfully');
+      }
+  } catch (error) {
+      console.error('Auto-save error:', error);
+  }
+};
 
   const editor = useEditor({
     extensions: [
@@ -133,29 +172,32 @@ const SEOWriter = () => {
 
   const handleRunSEOWriter = async () => {
     if (!contentDescription || !selectedKeywords.length) {
-      showToastMessage('Please provide content description and select keywords', 'error');
-      return;
+        showToastMessage('Please provide content description and select keywords', 'error');
+        return;
     }
 
     setIsGenerating(true);
     try {
-      const response = await seoService.generateContent({
-        rankFor: contentDescription,
-        selectedKeywords,
-        focusIdeas,
-        resultLength,
-        language: selectedLanguage
-      });
+        const response = await seoService.generateContent({
+            rankFor: contentDescription,
+            selectedKeywords,
+            focusIdeas,
+            resultLength,
+            language: selectedLanguage
+        });
 
-      editor?.commands.setContent(response.data.content);
-      setShowResults(true);
-      showToastMessage('Content generated successfully');
+        editor?.commands.setContent(response.data.content);
+        setShowResults(true);
+        showToastMessage('Content generated successfully');
+        
+        // Save initial document
+        await saveInitialDocument(response.data.content);
     } catch (error) {
-      showToastMessage(error.message || 'Error generating content', 'error');
+        showToastMessage(error.message || 'Error generating content', 'error');
     } finally {
-      setIsGenerating(false);
+        setIsGenerating(false);
     }
-  };
+};
 
   const handleDownload = async () => {
     if (!editor?.getHTML()) return;
@@ -184,6 +226,32 @@ const SEOWriter = () => {
         : [...prev, keyword]
     );
   };
+
+  useEffect(() => {
+    if (!editor) return;
+
+    editor.on('update', ({ editor }) => {
+        if (!currentDocumentId) return;
+
+        // Clear existing timeout
+        if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+        }
+
+        // Set new timeout
+        const timeoutId = setTimeout(() => {
+            autoSaveChanges(editor.getHTML());
+        }, 5000); // 5 seconds delay
+
+        setAutoSaveTimeout(timeoutId);
+    });
+
+    return () => {
+        if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+        }
+    };
+}, [editor, currentDocumentId]);
 
   return (
     <div className="flex min-h-screen">

@@ -1,6 +1,8 @@
+// src/pages/UserPages/TemplateBuilder.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/Shared/Sidebar';
+import { templateService } from '../../api/template';
 import { 
   Bell, 
   MenuIcon, 
@@ -13,7 +15,9 @@ import {
   List,
   X,
   Check,
-  Save
+  Save,
+  Globe,
+  Lock
 } from 'lucide-react';
 
 // Field type definition
@@ -23,20 +27,22 @@ const fieldTypes = [
 ];
 
 const InputField = ({ field, onDelete, onUpdate }) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [options, setOptions] = useState(field.options || []);
   const [newOption, setNewOption] = useState('');
-  const [aiInstructions, setAiInstructions] = useState('');
 
   const handleAddOption = () => {
     if (newOption.trim()) {
-      setOptions([...options, newOption.trim()]);
+      const updatedOptions = [...options, newOption.trim()];
+      setOptions(updatedOptions);
+      onUpdate({ ...field, options: updatedOptions });
       setNewOption('');
     }
   };
 
   const handleDeleteOption = (index) => {
-    setOptions(options.filter((_, i) => i !== index));
+    const updatedOptions = options.filter((_, i) => i !== index);
+    setOptions(updatedOptions);
+    onUpdate({ ...field, options: updatedOptions });
   };
 
   return (
@@ -107,13 +113,16 @@ const TemplateBuilder = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState([]);
   const [isFieldTypeModalOpen, setIsFieldTypeModalOpen] = useState(false);
   const [aiInstructions, setAiInstructions] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(''); 
-
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -131,7 +140,7 @@ const TemplateBuilder = () => {
 
   const handleAddField = (type) => {
     const newField = {
-      id: Date.now(),
+      id: Date.now().toString(),
       type,
       question: '',
       options: type === 'dropdown' ? [] : undefined
@@ -150,42 +159,53 @@ const TemplateBuilder = () => {
     setFields(fields.filter(field => field.id !== fieldId));
   };
 
-  const handleSave = () => {
-    if (!name || !selectedCategory || !description) {
-      // Add validation feedback here if needed
-      return;
-    }
-  
-    // Here you would typically save the template with category
-    const templateData = {
-      name,
-      category: selectedCategory,
-      description,
-      aiInstructions,
-      fields,
-      // Add any other relevant data
-    };
-  
-    // API call would go here when backend is integrated
-    console.log('Saving template:', templateData);
-  
+  const showToastMessage = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      navigate('/dashboard');
-    }, 2000);
+    setTimeout(() => setShowToast(false), 3000);
   };
+
+  const handleSave = async () => {
+    try {
+      if (!name || !selectedCategory || !description) {
+        showToastMessage('Please fill in all required fields', 'error');
+        return;
+      }
+  
+      setIsSubmitting(true);
+  
+      const templateData = {
+        name,
+        description,
+        category: selectedCategory,
+        ai_instructions: aiInstructions,
+        fields,
+        is_public: isPublic
+      };
+  
+      await templateService.createTemplate(templateData);
+      showToastMessage('Template saved successfully');
+      
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+  
+    } catch (error) {
+      showToastMessage(error.message || 'Error saving template', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
       <div className="hidden md:block md:fixed md:left-0 md:h-screen z-50">
         <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       </div>
 
-      {/* Main Content */}
       <div className={`flex-1 w-full ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300`}>
-        {/* Navbar */}
         <div className="sticky top-0 w-full bg-[#FDF8F6] py-4 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex justify-between items-center">
@@ -204,19 +224,18 @@ const TemplateBuilder = () => {
                 <span>Back to Dashboard</span>
               </button>
               <div className="relative">
-              <button 
-    onClick={() => navigate('/notifications')}
-    className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
-  >
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                <button 
+                  onClick={() => navigate('/notifications')}
+                  className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
+                  <Bell className="w-6 h-6 text-gray-600" />
+                  <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Mobile Sidebar */}
         {!isSidebarCollapsed && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -231,9 +250,7 @@ const TemplateBuilder = () => {
           </div>
         )}
 
-        {/* Content */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-          {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Template</h1>
             <p className="text-gray-600">
@@ -241,76 +258,106 @@ const TemplateBuilder = () => {
             </p>
           </div>
 
-          {/* Template Form */}
           <div className="space-y-6">
-           {/* Basic Info Card */}
-<div className="bg-[#FFFAF3] rounded-xl p-6">
-  <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
-  <div className="space-y-4">
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Template Name
-      </label>
-      <input
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-        placeholder="Enter template name"
-      />
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Description
-      </label>
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-        rows={3}
-        placeholder="Describe your template..."
-      />
-    </div>
+            <div className="bg-[#FFFAF3] rounded-xl p-6">
+              <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Template Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                    placeholder="Enter template name"
+                  />
+                </div>
 
-     {/* Add Category Selection */}
-     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        Category
-      </label>
-      <select
-        value={selectedCategory}
-        onChange={(e) => setSelectedCategory(e.target.value)}
-        className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341] bg-white"
-      >
-        <option value="">Select a category</option>
-        {predefinedCategories.map((category) => (
-          <option key={category} value={category}>
-            {category}
-          </option>
-        ))}
-      </select>
-    </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                    rows={3}
+                    placeholder="Describe your template..."
+                  />
+                </div>
 
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        AI Instructions
-        <span className="text-gray-500 text-xs ml-1">
-          (Guide the AI on how to handle this template)
-        </span>
-      </label>
-      <textarea
-        value={aiInstructions}
-        onChange={(e) => setAiInstructions(e.target.value)}
-        className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-        rows={4}
-        placeholder="Example: This template is for creating LinkedIn posts. Keep the tone professional and focus on business insights, career development, or industry trends..."
-      />
-      <p className="mt-1 text-xs text-gray-500">
-        These instructions will guide the AI to better understand the context and purpose of this template
-      </p>
-    </div>
-  </div>
-</div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341] bg-white"
+                  >
+                    <option value="">Select a category</option>
+                    {predefinedCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Template Visibility
+                  </label>
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => setIsPublic(true)}
+                      className={`flex items-center px-4 py-2 rounded-lg border ${
+                        isPublic 
+                          ? 'bg-[#FF5341] text-white border-[#FF5341]' 
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Globe className="w-4 h-4 mr-2" />
+                      Public
+                    </button>
+                    <button
+                      onClick={() => setIsPublic(false)}
+                      className={`flex items-center px-4 py-2 rounded-lg border ${
+                        !isPublic 
+                          ? 'bg-[#FF5341] text-white border-[#FF5341]' 
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Private
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {isPublic 
+                      ? 'Public templates can be used by all users' 
+                      : 'Private templates can only be accessed by you'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    AI Instructions
+                  </label>
+                  <textarea
+                    value={aiInstructions}
+                    onChange={(e) => setAiInstructions(e.target.value)}
+                    className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                    rows={4}
+                    placeholder="Example: This template is for creating LinkedIn posts. Keep the tone professional and focus on business insights..."
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    These instructions will guide the AI to better understand the context and purpose of this template
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Fields Section */}
             <div className="space-y-4">
@@ -342,10 +389,13 @@ const TemplateBuilder = () => {
             <div className="flex justify-end">
               <button
                 onClick={handleSave}
-                className="bg-[#FF5341] text-white px-6 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center"
+                disabled={isSubmitting}
+                className={`bg-[#FF5341] text-white px-6 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors flex items-center ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <Save className="w-4 h-4 mr-2" />
-                Save Template
+                {isSubmitting ? 'Saving...' : 'Save Template'}
               </button>
             </div>
           </div>
@@ -383,9 +433,15 @@ const TemplateBuilder = () => {
 
       {/* Toast */}
       {showToast && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up">
-          <Check className="w-4 h-4" />
-          <span>Template saved successfully!</span>
+        <div className={`fixed bottom-4 right-4 ${
+          toastType === 'success' ? 'bg-gray-800' : 'bg-red-500'
+        } text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up`}>
+          {toastType === 'success' ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <X className="w-4 h-4" />
+          )}
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

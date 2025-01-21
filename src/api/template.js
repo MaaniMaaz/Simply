@@ -63,6 +63,15 @@ export const templateService = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    runTemplate: async (templateId, data) => {
+        try {
+            const response = await API.post(`/templates/${templateId}/run`, data);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
     }
 
 };

@@ -23,7 +23,7 @@ const Login = () => {
 
     try {
       // Check for admin credentials
-      if (email === 'adminzay321@mail.com') {
+      if (email === 'admin@mail.com') {
         const response = await adminService.login({ email, password });
         if (response.success) {
           navigate('/admin/users');

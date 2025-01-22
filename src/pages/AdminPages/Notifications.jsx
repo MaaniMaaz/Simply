@@ -1,36 +1,43 @@
 // src/pages/AdminPages/Notifications.jsx
 import React, { useState } from 'react';
-import { Send, AlertCircle, Check, ChevronDown } from 'lucide-react';
-
-const notificationTypes = [
-  { id: 'general', label: 'General Update' },
-  { id: 'feature', label: 'New Feature' },
-  { id: 'maintenance', label: 'Maintenance' },
-  { id: 'security', label: 'Security Update' },
-  { id: 'maintenance', label: 'Sign in' },
-  { id: 'security', label: 'Security Update' },
-  { id: 'promotion', label: 'Promotion' }
-];
+import { 
+  Send, 
+  AlertCircle,
+  Check,
+  X
+} from 'lucide-react';
+import { adminNotificationService } from '../../api/adminNotification';
 
 const Notifications = () => {
   const [message, setMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [selectedType, setSelectedType] = useState(notificationTypes[0]);
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendNotification = () => {
-    if (!message.trim()) return;
-
-    // Here we'll integrate with backend later to send notifications
-    console.log('Sending notification:', {
-      type: selectedType.id,
-      message
-    });
-    
-    // Show success toast
+  const showToastMessage = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
-    setMessage(''); // Clear the input
     setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const handleSendNotification = async () => {
+    if (!message.trim()) {
+      showToastMessage('Please enter a notification message', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await adminNotificationService.sendNotification(message.trim());
+      showToastMessage('Notification sent successfully');
+      setMessage(''); // Clear the input
+    } catch (error) {
+      showToastMessage(error.message || 'Error sending notification', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -44,41 +51,6 @@ const Notifications = () => {
       {/* Notification Form */}
       <div className="bg-[#FFFAF3] rounded-xl p-6">
         <div className="space-y-6">
-          {/* Notification Type Dropdown */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notification Type
-            </label>
-            <div className="relative">
-              <button
-                onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                className="w-full flex items-center justify-between p-2 border rounded-lg bg-white"
-              >
-                <span>{selectedType.label}</span>
-                <ChevronDown className={`w-5 h-5 transition-transform ${
-                  isTypeDropdownOpen ? 'transform rotate-180' : ''
-                }`} />
-              </button>
-              
-              {isTypeDropdownOpen && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg">
-                  {notificationTypes.map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => {
-                        setSelectedType(type);
-                        setIsTypeDropdownOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg"
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Message Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -105,21 +77,36 @@ const Notifications = () => {
           {/* Send Button */}
           <button
             onClick={handleSendNotification}
-            disabled={!message.trim()}
+            disabled={isSubmitting || !message.trim()}
             className={`w-full bg-[#FF5341] text-white py-3 rounded-lg flex items-center justify-center space-x-2
-              ${!message.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF5341]/90'}`}
+              ${!message.trim() || isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#FF5341]/90'}`}
           >
-            <Send className="w-4 h-4" />
-            <span>Send Notification</span>
+            {isSubmitting ? (
+              <>
+                <span>Sending...</span>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Send Notification</span>
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Success Toast */}
+      {/* Toast Notification */}
       {showToast && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up">
-          <Check className="w-4 h-4" />
-          <span>Notification sent successfully!</span>
+        <div className={`fixed bottom-4 right-4 ${
+          toastType === 'success' ? 'bg-gray-800' : 'bg-red-500'
+        } text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up z-50`}>
+          {toastType === 'success' ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <X className="w-4 h-4" />
+          )}
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

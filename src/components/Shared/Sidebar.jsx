@@ -139,7 +139,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       </div>
 
      {/* User Profile Section */}
-  <div className="absolute bottom-0 w-full p-4">
+  <div className="absolute -bottom-1 -right-2 w-full p-2">
     <button 
       onClick={() => navigate('/profile')}
       className="w-full flex items-center hover:bg-gray-200 p-2 rounded-lg transition-colors"

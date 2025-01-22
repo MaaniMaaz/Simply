@@ -1,57 +1,64 @@
+// src/pages/UserPages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
-import { Search, Bell, Zap, WholeWord, FileText, Download, ArrowRight } from 'lucide-react';
-import ai1 from '../../assets/ai1.svg';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  Users,
+  FileText,
+  Layout,
+  BarChart2,
+  Settings,
+  FileEdit,
+  MenuIcon,
+  Bell,
+  Zap,
+  Download,
+  ArrowRight,
+  Play,
+  FileCheck2,
+  ArrowUpRight,
+  ArrowDownRight
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import ai1 from '../../assets/ai1.svg';
 import { userService } from '../../api/user';
 import { subscriptionService } from '../../api/subscription';
 import { getTimeBasedGreeting } from '../../utils/helpers';
+import axios from 'axios';
 
+const axiosWithAuth = axios.create({
+  baseURL: 'http://localhost:5000/api'
+});
 
-<FontAwesomeIcon icon={faCalendarAlt} className="h-5 w-5 text-gray-500" />
+const API_URL = 'http://localhost:5000/api';
 
+// Add request interceptor
+axiosWithAuth.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-
-
-const StatCard = ({ title, value, icon: Icon }) => (
+const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4">
     <div className="flex justify-between items-start">
       <div>
         <p className="text-sm text-gray-600 mb-1">{title}</p>
         <p className="text-2xl font-semibold">{value}</p>
       </div>
-      <div className="bg-[#FF5341] p-2 rounded-lg">
-        <Icon className="w-5 h-5 text-white" />
+      <div className="bg-[#FF5341] bg-opacity-10 p-3 rounded-lg">
+        <Icon className="w-5 h-5 text-[#FF5341]" />
       </div>
     </div>
   </div>
 );
-
-// First, update the wordGenerationData array to include full dates
-const generateWordData = () => {
-  const data = [];
-  const currentDate = new Date();
-  const threeYearsAgo = new Date();
-  threeYearsAgo.setFullYear(currentDate.getFullYear() - 3);
-  
-  // Generate sample data for the last 3 years
-  let currentDatePointer = threeYearsAgo;
-  while (currentDatePointer <= currentDate) {
-    data.push({
-      date: new Date(currentDatePointer),
-      words: Math.floor(Math.random() * 5000) + 1000
-    });
-    currentDatePointer.setDate(currentDatePointer.getDate() + 5); // Add data every 5 days
-  }
-  return data;
-};
-
-const wordGenerationData = generateWordData();
 
 const ArticleCard = ({ title, date }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4 hover:shadow-md transition-shadow border border-gray-400">
@@ -60,143 +67,106 @@ const ArticleCard = ({ title, date }) => (
   </div>
 );
 
-
-    // Helper function to format dates based on range
-    const formatDateForAxis = (date, rangeType) => {
-      const d = new Date(date);
-      switch (rangeType) {
-        case 'days':
-          return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-        case 'months':
-          return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-        case 'years':
-          return d.getFullYear().toString();
-        default:
-          return d.toLocaleDateString();
-      }
-    };
-
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [wordStats, setWordStats] = useState([]);
+  const [recentDocuments, setRecentDocuments] = useState([]);
+  const [favoriteTemplates, setFavoriteTemplates] = useState([]);
+  const [documentHistory, setDocumentHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [dateRange, setDateRange] = useState([new Date(new Date().getTime() - 30*24*60*60*1000), new Date()]);
-    const [startDate, endDate] = dateRange;
-    const [userData, setUserData] = useState({
-      name: '',
-      stats: {
-        total_words_generated: 0,
-        credits_left: 0,
-        total_templates_run: 0,
-        total_documents_saved: 0
-      },
-      currentPlan: null
-    });
-
-    // Fetch user data
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Get user profile
-        const userResponse = await userService.getProfile();
-        const user = userResponse.data.user;
-
-        // Get subscription status
-        const subscriptionResponse = await subscriptionService.getStatus();
-        const subscriptionData = subscriptionResponse.data;
-
-        setUserData({
-          name: user.name,
-          stats: {
-            total_words_generated: user.total_words_generated,
-            credits_left: user.credits_left,
-            total_templates_run: user.total_templates_run,
-            total_documents_saved: user.total_documents_saved
-          },
-          currentPlan: subscriptionData.current_plan
-        });
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSidebarCollapsed(false);
+      } else {
+        setIsSidebarCollapsed(true);
       }
     };
 
-    fetchUserData();
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-    const filteredData = wordGenerationData.filter(
-      (data) => new Date(data.date).toLocaleDateString() === selectedDate.toLocaleDateString()
-    );
-
-
-      // Calculate the range type
-  const getDifferenceInDays = (date1, date2) => {
-    const diffTime = Math.abs(date2 - date1);
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
-
-  const getRangeType = () => {
-    const daysDiff = getDifferenceInDays(startDate, endDate);
-    if (daysDiff <= 31) return 'days';
-    if (daysDiff <= 365) return 'months';
-    return 'years';
-  };
-
-  // Filter and format data based on selected date range
-  const getFilteredData = () => {
-    const rangeType = getRangeType();
-    const filteredData = wordGenerationData.filter(item => 
-      item.date >= startDate && item.date <= endDate
-    );
-
-    // If showing months or years, aggregate the data
-    if (rangeType === 'months') {
-      const monthlyData = {};
-      filteredData.forEach(item => {
-        const key = formatDateForAxis(item.date, 'months');
-        monthlyData[key] = (monthlyData[key] || 0) + item.words;
-      });
-      return Object.entries(monthlyData).map(([date, words]) => ({ date, words }));
-    }
-
-    if (rangeType === 'years') {
-      const yearlyData = {};
-      filteredData.forEach(item => {
-        const key = formatDateForAxis(item.date, 'years');
-        yearlyData[key] = (yearlyData[key] || 0) + item.words;
-      });
-      return Object.entries(yearlyData).map(([date, words]) => ({ date, words }));
-    }
-
-    // For days, just format the dates
-    return filteredData.map(item => ({
-      date: formatDateForAxis(item.date, 'days'),
-      words: item.words
-    }));
-  };
-    
-  
+  // Update in the fetchDashboardData useEffect
   useEffect(() => {
-      const handleResize = () => {
-          if (window.innerWidth >= 768) {
-              setIsSidebarCollapsed(false);
-          } else {
-              setIsSidebarCollapsed(true);
-          }
-      };
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Get all data in parallel
+        const [
+          statsResponse,
+          wordStatsResponse,
+          documentsResponse,
+          templatesResponse,
+          historyResponse
+        ] = await Promise.all([
+          axiosWithAuth.get('/dashboard/stats'),
+          axiosWithAuth.get('/dashboard/word-stats'),
+          axiosWithAuth.get('/dashboard/recent-documents'),
+          axiosWithAuth.get('/dashboard/favorite-templates'),
+          axiosWithAuth.get('/dashboard/document-history')
+        ]);
   
-      handleResize();
-      window.addEventListener('resize', handleResize);
+        setDashboardData({
+          name: statsResponse.data.data.name,  // This was missing
+          credits_left: statsResponse.data.data.credits_left,
+          total_words_generated: statsResponse.data.data.total_words_generated,
+          total_templates_run: statsResponse.data.data.total_templates_run,
+          total_documents_saved: statsResponse.data.data.total_documents_saved,
+          current_plan: statsResponse.data.data.current_plan
+        });
   
-      return () => window.removeEventListener('resize', handleResize);
+        // Use wordStatsResponse.data.data if it exists, otherwise use generated data
+        const wordStatsData = wordStatsResponse.data.data;
+        setWordStats(wordStatsData);
+  
+        setRecentDocuments(documentsResponse.data.data);
+        setFavoriteTemplates(templatesResponse.data.data);
+        setDocumentHistory(historyResponse.data.data);
+  
+      } catch (err) {
+        setError(err.response?.data?.message || 'Error fetching dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchDashboardData();
   }, []);
-  const navigate = useNavigate();
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF5341]"></div>
+      </div>
+    );
+  }
 
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   return (
     <div className="flex min-h-screen">
-      {/* Fixed Sidebar */}
-      <div className="fixed left-0 h-screen">
+      <div className="hidden md:block md:fixed md:left-0 md:h-screen">
         <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
       </div>
 
@@ -206,57 +176,76 @@ const Dashboard = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
             <div>
               <h1 className="text-xl md:text-2xl font-semibold mb-1">
-                {getTimeBasedGreeting()}, {userData.name}{' '}
+                {getTimeBasedGreeting()}, {dashboardData?.name}{' '}
                 <span role="img" aria-label="wave">👋</span>
               </h1>
               <p className="text-sm md:text-base text-gray-600">Welcome To Simply Dashboard</p>
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-4 w-full md:w-auto">
-              <div className="relative w-full md:w-64">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FF5341]"
-                />
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              </div>
               <div className="relative">
                 <button 
-                onClick={() => navigate('/notifications')}
-                className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                  onClick={() => navigate('/notifications')}
+                  className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
                 >
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                  <Bell className="w-6 h-6 text-gray-600" />
+                  <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
                 </button>
-                </div>
+                {/* Continuing from where we left off */}
+              </div>
             </div>
           </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-            <StatCard title="Total Credits Left" value={userData.stats.credits_left} icon={Zap} />
-            <StatCard title="Total Words Generated" value={userData.stats.total_words_generated} icon={WholeWord} />
-            <StatCard title="Total Templates Run" value={userData.stats.total_templates_run} icon={FileText} />
-            <StatCard title="Total Documents Saved" value={userData.stats.total_documents_saved} icon={Download} />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+            <StatCard 
+              title="Total Credits Left" 
+              value={dashboardData?.credits_left} 
+              icon={Zap}
+              change="12.5"
+              changeType="increase"
+            />
+            <StatCard 
+              title="Total Words Generated" 
+              value={dashboardData?.total_words_generated} 
+              icon={FileText}
+              change="15.2"
+              changeType="increase"
+            />
+            <StatCard 
+              title="Total Templates Run" 
+              value={dashboardData?.total_templates_run} 
+              icon={FileEdit}
+              change="8.3"
+              changeType="increase"
+            />
+            <StatCard 
+              title="Total Documents Saved" 
+              value={dashboardData?.total_documents_saved} 
+              icon={Download}
+              change="4.8"
+              changeType="decrease"
+            />
           </div>
 
-         {/* Current Plan Card */}
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
-            {userData.currentPlan ? (
+          {/* Current Plan Card */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
+            {dashboardData?.current_plan ? (
               <div className="bg-[#FF5341] rounded-xl p-4 md:p-6 text-white">
                 <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-xs md:text-sm mb-4">
                   Current Plan
                 </span>
-                <h2 className="text-xl md:text-2xl font-semibold mb-2">{userData.currentPlan.name}</h2>
+                <h2 className="text-xl md:text-2xl font-semibold mb-2">
+                  {dashboardData.current_plan.name}
+                </h2>
                 <p className="text-sm md:text-base mb-4">You have an active subscription</p>
                 <div className="flex justify-between items-center">
                   <button 
-                    onClick={() => navigate('/profile')}
+                    onClick={() => navigate('/profile')} 
                     className="px-3 md:px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors text-sm md:text-base">
                     Manage Plans
                   </button>
                   <span className="text-xl md:text-2xl font-semibold">
-                    ${userData.currentPlan.price}/Month
+                    ${dashboardData.current_plan.price}/Month
                   </span>
                 </div>
               </div>
@@ -283,11 +272,11 @@ const Dashboard = () => {
                     Effortlessly Create Precise, Engaging, And SEO-Optimized Template In Just One Go With Our Powerful AI Model!
                   </p>
                   <button 
-  onClick={() => navigate('/template-builder')}
-  className="flex items-center text-[#FF5341] font-medium hover:opacity-90 text-sm md:text-base"
->
-  Create Now <ArrowRight className="w-4 h-4 ml-1" />
-</button>
+                    onClick={() => navigate('/template-builder')}
+                    className="flex items-center text-[#FF5341] font-medium hover:opacity-90 text-sm md:text-base"
+                  >
+                    Create Now <ArrowRight className="w-4 h-4 ml-1" />
+                  </button>
                 </div>
                 <div className="w-full md:w-1/3">
                   <img src={ai1} alt="AI Generation" className="w-full" />
@@ -296,142 +285,129 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* SEO Articles Section */}
-          <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 -mb-2">
+          {/* Words Generation Graph */}
+          <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
               <div>
-                <h2 className="text-base md:text-lg font-semibold">Most Recent Documents Generated</h2>
+                <h2 className="text-lg md:text-xl font-semibold">Words Generated</h2>
+                <p className="text-xs md:text-sm text-gray-600">Last 6 months statistics</p>
+              </div>
+            </div>
+
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={wordStats}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="date"
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                    }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12, fill: '#6B7280' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#E5E7EB' }}
+                    tickFormatter={(value) => `${value}`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '8px',
+                      padding: '8px',
+                    }}
+                    labelStyle={{ color: '#374151', fontWeight: 500 }}
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString('en-US', { 
+                        month: 'long',
+                        year: 'numeric'
+                      });
+                    }}
+                    formatter={(value) => [`${value} words`]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="words"
+                    stroke="#FF5341"
+                    strokeWidth={2}
+                    dot={{ fill: '#FF5341', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#FF5341' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* SEO Articles Section */}
+          <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold mb-1">Most Recent Documents Generated</h2>
                 <p className="text-xs md:text-sm text-gray-600">Manage Your Generated Articles here</p>
               </div>
               <button 
-              onClick={() => navigate('/documents')}
-              className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
+                onClick={() => navigate('/documents')}
+                className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base"
+              >
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </button>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {[...Array(6)].map((_, index) => (
-                <ArticleCard
-                  key={index}
-                  title='"Top 5 AI SEO Writing & Compliance Checking Softwares in 2025"'
-                  date="24th December, 2025"
-                />
-              ))}
+              {recentDocuments.length > 0 ? (
+                recentDocuments.map((doc) => (
+                  <ArticleCard
+                    key={doc._id}
+                    title={doc.name}
+                    date={formatDate(doc.created_at)}
+                  />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No documents generated yet
+                </div>
+              )}
             </div>
           </div>
 
-
-  {/* Words Generation Graph */}
-  <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mt-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
-        <div>
-          <h2 className="text-base md:text-lg font-semibold">Words Generated</h2>
-          <p className="text-xs md:text-sm text-gray-600">Select date range to view statistics</p>
-        </div>
-        <div className="relative">
-          <DatePicker
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(update) => setDateRange(update)}
-            className="border w-64 rounded-lg px-2 py-1 pl-10"
-            dateFormat="MMM d, yyyy"
-          />
-          <div className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 pointer-events-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+          {/* Favourite Template Section */}
+          <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold mb-1">Favourite Templates</h2>
+                <p className="text-xs md:text-sm text-gray-600">Choose Your Favourite Template & Generate Accurate Content</p>
+              </div>
+              <button
+                onClick={() => navigate('/ai-writer')}
+                className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base"
+              >
+                View All <ArrowRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {favoriteTemplates.length > 0 ? (
+                favoriteTemplates.map((template) => (
+                  <div key={template._id} className="bg-[#FF5341] rounded-xl p-4 text-white">
+                    <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
+                      <h3 className="text-base md:text-lg font-medium">{template.name}</h3>
+                    </div>
+                    <p className="text-xs md:text-sm text-white/90">{template.description}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No favorite templates yet
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={getFilteredData()}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 12, fill: '#6B7280' }}
-              tickLine={false}
-              axisLine={{ stroke: '#E5E7EB' }}
-            />
-            <YAxis
-              tick={{ fontSize: 12, fill: '#6B7280' }}
-              tickLine={false}
-              axisLine={{ stroke: '#E5E7EB' }}
-              tickFormatter={(value) => `${value}`}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E5E7EB',
-                borderRadius: '8px',
-                padding: '8px',
-              }}
-              labelStyle={{ color: '#374151', fontWeight: 500 }}
-              itemStyle={{ color: '#FF5341' }}
-            />
-            <Line
-              type="monotone"
-              dataKey="words"
-              stroke="#FF5341"
-              strokeWidth={2}
-              dot={{ fill: '#FF5341', strokeWidth: 2 }}
-              activeDot={{ r: 6, fill: '#FF5341' }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-
-
-
-        </div>
-        <div className="p-4 md:p-8">
-     {/* Favourite Template Section */}
-<div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
-  <div className="flex justify-between items-center mb-6">
-    <div>
-      <h2 className="text-lg md:text-xl font-semibold mb-1">Favourite Template</h2>
-      <p className="text-xs md:text-sm text-gray-600">Choose Your Favourite Template & Generate Accurate Content</p>
-    </div>
-    <button
-      onClick={() => navigate('/ai-writer')}
-      className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base"
-    >
-      View All <ArrowRight className="w-4 h-4 ml-1" />
-    </button>
-  </div>
-  
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" >
-    {[
-      { title: 'Content Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-      { title: 'LinkedIn Post', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-      { title: 'Web Developer', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-      { title: 'Blog Writing', desc: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI' },
-    ].map((template, index) => (
-      <div key={index} className="bg-[#FF5341] rounded-xl p-4 text-white">
-        <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
-          <h3 className="text-base md:text-lg font-medium">{template.title}</h3>
-        </div>
-        <p className="text-xs md:text-sm text-white/90">{template.desc}</p>
-      </div>
-    ))}
-  </div>
-</div>
-
 
           {/* Document History Section */}
           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
@@ -441,43 +417,52 @@ const Dashboard = () => {
                 <p className="text-xs md:text-sm text-gray-600">View Your Recently Generated Documents</p>
               </div>
               <button 
-              onClick={() => navigate('/documents')}
-              className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base">
+                onClick={() => navigate('/documents')}
+                className="flex items-center text-gray-600 hover:opacity-90 text-sm md:text-base"
+              >
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </button>
             </div>
 
             <div className="space-y-4">
-              {[...Array(5)].map((_, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm md:text-base font-medium">March, 01, 2020</p>
-                    <p className="text-xs md:text-sm text-gray-500">#MS-415646</p>
+              {documentHistory.length > 0 ? (
+                documentHistory.map((doc) => (
+                  <div key={doc._id} className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm md:text-base font-medium">{formatDate(doc.created_at)}</p>
+                      <p className="text-xs md:text-sm text-gray-500">#{doc._id}</p>
+                    </div>
+                    <div className="flex items-center text-[#FF5341]">
+                      <FileText className="w-5 h-5 mr-2" />
+                      <span className="text-sm">{doc.type}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center text-[#FF5341]">
-                    <FileText className="w-5 h-5 mr-2" />
-                    <span className="text-sm">PDF</span>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No document history available
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
           {/* Need Assistance Section */}
-          <div className="bg-black rounded-xl p-6 md:p-8 text-white mb-8 w-full">
+          <div className="bg-black rounded-xl p-6 md:p-8 text-white mb-8">
             <h2 className="text-xl md:text-2xl font-semibold mb-2">Need Assistance?</h2>
             <p className="text-sm md:text-base text-gray-300 mb-6 max-w-2xl">
               Have Questions? Simply Has You Covered! From AI-Powered Tools To Content Tips, We're Here To Make Content Creation Easy And Hassle-Free.
             </p>
             <button 
-            onClick={() => navigate('/help')}
-            className="bg-[#FF5341] text-white px-6 py-3 rounded-lg flex items-center text-sm md:text-base hover:bg-opacity-90 transition-colors border border-white">
+              onClick={() => navigate('/help')}
+              className="bg-[#FF5341] text-white px-6 py-3 rounded-lg flex items-center text-sm md:text-base hover:bg-opacity-90 transition-colors border border-white"
+            >
               Get Help Now <ArrowRight className="w-4 h-4 ml-2" />
             </button>
           </div>
+        </div>
       </div>
-    </div>
     </div>
   );
 };
+
 export default Dashboard;

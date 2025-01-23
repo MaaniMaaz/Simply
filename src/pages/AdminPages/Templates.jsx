@@ -1,34 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Edit2, Trash2, Plus, X, Check, ChevronDown } from 'lucide-react';
-
-// Template data with categories
-const templateData = [
-  { 
-    title: 'Content Writing', 
-    description: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI',
-    categories: ['All', 'Blog', 'Article']
-  },
-  { 
-    title: 'LinkedIn Post', 
-    description: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI',
-    categories: ['All', 'Blog', 'Website']
-  },
-  { 
-    title: 'Web Developer', 
-    description: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI',
-    categories: ['All', 'Website']
-  },
-  { 
-    title: 'Blog Writing', 
-    description: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI',
-    categories: ['All', 'Blog', 'Article']
-  },
-  { 
-    title: 'Market Writing', 
-    description: 'Generate Compelling And Innovative Content Tailored To Your Needs With AI',
-    categories: ['All', 'Article', 'Ecommerce']
-  }
-];
+import { 
+  Search, 
+  Edit2, 
+  Trash2, 
+  Plus, 
+  X, 
+  Check,
+  ChevronDown,
+  FileText
+} from 'lucide-react';
+import { templateService } from '../../api/templateService';
 
 const TemplateCard = ({ title, description }) => (
   <div className="bg-[#FF5341] rounded-xl p-4 text-white cursor-pointer">
@@ -82,7 +63,7 @@ const DeleteCategoryModal = ({ isOpen, onClose, onConfirm }) => {
       <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
         <h3 className="text-lg font-semibold mb-2">Delete Category</h3>
         <p className="text-gray-600 mb-4">
-          Are you sure you want to delete this category? This action cannot be undone.
+          Are you sure you want to delete this category? Templates in this category will be moved to 'All' category.
         </p>
         <div className="flex justify-end space-x-3">
           <button
@@ -242,11 +223,12 @@ const AddCategoryModal = ({ isOpen, onClose, onAdd, availableTemplates }) => {
 };
 
 const Templates = () => {
+  const [templates, setTemplates] = useState([]);
+  const [categories, setCategories] = useState(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [categories, setCategories] = useState([
-    'All', 'Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -254,18 +236,49 @@ const Templates = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const availableTemplates = [
-    'Content Writing',
-    'LinkedIn Post',
-    'Web Developer',
-    'Blog Writing',
-    'Market Writing',
-    'Email Template',
-    'Social Media Post',
-    'Product Description',
-    'SEO Article',
-    'Press Release'
-  ];
+  // Fetch initial data
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Fetch data when category or search changes
+  useEffect(() => {
+    fetchTemplates();
+  }, [selectedCategory, searchQuery]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [categoriesResponse, templatesResponse] = await Promise.all([
+        templateService.getCategories(),
+        templateService.getTemplates()
+      ]);
+
+      if (categoriesResponse.success) {
+        setCategories(categoriesResponse.data);
+      }
+
+      if (templatesResponse.success) {
+        setTemplates(templatesResponse.data);
+      }
+    } catch (error) {
+      setError(error.message);
+      showToastMessage('Error fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await templateService.getTemplates(selectedCategory, searchQuery);
+      if (response.success) {
+        setTemplates(response.data);
+      }
+    } catch (error) {
+      showToastMessage('Error fetching templates');
+    }
+  };
 
   const showToastMessage = (message) => {
     setToastMessage(message);
@@ -285,45 +298,57 @@ const Templates = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleUpdateCategory = (newName) => {
-    if (newName.trim() && !categories.includes(newName.trim())) {
-      setCategories(categories.map(cat => 
-        cat === selectedCategoryForAction ? newName.trim() : cat
-      ));
-      setIsEditModalOpen(false);
-      showToastMessage('Category updated successfully');
+  const handleUpdateCategory = async (newName) => {
+    try {
+      if (newName.trim() && !categories.includes(newName.trim())) {
+        const response = await templateService.updateCategory(
+          selectedCategoryForAction,
+          newName.trim()
+        );
+
+        if (response.success) {
+          await fetchData();
+          setIsEditModalOpen(false);
+          showToastMessage('Category updated successfully');
+        }
+      }
+    } catch (error) {
+      showToastMessage('Error updating category');
     }
   };
 
-  const handleConfirmDelete = () => {
-    setCategories(categories.filter(cat => cat !== selectedCategoryForAction));
-    setIsDeleteModalOpen(false);
-    showToastMessage('Category deleted successfully');
-  };
-
-  const handleAddCategory = ({ name, templates }) => {
-    if (!categories.includes(name)) {
-      setCategories([...categories, name]);
-      // Here you would typically update your backend with the new category
-      // and its associated templates
-      console.log('New category:', name, 'with templates:', templates);
-      setIsAddModalOpen(false);
-      showToastMessage('Category added successfully');
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await templateService.deleteCategory(selectedCategoryForAction);
+      
+      if (response.success) {
+        if (selectedCategory === selectedCategoryForAction) {
+          setSelectedCategory('All');
+        }
+        await fetchData();
+        setIsDeleteModalOpen(false);
+        showToastMessage('Category deleted successfully');
+      }
+    } catch (error) {
+      showToastMessage('Error deleting category');
     }
   };
 
-  // Filter templates based on search query and selected category
-  const filteredTemplates = templateData.filter(template => {
-    const matchesSearch = 
-      template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = 
-      selectedCategory === 'All' || 
-      template.categories.includes(selectedCategory);
-
-    return matchesSearch && matchesCategory;
-  });
+  const handleAddCategory = async ({ name, templates }) => {
+    try {
+      if (!categories.includes(name)) {
+        const response = await templateService.updateCategory('', name.trim());
+        
+        if (response.success) {
+          await fetchData();
+          setIsAddModalOpen(false);
+          showToastMessage('Category added successfully');
+        }
+      }
+    } catch (error) {
+      showToastMessage('Error adding category');
+    }
+  };
 
   return (
     <div className="p-4 md:p-8 space-y-6">
@@ -377,6 +402,7 @@ const Templates = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      handlee.stopPropagation();
                       handleEditCategory(category);
                     }}
                     className="p-1 hover:bg-gray-100 rounded-lg"
@@ -400,27 +426,49 @@ const Templates = () => {
       </div>
 
       {/* Templates Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map((template, index) => (
-          <TemplateCard 
-            key={index} 
-            title={template.title} 
-            description={template.description} 
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#FF5341] border-t-transparent"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-600">{error}</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((template) => (
+            <div key={template._id} className="relative">
+              <TemplateCard
+                title={template.name}
+                description={template.description}
+              />
+            </div>
+          ))}
+          {templates.length === 0 && (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              {searchQuery 
+                ? 'No templates found matching your search'
+                : `No templates found in ${selectedCategory} category`}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modals */}
       <EditCategoryModal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedCategoryForAction(null);
+        }}
         category={selectedCategoryForAction}
         onSave={handleUpdateCategory}
       />
 
       <DeleteCategoryModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedCategoryForAction(null);
+        }}
         onConfirm={handleConfirmDelete}
       />
 
@@ -428,12 +476,12 @@ const Templates = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddCategory}
-        availableTemplates={availableTemplates}
+        availableTemplates={templates.map(t => t.name)}
       />
 
       {/* Toast Notification */}
       {showToast && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up">
+        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up z-50">
           <Check className="w-4 h-4" />
           <span>{toastMessage}</span>
         </div>

@@ -1,208 +1,265 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Send, Search, ChevronLeft } from 'lucide-react';
+import { 
+    MessageSquare, 
+    Send, 
+    Search, 
+    Clock,
+    Circle,
+    ChevronDown,
+    MenuIcon,
+    Bell
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { adminService } from '../../api/admin';
 
 const AdminSupport = () => {
-  const [chats, setChats] = useState([]);
-  const [activeChat, setActiveChat] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showChatList, setShowChatList] = useState(true);
+    const [tickets, setTickets] = useState([]);
+    const [activeTicket, setActiveTicket] = useState(null);
+    const [newMessage, setNewMessage] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    // Handle chat list visibility on resize
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setShowChatList(true);
-      }
+    useEffect(() => {
+        fetchTickets();
+        const interval = setInterval(fetchTickets, 30000); // Refresh every 30 seconds
+        return () => clearInterval(interval);
+    }, []);
+
+    const fetchTickets = async () => {
+        try {
+            setIsLoading(true);
+            const response = await adminService.getAllTickets();
+            setTickets(response.data);
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const handleSendMessage = async () => {
+        if (!newMessage.trim() || !activeTicket) return;
 
-  useEffect(() => {
-    // Dummy data
-    setChats([
-      {
-        id: 1,
-        userName: 'John Doe',
-        messages: [
-          { id: 1, text: 'Hi, I need help with my account', sender: 'user', timestamp: '10:30 AM' },
-          { id: 2, text: 'Sure, how can I help?', sender: 'admin', timestamp: '10:31 AM' }
-        ]
-      },
-      {
-        id: 2,
-        userName: 'Jane Smith',
-        messages: [
-          { id: 1, text: 'Is there anyone available?', sender: 'user', timestamp: '11:20 AM' }
-        ]
-      }
-    ]);
-  }, []);
+        try {
+            setIsLoading(true);
+            const response = await adminService.sendTicketMessage(
+                activeTicket._id,
+                newMessage
+            );
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !activeChat) return;
-
-    const newMsg = {
-      id: Date.now(),
-      text: newMessage,
-      sender: 'admin',
-      timestamp: new Date().toLocaleTimeString()
+            setActiveTicket(response.data);
+            setTickets(tickets.map(ticket => 
+                ticket._id === activeTicket._id ? response.data : ticket
+            ));
+            setNewMessage('');
+        } catch (error) {
+            setError(error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    setChats(chats.map(chat => 
-      chat.id === activeChat.id 
-        ? { ...chat, messages: [...chat.messages, newMsg] }
-        : chat
-    ));
-    
-    setActiveChat(prev => ({
-      ...prev,
-      messages: [...prev.messages, newMsg]
-    }));
-    
-    setNewMessage('');
-  };
+    const handleTicketSelect = async (ticket) => {
+        setActiveTicket(ticket);
+        try {
+            await adminService.markTicketAsRead(ticket._id);
+            fetchTickets(); // Refresh tickets to update read status
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+        }
+    };
 
-  const filteredChats = chats.filter(chat =>
-    chat.userName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    const handleUpdateStatus = async (ticketId, status) => {
+        try {
+            const response = await adminService.updateTicketStatus(ticketId, status);
+            setActiveTicket(response.data);
+            setTickets(tickets.map(ticket => 
+                ticket._id === ticketId ? response.data : ticket
+            ));
+        } catch (error) {
+            setError(error.message);
+        }
+    };
 
-  const handleChatSelect = (chat) => {
-    setActiveChat(chat);
-    if (window.innerWidth < 768) {
-      setShowChatList(false);
-    }
-  };
+    const filteredTickets = tickets.filter(ticket => {
+        const matchesSearch = 
+            ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            ticket.user_id.name.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
+        
+        return matchesSearch && matchesStatus;
+    });
 
-  
+    return (
+        <div className="flex min-h-screen">
+            <div className={`flex-1 transition-all duration-300`}>
+           
 
-return (
-  <div className="p-4 md:p-8 space-y-6">
-    {/* Header */}
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Support Tickets</h1>
-      <p className="text-gray-600">Manage support conversations with users</p>
-    </div>
+                {/* Support Interface */}
+                <div className="max-w-7xl mx-auto p-4">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div className="flex h-[calc(100vh-8rem)]">
+                            {/* Tickets List */}
+                            <div className="w-96 border-r">
+                                <div className="p-4">
+                                    <div className="mb-4">
+                                        <input
+                                            type="text"
+                                            placeholder="Search tickets..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                                        />
+                                    </div>
 
-    {/* Chat Interface */}
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-      <div className="flex h-[calc(100vh-16rem)]">
-        {/* Chat List */}
-        {(showChatList || window.innerWidth >= 768) && (
-          <div className="w-full md:w-80 border-r">
-            <div className="p-4">
-              <div className="relative mb-4">
-                <input
-                  type="text"
-                  placeholder="Search chats..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-                />
-                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              </div>
+                                    <div className="mb-4">
+                                        <select
+                                            value={filterStatus}
+                                            onChange={(e) => setFilterStatus(e.target.value)}
+                                            className="w-full p-2 border rounded-lg"
+                                        >
+                                            <option value="all">All Status</option>
+                                            <option value="open">Open</option>
+                                            <option value="pending">Pending</option>
+                                            <option value="closed">Closed</option>
+                                        </select>
+                                    </div>
 
-              <div className="space-y-2">
-                {filteredChats.map((chat) => (
-                  <div
-                    key={chat.id}
-                    onClick={() => handleChatSelect(chat)}
-                    className={`p-4 rounded-xl cursor-pointer transition-colors ${
-                      activeChat?.id === chat.id
-                        ? 'bg-[#FF5341] text-white'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <h3 className="font-medium mb-1">{chat.userName}</h3>
-                    <p className={`text-sm ${
-                      activeChat?.id === chat.id ? 'text-white/80' : 'text-gray-500'
-                    }`}>
-                      {chat.messages[chat.messages.length - 1]?.text.substring(0, 30)}...
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+                                    <div className="space-y-2">
+                                        {filteredTickets.map((ticket) => (
+                                            <div
+                                                key={ticket._id}
+                                                onClick={() => handleTicketSelect(ticket)}
+                                                className={`p-4 rounded-xl cursor-pointer transition-colors ${
+                                                    activeTicket?._id === ticket._id
+                                                        ? 'bg-[#FF5341] text-white'
+                                                        : 'hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h3 className="font-medium">{ticket.user_id.name}</h3>
+                                                        <p className="text-sm opacity-80">{ticket.subject}</p>
+                                                    </div>
+                                                    <span className={`px-2 py-1 text-xs rounded-full ${
+                                                        ticket.status === 'open' ? 'bg-green-100 text-green-800' :
+                                                        ticket.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                                    }`}>
+                                                        {ticket.status}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs mt-2">
+                                                    {new Date(ticket.last_message).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
 
-        {/* Chat Area */}
-        <div className={`flex-1 flex flex-col ${!showChatList || window.innerWidth >= 768 ? 'block' : 'hidden'}`}>
-          {activeChat ? (
-            <>
-              <div className="p-4 border-b">
-                <div className="flex items-center">
-                  {window.innerWidth < 768 && (
-                    <button
-                      onClick={() => setShowChatList(true)}
-                      className="mr-3 p-1 hover:bg-gray-100 rounded-lg md:hidden"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                  )}
-                  <div>
-                    <h3 className="font-bold text-lg">{activeChat.userName}</h3>
-                    <p className="text-sm text-gray-500">Active Now</p>
-                  </div>
-                </div>
-              </div>
+                            {/* Chat Area */}
+                            <div className="flex-1 flex flex-col">
+                                {activeTicket ? (
+                                    <>
+                                        {/* Chat Header */}
+                                        <div className="p-4 border-b">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h3 className="font-bold text-lg">
+                                                        {activeTicket.user_id.name}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500">
+                                                        Ticket #{activeTicket._id.substring(0, 8)}
+                                                    </p>
+                                                </div>
+                                                <select
+                                                    value={activeTicket.status}
+                                                    onChange={(e) => handleUpdateStatus(activeTicket._id, e.target.value)}
+                                                    className={`px-3 py-1 rounded-lg text-sm ${
+                                                        activeTicket.status === 'open' ? 'bg-green-100 text-green-800' :
+                                                        activeTicket.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-gray-100 text-gray-800'
+                                                    }`}
+                                                >
+                                                    <option value="open">Open</option>
+                                                    <option value="pending">Pending</option>
+                                                    <option value="closed">Closed</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                {activeChat.messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-[85%] md:max-w-[70%] rounded-xl p-3 ${
-                      msg.sender === 'admin' 
-                        ? 'bg-[#FF5341] text-white' 
-                        : 'bg-white'
-                    }`}>
-                      <p className="break-words">{msg.text}</p>
-                      <p className="text-xs opacity-70 mt-1">{msg.timestamp}</p>
+                                        {/* Messages */}
+                                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                            {activeTicket.messages.map((msg) => (
+                                                <div
+                                                    key={msg._id}
+                                                    className={`flex ${msg.sender_type === 'Admin' ? 'justify-end' : 'justify-start'}`}
+                                                >
+                                                    <div className={`max-w-[70%] rounded-xl p-3 ${
+                                                        msg.sender_type === 'Admin' 
+                                                            ? 'bg-[#FF5341] text-white' 
+                                                            : 'bg-gray-100'
+                                                    }`}>
+                                                        <p>{msg.message}</p>
+                                                        <div className="text-xs opacity-70 mt-1">
+                                                            {new Date(msg.timestamp).toLocaleTimeString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Message Input */}
+                                        <div className="p-4 border-t">
+                                            <div className="flex space-x-2">
+                                                <input
+                                                    type="text"
+                                                    value={newMessage}
+                                                    onChange={(e) => setNewMessage(e.target.value)}
+                                                    placeholder="Type your message..."
+                                                    className="flex-1 p-2 border rounded-lg"
+                                                    onKeyPress={(e) => {
+                                                        if (e.key === 'Enter') handleSendMessage();
+                                                    }}
+                                                />
+                                                <button
+                                                    onClick={handleSendMessage}
+                                                    disabled={!newMessage.trim() || isLoading}
+                                                    className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 disabled:opacity-50"
+                                                >
+                                                    <Send className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <div className="text-center text-gray-500">
+                                            <MessageSquare className="w-12 h-12 mx-auto mb-2" />
+                                            <p>Select a ticket to view conversation</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-4 border-t bg-white">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 p-3 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') handleSendMessage();
-                    }}
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
-                    className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
                 </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-gray-50">
-              <div className="text-center text-gray-500">
-                <MessageSquare className="w-12 h-12 mx-auto mb-2" />
-                <p>Select a chat to view conversation</p>
-              </div>
             </div>
-          )}
+
+            {/* Error Toast */}
+            {error && (
+                <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                    {error}
+                </div>
+            )}
         </div>
-      </div>
-    </div>
-  </div>
-);
+    );
 };
 
 export default AdminSupport;

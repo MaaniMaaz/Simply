@@ -2,10 +2,20 @@
 import API from './config';
 
 export const adminNotificationService = {
-    // Send notification to all users
-    sendNotification: async (message) => {
+    // Get all notification templates
+    getTemplates: async () => {
         try {
-            const response = await API.post('/admin/notifications/send', { message });
+            const response = await API.get('/admin/notifications/templates');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // Update notification template
+    updateTemplate: async (templateData) => {
+        try {
+            const response = await API.put('/admin/notifications/templates', templateData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error;

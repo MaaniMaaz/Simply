@@ -52,4 +52,42 @@ export const adminService = {
         const admin = localStorage.getItem('admin');
         return admin ? JSON.parse(admin) : null;
     }
+
 };
+
+adminService.getAllTickets = async () => {
+    try {
+        const response = await API.get('/admin/tickets');
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+adminService.sendTicketMessage = async (ticketId, message) => {
+    try {
+        const response = await API.post(`/admin/tickets/${ticketId}/messages`, { message });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+adminService.updateTicketStatus = async (ticketId, status) => {
+    try {
+        const response = await API.put(`/admin/tickets/${ticketId}/status`, { status });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+
+adminService.markTicketAsRead = async (ticketId) => {
+    try {
+        const response = await API.put(`/admin/tickets/${ticketId}/read`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};
+

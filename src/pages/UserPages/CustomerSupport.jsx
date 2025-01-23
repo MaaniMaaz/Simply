@@ -2,12 +2,22 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
 import { MessageSquare, Send, MenuIcon, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ticketService } from '../../api/ticket';
 
 const CustomerSupport = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [activeTicket, setActiveTicket] = useState(null);
   const [newMessage, setNewMessage] = useState('');
+  const [newTicket, setNewTicket] = useState({ subject: '', message: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [showNewTicketForm, setShowNewTicketForm] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -23,35 +33,82 @@ const CustomerSupport = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const fetchTickets = async () => {
+    try {
+      setIsLoading(true);
+      const response = await ticketService.getUserTickets();
+      setTickets(response.data);
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const userMessage = {
-      id: Date.now(),
-      text: newMessage,
-      sender: 'user',
-      timestamp: new Date().toLocaleTimeString()
-    };
+  const handleCreateTicket = async (e) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      const response = await ticketService.createTicket(
+        newTicket.subject,
+        newTicket.message
+      );
+      setTickets([response.data, ...tickets]);
+      setActiveTicket(response.data);
+      setShowNewTicketForm(false);
+      setNewTicket({ subject: '', message: '' });
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    setMessages([...messages, userMessage]);
-    setNewMessage('');
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeTicket) return;
 
-    setTimeout(() => {
-      const adminResponse = {
-        id: Date.now() + 1,
-        text: 'Thank you for your message. An admin will respond shortly.',
-        sender: 'admin',
-        timestamp: new Date().toLocaleTimeString()
-      };
-      setMessages(prev => [...prev, adminResponse]);
-    }, 1000);
+    try {
+      setIsLoading(true);
+      const response = await ticketService.sendMessage(
+        activeTicket._id,
+        newMessage
+      );
+
+      // Update the active ticket with the new message
+      setActiveTicket(response.data);
+      
+      // Update the ticket in the tickets list
+      setTickets(tickets.map(ticket => 
+        ticket._id === activeTicket._id ? response.data : ticket
+      ));
+      
+      setNewMessage('');
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTicketSelect = async (ticket) => {
+    setActiveTicket(ticket);
+    try {
+      await ticketService.markAsRead(ticket._id);
+      // Update tickets list to reflect read status
+      fetchTickets();
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#FFFAF3]">
-      {/* Sidebar - Hidden on mobile */}
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
       <div className="hidden md:block md:fixed md:left-0 md:h-screen z-50">
-        <Sidebar isCollapsed={isSidebarCollapsed} setIsCollapsed={setIsSidebarCollapsed} />
+        <Sidebar 
+          isCollapsed={isSidebarCollapsed} 
+          setIsCollapsed={setIsSidebarCollapsed} 
+        />
       </div>
 
       {/* Main Content */}
@@ -66,11 +123,7 @@ const CustomerSupport = () => {
               >
                 <MenuIcon className="h-6 w-6" />
               </button>
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-xl font-semibold">Support Chat</h1>
-                <p className="text-sm text-gray-600">Get help from our support team</p>
-              </div>
-              <div className="relative">
+              <div className="relative ml-auto">
                 <button 
                   onClick={() => navigate('/notifications')}
                   className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
@@ -83,71 +136,175 @@ const CustomerSupport = () => {
           </div>
         </div>
 
-        {/* Mobile Sidebar */}
-        {!isSidebarCollapsed && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setIsSidebarCollapsed(true)}>
-            <div className="fixed inset-y-0 left-0 w-64 bg-white" onClick={e => e.stopPropagation()}>
-              <Sidebar isCollapsed={false} setIsCollapsed={setIsSidebarCollapsed} />
-            </div>
-          </div>
-        )}
+        {/* Chat Interface */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="flex h-[calc(100vh-16rem)]">
+              {/* Tickets List */}
+              <div className="w-full md:w-80 border-r">
+                <div className="p-4">
+                  <button
+                    onClick={() => setShowNewTicketForm(true)}
+                    className="w-full bg-[#FF5341] text-white px-4 py-2 rounded-lg mb-4 hover:bg-[#FF5341]/90"
+                  >
+                    New Ticket
+                  </button>
 
-        {/* Chat Container */}
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="flex flex-col h-[calc(100vh-12rem)]">
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                    <MessageSquare className="w-12 h-12 mb-2" />
-                    <p>Send a message to start the conversation</p>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div className={`max-w-[85%] md:max-w-[70%] rounded-xl p-3 ${
-                        message.sender === 'user' 
-                          ? 'bg-[#FF5341] text-white' 
-                          : 'bg-gray-100'
-                      }`}>
-                        <p className="break-words">{message.text}</p>
-                        <p className="text-xs opacity-70 mt-1">{message.timestamp}</p>
+                  {/* Tickets List */}
+                  <div className="space-y-2 overflow-y-auto">
+                    {tickets.map((ticket) => (
+                      <div
+                        key={ticket._id}
+                        onClick={() => handleTicketSelect(ticket)}
+                        className={`p-4 rounded-xl cursor-pointer transition-colors ${
+                          activeTicket?._id === ticket._id
+                            ? 'bg-[#FF5341] text-white'
+                            : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <h3 className="font-medium mb-1">{ticket.subject}</h3>
+                        <p className={`text-sm ${
+                          activeTicket?._id === ticket._id ? 'text-white/80' : 'text-gray-500'
+                        }`}>
+                          {ticket.messages[ticket.messages.length - 1]?.message.substring(0, 30)}...
+                        </p>
+                        <div className="text-xs mt-2">
+                          {new Date(ticket.created_at).toLocaleDateString()}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* Message Input */}
-              <div className="p-4 border-t">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 p-3 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') handleSendMessage();
-                    }}
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
-                    className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
+              {/* Chat Area */}
+              <div className="flex-1 flex flex-col">
+                {activeTicket ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="p-4 border-b">
+                      <h3 className="font-bold text-lg">{activeTicket.subject}</h3>
+                      <p className="text-sm text-gray-500">
+                        Ticket #{activeTicket._id.substring(0, 8)}
+                      </p>
+                    </div>
+
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                      {activeTicket.messages.map((msg) => (
+                        <div
+                          key={msg._id}
+                          className={`flex ${msg.sender_type === 'User' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div className={`max-w-[70%] rounded-xl p-3 ${
+                            msg.sender_type === 'User' 
+                              ? 'bg-[#FF5341] text-white' 
+                              : 'bg-gray-100'
+                          }`}>
+                            <p>{msg.message}</p>
+                            <div className="text-xs opacity-70 mt-1">
+                              {new Date(msg.timestamp).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Message Input */}
+                    <div className="p-4 border-t">
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Type your message..."
+                          className="flex-1 p-2 border rounded-lg focus:ring-[#FF5341]"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') handleSendMessage();
+                          }}
+                        />
+                        <button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim() || isLoading}
+                          className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 disabled:opacity-50"
+                        >
+                          <Send className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center text-gray-500">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-2" />
+                      <p>Select a ticket to view the conversation</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* New Ticket Modal */}
+      {showNewTicketForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Create New Ticket</h3>
+            <form onSubmit={handleCreateTicket}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    value={newTicket.subject}
+                    onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                    className="w-full p-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Message
+                  </label>
+                  <textarea
+                    value={newTicket.message}
+                    onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })}
+                    className="w-full p-2 border rounded-lg h-32"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNewTicketForm(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90 disabled:opacity-50"
+                >
+                  {isLoading ? 'Creating...' : 'Create Ticket'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {error && (
+        <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          {error}
+        </div>
+      )}
     </div>
   );
 };

@@ -7,17 +7,39 @@ import {
     Clock,
     Check,
     X,
-    BookOpenCheck
+    BookOpenCheck,
+    AlertTriangle,
+    CreditCard,
+    FileText,
+    UserPlus,
+    LogIn
 } from 'lucide-react';
 import Sidebar from '../../components/Shared/Sidebar';
 import { notificationService } from '../../api/notification';
 import { useNavigate } from 'react-router-dom';
 
+const getNotificationIcon = (trigger_type) => {
+    switch (trigger_type) {
+        case 'registration':
+            return <UserPlus className="w-5 h-5 text-[#FF5341]" />;
+        case 'login':
+            return <LogIn className="w-5 h-5 text-[#FF5341]" />;
+        case 'subscription':
+            return <CreditCard className="w-5 h-5 text-[#FF5341]" />;
+        case 'credits':
+            return <AlertTriangle className="w-5 h-5 text-[#FF5341]" />;
+        case 'template':
+            return <FileText className="w-5 h-5 text-[#FF5341]" />;
+        default:
+            return <Bell className="w-5 h-5 text-[#FF5341]" />;
+    }
+};
+
 const NotificationCard = ({ notification, onMarkAsRead }) => (
     <div className="bg-white rounded-xl p-6 border border-gray-100 hover:shadow-md transition-all">
         <div className="flex items-start space-x-4">
             <div className="bg-[#FF5341] bg-opacity-10 p-2 rounded-lg">
-                <Bell className="w-5 h-5 text-[#FF5341]" />
+                {getNotificationIcon(notification.trigger_type)}
             </div>
             <div className="flex-1">
                 <p className="text-gray-800 mb-2">{notification.message}</p>
@@ -25,11 +47,11 @@ const NotificationCard = ({ notification, onMarkAsRead }) => (
                     <div className="flex items-center space-x-4">
                         <div className="flex items-center text-sm text-gray-500">
                             <Calendar className="w-4 h-4 mr-1" />
-                            {new Date(notification.sent_at).toLocaleDateString()}
+                            {new Date(notification.created_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center text-sm text-gray-500">
                             <Clock className="w-4 h-4 mr-1" />
-                            {new Date(notification.sent_at).toLocaleTimeString()}
+                            {new Date(notification.created_at).toLocaleTimeString()}
                         </div>
                     </div>
                     {!notification.is_read && (
@@ -76,6 +98,7 @@ const Notifications = () => {
 
     const fetchNotifications = async () => {
         try {
+            setLoading(true);
             const response = await notificationService.getNotifications();
             setNotifications(response.data);
         } catch (error) {
@@ -88,7 +111,6 @@ const Notifications = () => {
     const handleMarkAsRead = async (notificationId) => {
         try {
             await notificationService.markAsRead(notificationId);
-            // Update local state
             setNotifications(notifications.map(notif => 
                 notif._id === notificationId ? { ...notif, is_read: true } : notif
             ));
@@ -140,7 +162,7 @@ const Notifications = () => {
                     {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">Your Notifications</h1>
-                        <p className="text-gray-600">Stay updated with the latest announcements and features</p>
+                        <p className="text-gray-600">Stay updated with the latest announcements and activities</p>
                     </div>
 
                     {/* Notifications List */}

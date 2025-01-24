@@ -8,9 +8,7 @@ export const authService = {
             localStorage.removeItem('user');
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin');
-
             const response = await API.post('/users/login', credentials);
-            
             if (response.data.success) {
                 // Only set user tokens, never admin tokens
                 localStorage.setItem('token', response.data.data.token);
@@ -31,9 +29,7 @@ export const authService = {
             localStorage.removeItem('user');
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin');
-
             const response = await API.post('/users/register', userData);
-            
             if (response.data.success) {
                 // Only set user tokens
                 localStorage.setItem('token', response.data.data.token);
@@ -64,8 +60,6 @@ export const authService = {
         const user = localStorage.getItem('user');
         return !!(token && user); // Ensure both token and user exist
     },
-
-
     getUser: () => {
         try {
             const user = localStorage.getItem('user');

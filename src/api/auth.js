@@ -9,7 +9,6 @@ export const authService = {
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin');
 
-
             const response = await API.post('/users/login', credentials);
             
             if (response.data.success) {
@@ -32,7 +31,6 @@ export const authService = {
             localStorage.removeItem('user');
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin');
-
 
             const response = await API.post('/users/register', userData);
             

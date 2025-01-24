@@ -27,10 +27,10 @@ import { getTimeBasedGreeting } from '../../utils/helpers';
 import axios from 'axios';
 
 const axiosWithAuth = axios.create({
-  baseURL: 'http://localhost:5000/api'
+  baseURL: 'https://simply-backend-yl91.onrender.com/api'
 });
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://simply-backend-yl91.onrender.com/api';
 
 // Add request interceptor
 axiosWithAuth.interceptors.request.use(

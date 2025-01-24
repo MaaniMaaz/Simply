@@ -2,30 +2,51 @@
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
 import { 
-  Users,
-  FileText,
-  Layout,
-  BarChart2,
-  Settings,
-  FileEdit,
-  MenuIcon,
-  Bell,
-  Zap,
-  Download,
-  ArrowRight,
-  Play,
-  FileCheck2,
-  ArrowUpRight,
-  ArrowDownRight
+  Users, FileText, Layout, BarChart2, Settings, FileEdit, MenuIcon, Bell, Zap, 
+  Download, ArrowRight, Play, FileCheck2, ArrowUpRight, ArrowDownRight 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ai1 from '../../assets/ai1.svg';
-import { userService } from '../../api/user';
-import { dashboardService } from '../../api/dashboard';
-import { subscriptionService } from '../../api/subscription';
 import { getTimeBasedGreeting } from '../../utils/helpers';
-import API from '../../api/config';
+
+const DUMMY_DATA = {
+  stats: {
+    name: "John Doe",
+    credits_left: 5000,
+    total_words_generated: 25000,
+    total_templates_run: 150,
+    total_documents_saved: 75,
+    current_plan: {
+      name: "Professional",
+      price: 19.99
+    }
+  },
+  wordStats: [
+    { date: '2024-01', words: 4500 },
+    { date: '2024-02', words: 5200 },
+    { date: '2024-03', words: 6100 },
+    { date: '2024-04', words: 5800 },
+    { date: '2024-05', words: 7200 },
+    { date: '2024-06', words: 8500 }
+  ],
+  recentDocuments: [
+    { _id: '1', name: 'SEO Article - Digital Marketing', created_at: '2024-01-20' },
+    { _id: '2', name: 'Blog Post - AI Trends', created_at: '2024-01-18' },
+    { _id: '3', name: 'Product Description', created_at: '2024-01-15' }
+  ],
+  favoriteTemplates: [
+    { _id: '1', name: 'Blog Post', description: 'Create engaging blog posts' },
+    { _id: '2', name: 'SEO Article', description: 'SEO-optimized content' },
+    { _id: '3', name: 'Social Media', description: 'Social media posts' },
+    { _id: '4', name: 'Product Copy', description: 'Compelling product descriptions' }
+  ],
+  documentHistory: [
+    { _id: 'doc1', created_at: '2024-01-20', type: 'Blog Post' },
+    { _id: 'doc2', created_at: '2024-01-18', type: 'Article' },
+    { _id: 'doc3', created_at: '2024-01-15', type: 'Social Post' }
+  ]
+};
 
 const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4">
@@ -51,88 +72,21 @@ const ArticleCard = ({ title, date }) => (
 const Dashboard = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [wordStats, setWordStats] = useState([]);
-  const [recentDocuments, setRecentDocuments] = useState([]);
-  const [favoriteTemplates, setFavoriteTemplates] = useState([]);
-  const [documentHistory, setDocumentHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState(DUMMY_DATA.stats);
+  const [wordStats, setWordStats] = useState(DUMMY_DATA.wordStats);
+  const [recentDocuments, setRecentDocuments] = useState(DUMMY_DATA.recentDocuments);
+  const [favoriteTemplates, setFavoriteTemplates] = useState(DUMMY_DATA.favoriteTemplates);
+  const [documentHistory, setDocumentHistory] = useState(DUMMY_DATA.documentHistory);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsSidebarCollapsed(false);
-      } else {
-        setIsSidebarCollapsed(true);
-      }
+      setIsSidebarCollapsed(window.innerWidth < 768);
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        const [
-          statsResponse,
-          wordStatsResponse,
-          documentsResponse,
-          templatesResponse,
-          historyResponse
-        ] = await Promise.all([
-          dashboardService.getStats(),
-          dashboardService.getWordStats(),
-          dashboardService.getRecentDocuments(),
-          dashboardService.getFavoriteTemplates(),
-          dashboardService.getDocumentHistory()
-        ]);
-  
-        setDashboardData({
-          name: statsResponse.data.data.name,
-          credits_left: statsResponse.data.data.credits_left,
-          total_words_generated: statsResponse.data.data.total_words_generated,
-          total_templates_run: statsResponse.data.data.total_templates_run,
-          total_documents_saved: statsResponse.data.data.total_documents_saved,
-          current_plan: statsResponse.data.data.current_plan
-        });
-  
-        const wordStatsData = wordStatsResponse.data.data;
-        setWordStats(wordStatsData);
-  
-        setRecentDocuments(documentsResponse.data.data);
-        setFavoriteTemplates(templatesResponse.data.data);
-        setDocumentHistory(historyResponse.data.data);
-  
-      } catch (err) {
-        setError(err.response?.data?.message || 'Error fetching dashboard data');
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchDashboardData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF5341]"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-red-600">Error: {error}</div>
-      </div>
-    );
-  }
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -348,8 +302,7 @@ const Dashboard = () => {
               ) : (
                 <div className="col-span-full text-center py-8 text-gray-500">
                   No documents generated yet
-                </div>
-              )}
+                </div>)}
             </div>
           </div>
 

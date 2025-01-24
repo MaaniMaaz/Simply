@@ -1,10 +1,8 @@
 // src/api/config.js
 import axios from 'axios';
 
-import { API_URL } from '../config/environment';
-
 const API = axios.create({
-    baseURL: API_URL,
+    baseURL: 'https://simply-backend-yl91.onrender.com/api',
     headers: {
         'Content-Type': 'application/json'
     }

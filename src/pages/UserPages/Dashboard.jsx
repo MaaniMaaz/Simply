@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ai1 from '../../assets/ai1.svg';
 import { userService } from '../../api/user';
+import { dashboardService } from '../../api/dashboard';
 import { subscriptionService } from '../../api/subscription';
 import { getTimeBasedGreeting } from '../../utils/helpers';
 import API from '../../api/config';
@@ -84,11 +85,11 @@ const Dashboard = () => {
           templatesResponse,
           historyResponse
         ] = await Promise.all([
-          API.get('/dashboard/stats'),
-          API.get('/dashboard/word-stats'),
-          API.get('/dashboard/recent-documents'),
-          API.get('/dashboard/favorite-templates'),
-          API.get('/dashboard/document-history')
+          dashboardService.getStats(),
+          dashboardService.getWordStats(),
+          dashboardService.getRecentDocuments(),
+          dashboardService.getFavoriteTemplates(),
+          dashboardService.getDocumentHistory()
         ]);
   
         setDashboardData({

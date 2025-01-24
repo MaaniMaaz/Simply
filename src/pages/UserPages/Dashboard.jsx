@@ -24,27 +24,7 @@ import ai1 from '../../assets/ai1.svg';
 import { userService } from '../../api/user';
 import { subscriptionService } from '../../api/subscription';
 import { getTimeBasedGreeting } from '../../utils/helpers';
-import axios from 'axios';
-
-const axiosWithAuth = axios.create({
-  baseURL: 'https://simply-backend-yl91.onrender.com/api'
-});
-
-const API_URL = 'https://simply-backend-yl91.onrender.com/api';
-
-// Add request interceptor
-axiosWithAuth.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import API from '../../api/config';
 
 const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4">
@@ -92,13 +72,11 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Update in the fetchDashboardData useEffect
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         
-        // Get all data in parallel
         const [
           statsResponse,
           wordStatsResponse,
@@ -106,15 +84,15 @@ const Dashboard = () => {
           templatesResponse,
           historyResponse
         ] = await Promise.all([
-          axiosWithAuth.get('/dashboard/stats'),
-          axiosWithAuth.get('/dashboard/word-stats'),
-          axiosWithAuth.get('/dashboard/recent-documents'),
-          axiosWithAuth.get('/dashboard/favorite-templates'),
-          axiosWithAuth.get('/dashboard/document-history')
+          API.get('/dashboard/stats'),
+          API.get('/dashboard/word-stats'),
+          API.get('/dashboard/recent-documents'),
+          API.get('/dashboard/favorite-templates'),
+          API.get('/dashboard/document-history')
         ]);
   
         setDashboardData({
-          name: statsResponse.data.data.name,  // This was missing
+          name: statsResponse.data.data.name,
           credits_left: statsResponse.data.data.credits_left,
           total_words_generated: statsResponse.data.data.total_words_generated,
           total_templates_run: statsResponse.data.data.total_templates_run,
@@ -122,7 +100,6 @@ const Dashboard = () => {
           current_plan: statsResponse.data.data.current_plan
         });
   
-        // Use wordStatsResponse.data.data if it exists, otherwise use generated data
         const wordStatsData = wordStatsResponse.data.data;
         setWordStats(wordStatsData);
   
@@ -190,7 +167,6 @@ const Dashboard = () => {
                   <Bell className="w-6 h-6 text-gray-600" />
                   <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
                 </button>
-                {/* Continuing from where we left off */}
               </div>
             </div>
           </div>

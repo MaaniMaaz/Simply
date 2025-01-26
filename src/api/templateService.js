@@ -13,19 +13,10 @@ export const templateService = {
 
     getTemplates: async (category = 'All') => {
         try {
-            const url = `/admin/templates${category !== 'All' ? `?category=${category}` : ''}`;
-            console.log("Fetching templates from:", url);
+            const url = category === 'All' 
+                ? '/admin/templates/all'
+                : `/admin/templates/all?category=${encodeURIComponent(category)}`;
             const response = await API.get(url);
-            console.log("Template response:", response.data);
-            return response.data;
-        } catch (error) {
-            console.error("Template service error:", error);
-            throw error.response?.data || error;
-        }
-    },
-    getAllTemplates: async () => {
-        try {
-            const response = await API.get('/admin/templates');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -42,10 +33,17 @@ export const templateService = {
             throw error.response?.data || error.message;
         }
     },
-
-    deleteCategory: async (category) => {
+    getTemplatesWithCategories: async () => {
         try {
-            const response = await API.delete(`/admin/templates/categories/${category}`);
+            const response = await API.get('/admin/templates/grouped');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+    updateTemplate: async (templateId, templateData) => {
+        try {
+            const response = await API.put(`/admin/templates/${templateId}`, templateData);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

@@ -1,4 +1,3 @@
-// src/api/dashboard.js
 import API from './config';
 
 export const dashboardService = {
@@ -11,9 +10,14 @@ export const dashboardService = {
         }
     },
 
-    getWordStats: async () => {
+    getWordStats: async (startDate, endDate, groupBy = 'day') => {
         try {
-            const response = await API.get('/dashboard/word-stats');
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            if (groupBy) params.append('groupBy', groupBy);
+
+            const response = await API.get(`/dashboard/word-stats?${params}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

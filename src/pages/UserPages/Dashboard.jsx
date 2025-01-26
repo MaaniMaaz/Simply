@@ -21,30 +21,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import ai1 from '../../assets/ai1.svg';
-import { userService } from '../../api/user';
-import { subscriptionService } from '../../api/subscription';
+import { dashboardService } from '../../api/dashboard';
 import { getTimeBasedGreeting } from '../../utils/helpers';
-import axios from 'axios';
-
-const axiosWithAuth = axios.create({
-  baseURL: 'http://localhost:5000/api'
-});
-
-const API_URL = 'http://localhost:5000/api';
-
-// Add request interceptor
-axiosWithAuth.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4">
@@ -78,13 +56,20 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Initialize with 6 months ago and format as YYYY-MM-DD
+  const formatDateToYYYYMMDD = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const [dateRange, setDateRange] = useState({
+    startDate: formatDateToYYYYMMDD(new Date(new Date().setMonth(new Date().getMonth() - 6))),
+    endDate: formatDateToYYYYMMDD(new Date())
+  });
+  const [groupBy, setGroupBy] = useState('day');
+
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsSidebarCollapsed(false);
-      } else {
-        setIsSidebarCollapsed(true);
-      }
+      setIsSidebarCollapsed(window.innerWidth < 768);
     };
 
     handleResize();
@@ -92,7 +77,25 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Update in the fetchDashboardData useEffect
+  // Separate useEffect for word stats
+  useEffect(() => {
+    const fetchWordStats = async () => {
+      try {
+        const response = await dashboardService.getWordStats(
+          dateRange.startDate,
+          dateRange.endDate,
+          groupBy
+        );
+        setWordStats(response.data);
+      } catch (err) {
+        console.error('Error fetching word stats:', err);
+      }
+    };
+
+    fetchWordStats();
+  }, [dateRange.startDate, dateRange.endDate, groupBy]);
+
+  // Main data fetching useEffect
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -101,34 +104,28 @@ const Dashboard = () => {
         // Get all data in parallel
         const [
           statsResponse,
-          wordStatsResponse,
           documentsResponse,
           templatesResponse,
           historyResponse
         ] = await Promise.all([
-          axiosWithAuth.get('/dashboard/stats'),
-          axiosWithAuth.get('/dashboard/word-stats'),
-          axiosWithAuth.get('/dashboard/recent-documents'),
-          axiosWithAuth.get('/dashboard/favorite-templates'),
-          axiosWithAuth.get('/dashboard/document-history')
+          dashboardService.getStats(),
+          dashboardService.getRecentDocuments(),
+          dashboardService.getFavoriteTemplates(),
+          dashboardService.getDocumentHistory()
         ]);
   
         setDashboardData({
-          name: statsResponse.data.data.name,  // This was missing
-          credits_left: statsResponse.data.data.credits_left,
-          total_words_generated: statsResponse.data.data.total_words_generated,
-          total_templates_run: statsResponse.data.data.total_templates_run,
-          total_documents_saved: statsResponse.data.data.total_documents_saved,
-          current_plan: statsResponse.data.data.current_plan
+          name: statsResponse.data.name,
+          credits_left: statsResponse.data.credits_left,
+          total_words_generated: statsResponse.data.total_words_generated,
+          total_templates_run: statsResponse.data.total_templates_run,
+          total_documents_saved: statsResponse.data.total_documents_saved,
+          current_plan: statsResponse.data.current_plan
         });
   
-        // Use wordStatsResponse.data.data if it exists, otherwise use generated data
-        const wordStatsData = wordStatsResponse.data.data;
-        setWordStats(wordStatsData);
-  
-        setRecentDocuments(documentsResponse.data.data);
-        setFavoriteTemplates(templatesResponse.data.data);
-        setDocumentHistory(historyResponse.data.data);
+        setRecentDocuments(documentsResponse.data);
+        setFavoriteTemplates(templatesResponse.data);
+        setDocumentHistory(historyResponse.data);
   
       } catch (err) {
         setError(err.response?.data?.message || 'Error fetching dashboard data');
@@ -139,6 +136,13 @@ const Dashboard = () => {
   
     fetchDashboardData();
   }, []);
+
+  const handleDateChange = (type, value) => {
+    setDateRange(prev => ({
+      ...prev,
+      [type]: value
+    }));
+  };
 
   if (loading) {
     return (
@@ -190,7 +194,6 @@ const Dashboard = () => {
                   <Bell className="w-6 h-6 text-gray-600" />
                   <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
                 </button>
-                {/* Continuing from where we left off */}
               </div>
             </div>
           </div>
@@ -287,10 +290,38 @@ const Dashboard = () => {
 
           {/* Words Generation Graph */}
           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0 mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
               <div>
                 <h2 className="text-lg md:text-xl font-semibold">Words Generated</h2>
-                <p className="text-xs md:text-sm text-gray-600">Last 6 months statistics</p>
+                <p className="text-xs md:text-sm text-gray-600">View statistics by date range</p>
+              </div>
+              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                <div className="flex gap-4">
+                  <input
+                    type="date"
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    value={dateRange.startDate}
+                    max={dateRange.endDate}
+                    onChange={(e) => handleDateChange('startDate', e.target.value)}
+                  />
+                  <input
+                    type="date"
+                    className="px-3 py-2 border rounded-lg text-sm"
+                    value={dateRange.endDate}
+                    min={dateRange.startDate}
+                    max={formatDateToYYYYMMDD(new Date())}
+                    onChange={(e) => handleDateChange('endDate', e.target.value)}
+                  />
+                </div>
+                <select
+                  className="px-3 py-2 border rounded-lg text-sm"
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value)}
+                >
+                  <option value="day">Daily</option>
+                  <option value="month">Monthly</option>
+                  <option value="year">Yearly</option>
+                </select>
               </div>
             </div>
 
@@ -305,7 +336,11 @@ const Dashboard = () => {
                     axisLine={{ stroke: '#E5E7EB' }}
                     tickFormatter={(value) => {
                       const date = new Date(value);
-                      return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                      return groupBy === 'year' 
+                        ? value 
+                        : groupBy === 'month'
+                        ? date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+                        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     }}
                   />
                   <YAxis
@@ -324,9 +359,10 @@ const Dashboard = () => {
                     labelStyle={{ color: '#374151', fontWeight: 500 }}
                     labelFormatter={(value) => {
                       const date = new Date(value);
-                      return date.toLocaleDateString('en-US', { 
+                      return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
                         month: 'long',
-                        year: 'numeric'
+                        day: groupBy === 'day' ? 'numeric' : undefined
                       });
                     }}
                     formatter={(value) => [`${value} words`]}

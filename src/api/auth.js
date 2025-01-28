@@ -25,6 +25,21 @@ export const authService = {
             throw error.response?.data || error.message;
         }
     },
+
+
+
+   // src/api/auth.js
+sendVerificationCode: async (userData) => {
+    try {
+      console.log('Sending verification code for:', userData); // Debug log
+      const response = await API.post('/users/send-verification', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Verification code error:', error); // Debug log
+      throw error.response?.data || error.message;
+    }
+  },
+
     register: async (userData) => {
         try {
             // Clear any existing tokens before registration
@@ -33,22 +48,39 @@ export const authService = {
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin');
 
-
             const response = await API.post('/users/register', userData);
             
             if (response.data.success) {
-                // Only set user tokens
                 localStorage.setItem('token', response.data.data.token);
                 localStorage.setItem('user', JSON.stringify(response.data.data.user));
             }
             return response.data;
         } catch (error) {
-            // Clear any tokens on error
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             throw error.response?.data || error.message;
         }
     },
+
+
+    sendPasswordResetCode: async (email) => {
+        try {
+            const response = await API.post('/users/send-password-reset', { email });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    resetPassword: async (resetData) => {
+        try {
+            const response = await API.post('/users/reset-password', resetData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
     logout: async () => {
         try {
             // Try to call logout API

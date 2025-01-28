@@ -1,6 +1,13 @@
 // src/api/config.js
 import axios from 'axios';
 
+
+//LOCAL HOST URL FOR LOCAL MACHINE RUN 
+//http://localhost:5000/api
+
+// RENDER DEPLOYMENT URL, CHANGE ACCORDINGLY
+//https://simply-backend-yl91.onrender.com/api
+
 const API = axios.create({
     baseURL: 'https://simply-backend-yl91.onrender.com/api',
     headers: {

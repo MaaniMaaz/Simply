@@ -15,7 +15,10 @@ import {
   LogOut,
   ExternalLink,
   X,
-  Check
+  Check,
+  Lock,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../../api/user';
@@ -42,6 +45,131 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
+const ChangePasswordModal = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+      currentPassword: '',
+      newPassword: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
+  const handleChange = (e) => {
+      setFormData({
+          ...formData,
+          [e.target.name]: e.target.value
+      });
+  };
+
+  const handleSubmit = async (e) => {
+      e.preventDefault();
+      setError('');
+      setLoading(true);
+
+      try {
+          await userService.changePassword(formData);
+          onClose();
+          showToastMessage('Password updated successfully');
+      } catch (error) {
+          setError(error.message || 'Error changing password');
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+              
+              {error && (
+                  <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                      {error}
+                  </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Current Password
+                      </label>
+                      <div className="relative">
+                          <input
+                              type={showCurrentPassword ? "text" : "password"}
+                              name="currentPassword"
+                              value={formData.currentPassword}
+                              onChange={handleChange}
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                          />
+                          <button
+                              type="button"
+                              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                          >
+                              {showCurrentPassword ? (
+                                  <EyeOff className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                  <Eye className="w-5 h-5 text-gray-400" />
+                              )}
+                          </button>
+                      </div>
+                  </div>
+
+                  <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                          New Password
+                      </label>
+                      <div className="relative">
+                          <input
+                              type={showNewPassword ? "text" : "password"}
+                              name="newPassword"
+                              value={formData.newPassword}
+                              onChange={handleChange}
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                          />
+                          <button
+                              type="button"
+                              onClick={() => setShowNewPassword(!showNewPassword)}
+                              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                          >
+                              {showNewPassword ? (
+                                  <EyeOff className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                  <Eye className="w-5 h-5 text-gray-400" />
+                              )}
+                          </button>
+                      </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 mt-6">
+                      <button
+                          type="button"
+                          onClick={onClose}
+                          className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                      >
+                          Cancel
+                      </button>
+                      <button
+                          type="submit"
+                          disabled={loading}
+                          className={`px-4 py-2 bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90 ${
+                              loading ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                      >
+                          {loading ? 'Updating...' : 'Update Password'}
+                      </button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  );
+};
+
 const defaultProfileImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23CBD5E0'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
 
 const Profile = () => {
@@ -53,6 +181,7 @@ const Profile = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // success or error
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: '',
@@ -411,23 +540,29 @@ const handleUpgrade = async (planName) => {
                 </div>
               </div>
 
-              {/* Settings Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start">
-                      <div className="bg-[#FF5341] bg-opacity-10 p-3 rounded-lg">
-                        <Key className="w-5 h-5 text-[#FF5341]" />
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="font-medium">Password & Security</h3>
-                        <p className="text-sm text-gray-600">Change password for security purpose</p>
-                      </div>
+              {/* Password & Security Section */}
+              <div className="bg-[#FFFAF3] rounded-xl p-6 mb-6">
+                    <h3 className="text-lg font-semibold mb-4">Password & Security</h3>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-gray-600">Change password for security purpose</p>
+                        </div>
+                        <button
+                            onClick={() => setIsPasswordModalOpen(true)}
+                            className="px-4 py-2 bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90 flex items-center"
+                        >
+                            <Lock className="w-4 h-4 mr-2" />
+                            Change Password
+                        </button>
                     </div>
-                    <ExternalLink className="w-5 h-5 text-gray-400" />
-                  </div>
                 </div>
-              </div>
+
+                {/* Password Change Modal */}
+                <ChangePasswordModal
+                    isOpen={isPasswordModalOpen}
+                    onClose={() => setIsPasswordModalOpen(false)}
+                />
+
 
               {/* Billing History */}
               {subscriptionData.transactions && subscriptionData.transactions.length > 0 ? (

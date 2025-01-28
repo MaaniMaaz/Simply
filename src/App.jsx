@@ -7,6 +7,7 @@ import Signup from './pages/Auth/Signup';
 import User from './pages/Main/User';
 import Admin from './pages/Main/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import ForgotPassword from './pages/Auth/ForgotPassword';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/*" element={
           <ProtectedRoute>
             <User />

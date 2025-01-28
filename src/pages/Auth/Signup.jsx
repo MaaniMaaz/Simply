@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+// src/pages/Auth/Signup.jsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import signupSvg1 from '../../assets/s2.svg';
 import signupSvg2 from '../../assets/s10.svg';
@@ -13,34 +14,93 @@ const Signup = () => {
     name: '',
     email: '',
     phone_number: '',
-    password: ''
+    password: '',
+    verificationCode: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
   const navigate = useNavigate();
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const response = await authService.register(formData);
-      if (response.success) {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      setError(error.message || 'Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [showToast]);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const showToastMessage = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
+// In your Signup component
+const handleSendVerification = async () => {
+  if (!formData.email || !formData.name) {
+    showToastMessage('Please provide both name and email', 'error');
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+
+  try {
+    console.log('Sending verification for:', {  // Debug log
+      email: formData.email,
+      name: formData.name
+    });
+    
+    await authService.sendVerificationCode({
+      email: formData.email,
+      name: formData.name
+    });
+    
+    setVerificationSent(true);
+    showToastMessage('Verification code sent to your email');
+  } catch (error) {
+    showToastMessage(error.message || 'Error sending verification code', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+
+    if (!formData.verificationCode) {
+      showToastMessage('Please enter verification code', 'error');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authService.register(formData);
+      if (response.success) {
+        showToastMessage('Registration successful! Redirecting to login...');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      }
+    } catch (error) {
+      showToastMessage(error.message || 'Registration failed. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -80,13 +140,6 @@ const Signup = () => {
             </p>
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-
           {/* Form */}
           <form className="mt-8 space-y-6" onSubmit={handleSignup}>
             <div className="space-y-4">
@@ -98,7 +151,6 @@ const Signup = () => {
                   id="name"
                   name="name"
                   type="text"
-                  autoComplete="name"
                   required
                   value={formData.name}
                   onChange={handleChange}
@@ -106,6 +158,7 @@ const Signup = () => {
                   placeholder="Enter your name"
                 />
               </div>
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email address
@@ -114,7 +167,6 @@ const Signup = () => {
                   id="email"
                   name="email"
                   type="email"
-                  autoComplete="email"
                   required
                   value={formData.email}
                   onChange={handleChange}
@@ -122,50 +174,72 @@ const Signup = () => {
                   placeholder="Enter your email"
                 />
               </div>
-              <div>
-                <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  id="phone_number"
-                  name="phone_number"
-                  type="tel"
-                  autoComplete="tel"
-                  required
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-[#FF5341] focus:border-[#FF5341] sm:text-sm"
-                  placeholder="Enter your phone number"
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
+
+              {verificationSent && (
+                <div>
+                  <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-1">
+                    Verification Code
+                  </label>
                   <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
+                    id="verificationCode"
+                    name="verificationCode"
+                    type="text"
                     required
-                    value={formData.password}
+                    value={formData.verificationCode}
                     onChange={handleChange}
                     className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-[#FF5341] focus:border-[#FF5341] sm:text-sm"
-                    placeholder="••••••••"
+                    placeholder="Enter verification code"
                   />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? 
-                      <EyeOff className="h-5 w-5 text-gray-400" /> : 
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    }
-                  </button>
                 </div>
-              </div>
+              )}
+
+              {verificationSent && (
+                <>
+                  <div>
+                    <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      id="phone_number"
+                      name="phone_number"
+                      type="tel"
+                      required
+                      value={formData.phone_number}
+                      onChange={handleChange}
+                      className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-[#FF5341] focus:border-[#FF5341] sm:text-sm"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="appearance-none relative block w-full px-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-[#FF5341] focus:border-[#FF5341] sm:text-sm"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? 
+                          <EyeOff className="h-5 w-5 text-gray-400" /> : 
+                          <Eye className="h-5 w-5 text-gray-400" />
+                        }
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex items-center">
@@ -185,11 +259,18 @@ const Signup = () => {
             </div>
 
             <button
-              type="submit"
+              type={verificationSent ? "submit" : "button"}
+              onClick={!verificationSent ? handleSendVerification : undefined}
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-[#FF5341] hover:bg-[#FF5341]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF5341] ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`group relative w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-[#FF5341] hover:bg-[#FF5341]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF5341] ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? (
+                verificationSent ? 'Creating Account...' : 'Sending Code...'
+              ) : (
+                verificationSent ? 'Create Account' : 'Send Verification Code'
+              )}
             </button>
           </form>
 
@@ -206,6 +287,20 @@ const Signup = () => {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className={`fixed bottom-4 right-4 ${
+          toastType === 'success' ? 'bg-gray-800' : 'bg-red-500'
+        } text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in-up z-50`}>
+          {toastType === 'success' ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <X className="w-4 h-4" />
+          )}
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 };

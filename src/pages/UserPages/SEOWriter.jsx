@@ -54,12 +54,11 @@ const languages = [
 const SEOWriter = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [contentDescription, setContentDescription] = useState('');
-  const [focusIdeas, setFocusIdeas] = useState('');
+  const [isLoadingKeywords, setIsLoadingKeywords] = useState(false);
+  const [selectedKeywords, setSelectedKeywords] = useState([]);
   const [suggestedKeywords, setSuggestedKeywords] = useState([]);
-  const [keywordSearch, setKeywordSearch] = useState('');
+  const [focusIdeas, setFocusIdeas] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [resultLength, setResultLength] = useState('M');
@@ -75,45 +74,33 @@ const SEOWriter = () => {
   useEffect(() => {
     const user = authService.getUser();
     if (user) {
-        setUserCredits(user.credits_left || 0);
+      setUserCredits(user.credits_left || 0);
     }
-}, []);
+  }, []);
 
-// SEOWriter.jsx
-const saveInitialDocument = async (content) => {
-  try {
-      // Log for debugging
-      console.log('Saving document with token:', localStorage.getItem('token'));
-      
-      const response = await documentService.saveDocument({
-          name: contentDescription || 'SEO Content',
-          type: 'SEO Writer',
-          content: content
-      });
-
-      if (response.success) {
-          setCurrentDocumentId(response.data._id);
-          showToastMessage('Document saved successfully');
+  // SEO keyword generation effect
+  useEffect(() => {
+    const debounceTimer = setTimeout(async () => {
+      if (contentDescription.trim().length >= 10) {
+        setIsLoadingKeywords(true);
+        try {
+          const response = await seoService.getKeywordSuggestions(
+            contentDescription,
+            selectedLanguage
+          );
+          setSuggestedKeywords(response.data);
+        } catch (error) {
+          showToastMessage(error.message || 'Error fetching keywords', 'error');
+        } finally {
+          setIsLoadingKeywords(false);
+        }
+      } else {
+        setSuggestedKeywords([]);
       }
-  } catch (error) {
-      console.error('Save document error:', error);
-      showToastMessage(error.message || 'Error saving document', 'error');
-  }
-};
+    }, 1000);
 
-
-const autoSaveChanges = async (content) => {
-  if (!currentDocumentId) return;
-
-  try {
-      const response = await documentService.updateDocument(currentDocumentId, content);
-      if (response.success) {
-          console.log('Auto-saved successfully');
-      }
-  } catch (error) {
-      console.error('Auto-save error:', error);
-  }
-};
+    return () => clearTimeout(debounceTimer);
+  }, [contentDescription, selectedLanguage]);
 
   const editor = useEditor({
     extensions: [
@@ -145,24 +132,6 @@ const autoSaveChanges = async (content) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle keyword search with debounce
-  useEffect(() => {
-    const debounceTimer = setTimeout(async () => {
-      if (keywordSearch.trim()) {
-        try {
-          const response = await seoService.getKeywordSuggestions(keywordSearch, selectedLanguage);
-          setSuggestedKeywords(response.data);
-        } catch (error) {
-          showToastMessage(error.message || 'Error fetching keywords', 'error');
-        }
-      } else {
-        setSuggestedKeywords([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(debounceTimer);
-  }, [keywordSearch, selectedLanguage]);
-
   const showToastMessage = (message, type = 'success') => {
     setToastMessage(message);
     setToastType(type);
@@ -170,34 +139,64 @@ const autoSaveChanges = async (content) => {
     setTimeout(() => setShowToast(false), 3000);
   };
 
+  const saveInitialDocument = async (content) => {
+    try {
+      const response = await documentService.saveDocument({
+        name: contentDescription || 'SEO Content',
+        type: 'SEO Writer',
+        content: content
+      });
+
+      if (response.success) {
+        setCurrentDocumentId(response.data._id);
+        showToastMessage('Document saved successfully');
+      }
+    } catch (error) {
+      console.error('Save document error:', error);
+      showToastMessage(error.message || 'Error saving document', 'error');
+    }
+  };
+
+  const autoSaveChanges = async (content) => {
+    if (!currentDocumentId) return;
+
+    try {
+      const response = await documentService.updateDocument(currentDocumentId, content);
+      if (response.success) {
+        console.log('Auto-saved successfully');
+      }
+    } catch (error) {
+      console.error('Auto-save error:', error);
+    }
+  };
+
   const handleRunSEOWriter = async () => {
     if (!contentDescription || !selectedKeywords.length) {
-        showToastMessage('Please provide content description and select keywords', 'error');
-        return;
+      showToastMessage('Please provide content description and select keywords', 'error');
+      return;
     }
 
     setIsGenerating(true);
     try {
-        const response = await seoService.generateContent({
-            rankFor: contentDescription,
-            selectedKeywords,
-            focusIdeas,
-            resultLength,
-            language: selectedLanguage
-        });
+      const response = await seoService.generateContent({
+        rankFor: contentDescription,
+        selectedKeywords,
+        focusIdeas,
+        resultLength,
+        language: selectedLanguage
+      });
 
-        editor?.commands.setContent(response.data.content);
-        setShowResults(true);
-        showToastMessage('Content generated successfully');
+      editor?.commands.setContent(response.data.content);
+      setShowResults(true);
+      showToastMessage('Content generated successfully');
         
-        // Save initial document
-        await saveInitialDocument(response.data.content);
+      await saveInitialDocument(response.data.content);
     } catch (error) {
-        showToastMessage(error.message || 'Error generating content', 'error');
+      showToastMessage(error.message || 'Error generating content', 'error');
     } finally {
-        setIsGenerating(false);
+      setIsGenerating(false);
     }
-};
+  };
 
   const handleDownload = async () => {
     if (!editor?.getHTML()) return;
@@ -231,27 +230,25 @@ const autoSaveChanges = async (content) => {
     if (!editor) return;
 
     editor.on('update', ({ editor }) => {
-        if (!currentDocumentId) return;
+      if (!currentDocumentId) return;
 
-        // Clear existing timeout
-        if (autoSaveTimeout) {
-            clearTimeout(autoSaveTimeout);
-        }
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
 
-        // Set new timeout
-        const timeoutId = setTimeout(() => {
-            autoSaveChanges(editor.getHTML());
-        }, 5000); // 5 seconds delay
+      const timeoutId = setTimeout(() => {
+        autoSaveChanges(editor.getHTML());
+      }, 5000);
 
-        setAutoSaveTimeout(timeoutId);
+      setAutoSaveTimeout(timeoutId);
     });
 
     return () => {
-        if (autoSaveTimeout) {
-            clearTimeout(autoSaveTimeout);
-        }
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
     };
-}, [editor, currentDocumentId]);
+  }, [editor, currentDocumentId]);
 
   return (
     <div className="flex min-h-screen">
@@ -296,9 +293,9 @@ const autoSaveChanges = async (content) => {
               </p>
 
               <div className="bg-[#FF5341] text-white rounded-lg p-3 mb-6 flex items-center">
-               <Zap className="w-5 h-5 mr-2" />
-                 Your Balance Is {userCredits} Credits
-              </div>  
+                <Zap className="w-5 h-5 mr-2" />
+                Your Balance Is {userCredits} Credits
+              </div>
 
               {/* Form Fields */}
               <div className="space-y-4">
@@ -342,6 +339,7 @@ const autoSaveChanges = async (content) => {
                   )}
                 </div>
 
+                {/* Content Description Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     What do you want to rank for?
@@ -351,22 +349,22 @@ const autoSaveChanges = async (content) => {
                     value={contentDescription}
                     onChange={(e) => setContentDescription(e.target.value)}
                     className="w-full p-2 border rounded-lg"
-                    placeholder="Enter your content description"
+                    placeholder="Enter your content description (min. 10 characters)"
                   />
+                  {contentDescription.length > 0 && contentDescription.length < 10 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please enter at least 10 characters for keyword suggestions
+                    </p>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Search Keywords
-                  </label>
-                  <input
-                    type="text"
-                    value={keywordSearch}
-                    onChange={(e) => setKeywordSearch(e.target.value)}
-                    className="w-full p-2 border rounded-lg"
-                    placeholder="Search keywords (e.g., SEO optimization)"
-                  />
-                </div>
+                {/* Keywords Section */}
+                {isLoadingKeywords && contentDescription.length >= 10 && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#FF5341]"></div>
+                    <span>Generating keywords...</span>
+                  </div>
+                )}
 
                 {suggestedKeywords.length > 0 && (
                   <div>
@@ -647,4 +645,4 @@ const autoSaveChanges = async (content) => {
   );
 };
 
-export default SEOWriter;
+export default SEOWriter; 

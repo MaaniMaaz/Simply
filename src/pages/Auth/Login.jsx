@@ -1,6 +1,6 @@
 // src/pages/auth/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import loginSvg1 from '../../assets/s11.svg';
@@ -143,10 +143,13 @@ const Login = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-[#FF5341] hover:text-[#FF5341]/80">
-                  Forgot password?
-                </a>
-              </div>
+                <Link 
+                to="/forgot-password" 
+                className="font-medium text-[#FF5341] hover:text-[#FF5341]/80"
+                >
+                Forgot password?
+              </Link>
+            </div>
             </div>
 
             <div>

@@ -1,9 +1,15 @@
+// src/api/seo.js
 import API from './config';
 
 export const seoService = {
-    getKeywordSuggestions: async (searchTerm, language) => {
+    getKeywordSuggestions: async (contentDescription, language) => {
         try {
-            const response = await API.get(`/seo/keywords?searchTerm=${searchTerm}&language=${JSON.stringify(language)}`);
+            const response = await API.get('/seo/keywords', {
+                params: {
+                    contentDescription,
+                    language: JSON.stringify(language)
+                }
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

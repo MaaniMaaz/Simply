@@ -8,8 +8,16 @@ import axios from 'axios';
 // RENDER DEPLOYMENT URL, CHANGE ACCORDINGLY
 //https://simply-backend-yl91.onrender.com/api
 
+const BASE_URL = 'http://localhost:5000/api';
+
+
+export const getFullURL = (path) => {
+    const baseURL = BASE_URL.replace('/api', ''); // Remove /api for asset URLs
+    return `${baseURL}/${path}`;
+};
+
 const API = axios.create({
-    baseURL: 'https://simply-backend-yl91.onrender.com/api',
+    baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json'
     }

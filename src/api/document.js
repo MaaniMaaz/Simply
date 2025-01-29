@@ -4,7 +4,12 @@ import API from './config';
 export const documentService = {
     saveDocument: async (documentData) => {
         try {
-            const response = await API.post('/documents', documentData);
+            // Parse the HTML content and save it properly
+            const response = await API.post('/documents', {
+                ...documentData,
+                content: documentData.content,
+                contentType: 'html'
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

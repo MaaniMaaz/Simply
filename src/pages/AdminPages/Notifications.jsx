@@ -6,13 +6,21 @@ import {
     Save,
     Check,
     X,
-    AlertTriangle
+    AlertTriangle,
+    ChevronDown
 } from 'lucide-react';
 
 const NotificationTemplateCard = ({ template, onSave }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [message, setMessage] = useState(template.message_template);
-    const [isActive, setIsActive] = useState(template.is_active);
+    // Update state when template prop changes
+    const [message, setMessage] = useState(template?.message_template || '');
+    const [isActive, setIsActive] = useState(template?.is_active || false);
+
+    // Add useEffect to update state when template changes
+    useEffect(() => {
+        setMessage(template?.message_template || '');
+        setIsActive(template?.is_active || false);
+    }, [template]); // Dependency on template prop
 
     const handleSave = async () => {
         await onSave({
@@ -99,14 +107,22 @@ const NotificationTemplateCard = ({ template, onSave }) => {
 
 const Notifications = () => {
     const [templates, setTemplates] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [loading, setLoading] = useState(true);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     useEffect(() => {
         fetchTemplates();
     }, []);
+
+    useEffect(() => {
+        if (templates.length > 0 && !selectedTemplate) {
+            setSelectedTemplate(templates[0]);
+        }
+    }, [templates]);
 
     const fetchTemplates = async () => {
         try {
@@ -144,20 +160,53 @@ const Notifications = () => {
                 <p className="text-gray-600">Manage system notification messages and settings</p>
             </div>
 
-            {/* Templates Grid */}
+            {/* Template Selection and Editor */}
             {loading ? (
                 <div className="flex justify-center items-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5341]"></div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-6">
-                    {templates.map((template) => (
+                <div className="space-y-6">
+                    {/* Template Selector Dropdown */}
+                    <div className="relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Select Notification Template
+                        </label>
+                        <button
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="w-full md:w-96 flex items-center justify-between p-2 border rounded-lg bg-white hover:bg-gray-50"
+                        >
+                            <span className="capitalize">
+                                {selectedTemplate?.trigger_type || 'Select a template'}
+                            </span>
+                            <ChevronDown className="w-5 h-5 text-gray-500" />
+                        </button>
+
+                        {isDropdownOpen && (
+                            <div className="absolute w-full md:w-96 mt-1 bg-white border rounded-lg shadow-lg z-20">
+                                {templates.map((template) => (
+                                    <button
+                                        key={template.trigger_type}
+                                        className="w-full text-left px-4 py-2 hover:bg-gray-100 capitalize"
+                                        onClick={() => {
+                                            setSelectedTemplate(template);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                    >
+                                        {template.trigger_type}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Selected Template Card */}
+                    {selectedTemplate && (
                         <NotificationTemplateCard
-                            key={template.trigger_type}
-                            template={template}
+                            template={selectedTemplate}
                             onSave={handleSaveTemplate}
                         />
-                    ))}
+                    )}
                 </div>
             )}
 

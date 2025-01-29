@@ -45,6 +45,39 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
+const dummyTransactions = [
+  {
+    plan: "Enterprise Plan",
+    amount: "$490.00",
+    date: "2024-01-30",  // Most recent first
+    status: "completed"
+  },
+  {
+    plan: "Enterprise Plan",
+    amount: "$490.00",
+    date: "2023-12-30",
+    status: "completed"
+  },
+  {
+    plan: "Professional Plan",
+    amount: "$39.00",
+    date: "2023-11-30",
+    status: "completed"
+  },
+  {
+    plan: "Professional Plan",
+    amount: "$39.00",
+    date: "2023-10-30",
+    status: "completed"
+  },
+  {
+    plan: "Professional Plan",
+    amount: "$39.00",
+    date: "2023-09-30",
+    status: "completed"
+  }
+];
+
 const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
       currentPassword: '',
@@ -192,7 +225,7 @@ const Profile = () => {
 
   const [subscriptionData, setSubscriptionData] = useState({
     currentPlan: null,
-    transactions: [],
+    transactions: dummyTransactions,
     stats: {
       total_words_generated: 0,
       credits_left: 0,
@@ -212,28 +245,28 @@ const Profile = () => {
   // Fetch user profile and subscription data
   useEffect(() => {
     const fetchProfileData = async () => {
-      try {
-        const userData = await userService.getProfile();
-        setProfileData({
-          name: userData.data.user.name,
-          email: userData.data.user.email,
-          phone: userData.data.user.phone_number,
-          image: userData.data.user.profile_image ? getProfileImageUrl(userData.data.user.profile_image) : null
-        });
+        try {
+            const userData = await userService.getProfile();
+            setProfileData({
+                name: userData.data.user.name,
+                email: userData.data.user.email,
+                phone: userData.data.user.phone_number,
+                image: userService.getProfileImageUrl(userData.data.user.profile_image)
+            });
 
-        const subscriptionStatus = await subscriptionService.getStatus();
-        setSubscriptionData({
-          currentPlan: subscriptionStatus.data.current_plan,
-          transactions: subscriptionStatus.data.billing_history,
-          stats: subscriptionStatus.data.stats
-        });
-      } catch (error) {
-        showToastMessage('Error loading profile data', 'error');
-      }
+            const subscriptionStatus = await subscriptionService.getStatus();
+            setSubscriptionData({
+                currentPlan: subscriptionStatus.data.current_plan,
+                transactions: subscriptionStatus.data.billing_history,
+                stats: subscriptionStatus.data.stats
+            });
+        } catch (error) {
+            showToastMessage('Error loading profile data', 'error');
+        }
     };
 
     fetchProfileData();
-  }, []);
+}, []);
 
   useEffect(() => {
     const handleResize = () => {

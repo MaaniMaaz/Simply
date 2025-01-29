@@ -105,32 +105,35 @@ const AdminSupport = () => {
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                         <div className="flex h-[calc(100vh-8rem)]">
                             {/* Tickets List */}
-                            <div className="w-96 border-r">
-                                <div className="p-4">
-                                    <div className="mb-4">
-                                        <input
-                                            type="text"
-                                            placeholder="Search tickets..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                                        />
+                            <div className="w-96 border-r flex flex-col max-h-full"> {/* Added flex flex-col max-h-full */}
+                                <div className="p-4 flex flex-col h-full"> {/* Added flex flex-col h-full */}
+                                    {/* Search and Filter - Keep these fixed */}
+                                    <div className="flex-shrink-0"> {/* Added flex-shrink-0 to prevent shrinking */}
+                                        <div className="mb-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Search tickets..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2 border rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div className="mb-4">
+                                            <select
+                                                value={filterStatus}
+                                                onChange={(e) => setFilterStatus(e.target.value)}
+                                                className="w-full p-2 border rounded-lg"
+                                            >
+                                                <option value="all">All Status</option>
+                                                <option value="open">Open</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="closed">Closed</option>
+                                            </select>
+                                        </div>
                                     </div>
 
-                                    <div className="mb-4">
-                                        <select
-                                            value={filterStatus}
-                                            onChange={(e) => setFilterStatus(e.target.value)}
-                                            className="w-full p-2 border rounded-lg"
-                                        >
-                                            <option value="all">All Status</option>
-                                            <option value="open">Open</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="closed">Closed</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="space-y-2">
+                                    <div className="space-y-2 overflow-y-auto flex-1">
                                         {filteredTickets.map((ticket) => (
                                             <div
                                                 key={ticket._id}

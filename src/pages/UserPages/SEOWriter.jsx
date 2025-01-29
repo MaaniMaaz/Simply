@@ -23,7 +23,6 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Document from '@tiptap/extension-document';
 import Paragraph from '@tiptap/extension-paragraph';
@@ -32,12 +31,20 @@ import Bold from '@tiptap/extension-bold';
 import Italic from '@tiptap/extension-italic';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
-import { useNavigate } from 'react-router-dom';
-import Flags from 'country-flag-icons/react/3x2';
+import { useEditor, EditorContent } from '@tiptap/react';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
+import Heading from '@tiptap/extension-heading';
+import TextStyle from '@tiptap/extension-text-style'
+import { Mark } from '@tiptap/core'
+
 import { seoService } from '../../api/seo';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { documentService } from '../../api/document';
+import Flags from 'country-flag-icons/react/3x2';
+import { useNavigate } from 'react-router-dom';
 
 const languages = [
   { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -102,21 +109,76 @@ const SEOWriter = () => {
     return () => clearTimeout(debounceTimer);
   }, [contentDescription, selectedLanguage]);
 
+
+
+  const H1 = Mark.create({
+    name: 'h1style',
+    addOptions() {
+        return {
+            HTMLAttributes: {}
+        }
+    },
+    parseHTML() {
+        return [
+            {
+                tag: 'span.h1-text'
+            }
+        ]
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ['span', { class: 'h1-text' }, 0]
+    }
+});
+
+const H2 = Mark.create({
+    name: 'h2style',
+    addOptions() {
+        return {
+            HTMLAttributes: {}
+        }
+    },
+    parseHTML() {
+        return [
+            {
+                tag: 'span.h2-text'
+            }
+        ]
+    },
+    renderHTML({ HTMLAttributes }) {
+        return ['span', { class: 'h2-text' }, 0]
+    }
+});
+
+
+
   const editor = useEditor({
     extensions: [
-      StarterKit,
       Document,
       Paragraph,
       Text,
       Bold,
       Italic,
       Underline,
-      TextAlign.configure({
-        types: ['heading', 'paragraph'],
-      }),
+      H1,
+      H2,
+        BulletList.configure({
+            HTMLAttributes: {
+                class: 'list-disc ml-4'
+            }
+        }),
+        OrderedList.configure({
+            HTMLAttributes: {
+                class: 'list-decimal ml-4'
+            }
+        }),
+        ListItem,
+        TextAlign.configure({
+          types: ['paragraph']
+      })
     ],
-    content: '',
-  });
+    content: ''
+    
+});
 
   useEffect(() => {
     const handleResize = () => {
@@ -508,22 +570,45 @@ const SEOWriter = () => {
                   {/* Editor Toolbar */}
                   <div className="overflow-x-auto">
                     <div className="flex items-center gap-2 border-b pb-4 mb-4 min-w-max md:min-w-0">
-                      <select 
-                        className="border rounded px-2 py-1 text-sm"
-                        onChange={e => {
-                          if (e.target.value === 'Heading 1') {
-                            editor?.chain().focus().toggleHeading({ level: 1 }).run()
-                          } else if (e.target.value === 'Heading 2') {
-                            editor?.chain().focus().toggleHeading({ level: 2 }).run()
-                          } else {
-                            editor?.chain().focus().setParagraph().run()
-                          }
-                        }}
-                      >
-                        <option>Paragraph</option>
-                        <option>Heading 1</option>
-                        <option>Heading 2</option>
-                      </select>
+                    <div className="flex items-center gap-2 border-l pl-2">
+    <button
+        onClick={() => {
+            editor?.chain().focus()
+                .unsetMark('h2style')
+                .toggleMark('h1style')
+                .run()
+        }}
+        className={`p-1.5 rounded hover:bg-gray-100 ${
+            editor?.isActive('h1style') ? 'bg-gray-200' : ''
+        }`}
+    >
+        H1
+    </button>
+    <button
+        onClick={() => {
+            editor?.chain().focus()
+                .unsetMark('h1style')
+                .toggleMark('h2style')
+                .run()
+        }}
+        className={`p-1.5 rounded hover:bg-gray-100 ${
+            editor?.isActive('h2style') ? 'bg-gray-200' : ''
+        }`}
+    >
+        H2
+    </button>
+    <button
+        onClick={() => {
+            editor?.chain().focus()
+                .unsetMark('h1style')
+                .unsetMark('h2style')
+                .run()
+        }}
+        className={`p-1.5 rounded hover:bg-gray-100`}
+    >
+        P
+    </button>
+</div>
 
                       <div className="flex items-center border-l pl-2">
                         <button
@@ -580,22 +665,22 @@ const SEOWriter = () => {
                       </div>
 
                       <div className="flex items-center border-l pl-2">
-                        <button
-                          onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 ${
-                            editor?.isActive('bulletList') ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <List className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 ${
-                            editor?.isActive('orderedList') ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <ListOrdered className="w-4 h-4" />
-                        </button>
+                          <button
+                              onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                              className={`p-1.5 rounded hover:bg-gray-100 ${
+                                  editor?.isActive('bulletList') ? 'bg-gray-200' : ''
+                              }`}
+                          >
+                              <List className="w-4 h-4" />
+                          </button>
+                          <button
+                              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                              className={`p-1.5 rounded hover:bg-gray-100 ${
+                                  editor?.isActive('orderedList') ? 'bg-gray-200' : ''
+                              }`}
+                          >
+                              <ListOrdered className="w-4 h-4" />
+                          </button>
                       </div>
 
                       <div className="flex items-center border-l pl-2">

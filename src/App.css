@@ -42,3 +42,95 @@ body{
 .read-the-docs {
   color: #888;
 }
+
+
+.ProseMirror {
+  .h1-text {
+    font-size: 24px !important;
+    font-weight: bold !important;
+}
+
+.h2-text {
+    font-size: 20px !important;
+    font-weight: bold !important;
+}
+
+p {
+    display: inline !important;
+    font-size: 1em !important;
+    font-weight: normal !important;
+}
+
+  ul {
+      list-style-type: disc !important;
+      padding-left: 1.5rem !important;
+      margin: 1rem 0 !important;
+  }
+
+  ol {
+      list-style-type: decimal !important;
+      padding-left: 1.5rem !important;
+      margin: 1rem 0 !important;
+  }
+
+  li {
+      display: list-item !important;
+      margin: 0.5rem 0 !important;
+  }
+
+  /* Make list markers visible */
+  ul li::marker,
+  ol li::marker {
+      color: currentColor !important;
+      display: inline !important;
+  }
+}
+
+/* Handle different heading styles */
+.heading-custom {
+  &:is(h1) {
+      font-size: 2.25rem !important;
+      font-weight: 700 !important;
+  }
+  
+  &:is(h2) {
+      font-size: 1.875rem !important;
+      font-weight: 600 !important;
+  }
+}
+
+
+
+.document-content {
+  h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+  }
+  
+  h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.75rem;
+  }
+
+  ul {
+      list-style-type: disc;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+  }
+
+  ol {
+      list-style-type: decimal;
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+  }
+
+  li {
+      margin-bottom: 0.5rem;
+  }
+
+  p {
+      margin-bottom: 1rem;
+  }
+}

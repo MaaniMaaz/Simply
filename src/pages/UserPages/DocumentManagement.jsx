@@ -102,7 +102,7 @@ const DocumentModal = ({ document, isOpen, onClose }) => {
 
   return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col"> {/* Added max-h-[90vh] and flex flex-col */}
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
               <div className="flex items-start justify-between p-6 border-b">
                   <div>
                       <h3 className="text-xl font-semibold text-gray-900">{document.name}</h3>
@@ -115,11 +115,12 @@ const DocumentModal = ({ document, isOpen, onClose }) => {
                       <X className="w-6 h-6" />
                   </button>
               </div>
-              <div className="p-6 flex-1 overflow-y-auto"> {/* Added flex-1 and overflow-y-auto */}
-                  <div className="bg-gray-50 p-4 rounded-lg h-full">
-                      <pre className="whitespace-pre-wrap font-mono text-sm">
-                          {document.content}
-                      </pre>
+              <div className="p-6 flex-1 overflow-y-auto">
+                  <div className="prose max-w-none"> {/* Changed this div */}
+                      <div 
+                          dangerouslySetInnerHTML={{ __html: document.content }}
+                          className="document-content"
+                      />
                   </div>
               </div>
           </div>

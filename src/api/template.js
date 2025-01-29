@@ -72,6 +72,14 @@ export const templateService = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
-    }
+    },
 
+    getTemplateFields: async (templateId) => {
+        try {
+            const response = await this.getTemplateById(templateId);
+            return response.data.fields || [];
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    }
 };

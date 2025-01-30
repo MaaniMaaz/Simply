@@ -24,6 +24,22 @@ import ai1 from '../../assets/ai1.svg';
 import { dashboardService } from '../../api/dashboard';
 import { getTimeBasedGreeting } from '../../utils/helpers';
 
+const formatDateToYYYYMMDD = (date) => {
+  return date.toISOString().split('T')[0];
+};
+
+
+const getDefaultDateRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setMonth(start.getMonth() - 1); // Default to last month
+  
+  return {
+      startDate: formatDateToYYYYMMDD(start),
+      endDate: formatDateToYYYYMMDD(end)
+  };
+};
+
 const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-4">
     <div className="flex justify-between items-start">
@@ -49,23 +65,15 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
-  const [wordStats, setWordStats] = useState([]);
   const [recentDocuments, setRecentDocuments] = useState([]);
   const [favoriteTemplates, setFavoriteTemplates] = useState([]);
   const [documentHistory, setDocumentHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [wordStats, setWordStats] = useState([]);
+  const [dateRange, setDateRange] = useState(getDefaultDateRange());
 
-  // Initialize with 6 months ago and format as YYYY-MM-DD
-  const formatDateToYYYYMMDD = (date) => {
-    return date.toISOString().split('T')[0];
-  };
 
-  const [dateRange, setDateRange] = useState({
-    startDate: formatDateToYYYYMMDD(new Date(new Date().setMonth(new Date().getMonth() - 6))),
-    endDate: formatDateToYYYYMMDD(new Date())
-  });
-  const [groupBy, setGroupBy] = useState('day');
 
   useEffect(() => {
     const handleResize = () => {
@@ -77,23 +85,23 @@ const Dashboard = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Separate useEffect for word stats
   useEffect(() => {
     const fetchWordStats = async () => {
-      try {
-        const response = await dashboardService.getWordStats(
-          dateRange.startDate,
-          dateRange.endDate,
-          groupBy
-        );
-        setWordStats(response.data);
-      } catch (err) {
-        console.error('Error fetching word stats:', err);
-      }
+        try {
+            const response = await dashboardService.getWordsGenerated(
+                dateRange.startDate,
+                dateRange.endDate
+            );
+            setWordStats(response.data);
+        } catch (err) {
+            console.error('Error fetching word stats:', err);
+            // Handle error appropriately
+        }
     };
 
     fetchWordStats();
-  }, [dateRange.startDate, dateRange.endDate, groupBy]);
+}, [dateRange.startDate, dateRange.endDate]);
+
 
   // Main data fetching useEffect
   useEffect(() => {
@@ -139,10 +147,11 @@ const Dashboard = () => {
 
   const handleDateChange = (type, value) => {
     setDateRange(prev => ({
-      ...prev,
-      [type]: value
+        ...prev,
+        [type]: value
     }));
-  };
+};
+
 
   if (loading) {
     return (
@@ -288,97 +297,109 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Words Generation Graph */}
-          <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
-              <div>
-                <h2 className="text-lg md:text-xl font-semibold">Words Generated</h2>
-                <p className="text-xs md:text-sm text-gray-600">View statistics by date range</p>
-              </div>
-              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                <div className="flex gap-4">
-                  <input
-                    type="date"
-                    className="px-3 py-2 border rounded-lg text-sm"
-                    value={dateRange.startDate}
-                    max={dateRange.endDate}
-                    onChange={(e) => handleDateChange('startDate', e.target.value)}
-                  />
-                  <input
-                    type="date"
-                    className="px-3 py-2 border rounded-lg text-sm"
-                    value={dateRange.endDate}
-                    min={dateRange.startDate}
-                    max={formatDateToYYYYMMDD(new Date())}
-                    onChange={(e) => handleDateChange('endDate', e.target.value)}
-                  />
-                </div>
-                <select
-                  className="px-3 py-2 border rounded-lg text-sm"
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value)}
-                >
-                  <option value="day">Daily</option>
-                  <option value="month">Monthly</option>
-                  <option value="year">Yearly</option>
-                </select>
-              </div>
-            </div>
+          
 
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={wordStats}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis 
-                    dataKey="date"
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#E5E7EB' }}
-                    tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return groupBy === 'year' 
-                        ? value 
-                        : groupBy === 'month'
-                        ? date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
-                        : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    }}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#E5E7EB' }}
-                    tickFormatter={(value) => `${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid #E5E7EB',
-                      borderRadius: '8px',
-                      padding: '8px',
-                    }}
-                    labelStyle={{ color: '#374151', fontWeight: 500 }}
-                    labelFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: groupBy === 'day' ? 'numeric' : undefined
-                      });
-                    }}
-                    formatter={(value) => [`${value} words`]}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="words"
-                    stroke="#FF5341"
-                    strokeWidth={2}
-                    dot={{ fill: '#FF5341', strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: '#FF5341' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+{/* Words Generation Graph */}
+<div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
+  <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0 mb-6">
+    <div>
+      <h2 className="text-lg md:text-xl font-semibold">Words Generated</h2>
+      <p className="text-xs md:text-sm text-gray-600">View statistics by date range</p>
+    </div>
+    <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+      <div className="flex gap-4">
+        <input
+          type="date"
+          className="px-3 py-2 border rounded-lg text-sm"
+          value={dateRange.startDate}
+          max={dateRange.endDate}
+          onChange={(e) => handleDateChange('startDate', e.target.value)}
+        />
+        <input
+          type="date"
+          className="px-3 py-2 border rounded-lg text-sm"
+          value={dateRange.endDate}
+          min={dateRange.startDate}
+          max={formatDateToYYYYMMDD(new Date())}
+          onChange={(e) => handleDateChange('endDate', e.target.value)}
+        />
+      </div>
+    </div>
+  </div>
+
+  <div className="h-64">
+    <ResponsiveContainer width="100%" height="100%">
+      <LineChart data={wordStats}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+        <XAxis 
+          dataKey="date"
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          tickLine={false}
+          axisLine={{ stroke: '#E5E7EB' }}
+          tickFormatter={(value) => {
+            if (!value) return '';
+            
+            // For hour format (single day view)
+            if (value.includes(':')) {
+              return new Date(value).toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                hour12: true
+              });
+            }
+            
+            // For different date formats
+            const date = new Date(value);
+            const timeDiff = dateRange.endDate - dateRange.startDate;
+            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff <= 1) {
+              return date.toLocaleTimeString('en-US', { hour: 'numeric' });
+            } else if (daysDiff <= 31) {
+              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } else if (daysDiff <= 365) {
+              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } else {
+              return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            }
+          }}
+        />
+        <YAxis
+          tick={{ fontSize: 12, fill: '#6B7280' }}
+          tickLine={false}
+          axisLine={{ stroke: '#E5E7EB' }}
+          tickFormatter={(value) => value.toLocaleString()}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E5E7EB',
+            borderRadius: '8px',
+            padding: '8px',
+          }}
+          labelStyle={{ color: '#374151', fontWeight: 500 }}
+          labelFormatter={(value) => {
+            if (!value) return '';
+            return new Date(value).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: value.includes(':') ? 'numeric' : undefined
+            });
+          }}
+          formatter={(value) => [`${value.toLocaleString()} words`]}
+        />
+        <Line
+          type="monotone"
+          dataKey="words"
+          stroke="#FF5341"
+          strokeWidth={2}
+          dot={{ fill: '#FF5341', strokeWidth: 2 }}
+          activeDot={{ r: 6, fill: '#FF5341' }}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+</div>
 
           {/* SEO Articles Section */}
           <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6 mb-8">
@@ -428,8 +449,13 @@ const Dashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {favoriteTemplates.length > 0 ? (
-                favoriteTemplates.map((template) => (
+    {favoriteTemplates.length > 0 ? (
+      favoriteTemplates
+        // Sort templates by creation date (newest first)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        // Take only first 4 items
+        .slice(0, 4)
+        .map((template) => (
                   <div key={template._id} className="bg-[#FF5341] rounded-xl p-4 text-white">
                     <div className="flex justify-between items-center mb-3 pb-3 border-b border-white/20">
                       <h3 className="text-base md:text-lg font-medium">{template.name}</h3>
@@ -465,8 +491,8 @@ const Dashboard = () => {
                 documentHistory.map((doc) => (
                   <div key={doc._id} className="flex justify-between items-center">
                     <div>
-                      <p className="text-sm md:text-base font-medium">{formatDate(doc.created_at)}</p>
-                      <p className="text-xs md:text-sm text-gray-500">#{doc._id}</p>
+                    <p className="text-sm md:text-base font-medium">{doc.name}</p>
+                      <p className="text-xs md:text-sm text-gray-500 ">{formatDate(doc.created_at)}</p>
                     </div>
                     <div className="flex items-center text-[#FF5341]">
                       <FileText className="w-5 h-5 mr-2" />

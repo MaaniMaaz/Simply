@@ -111,56 +111,27 @@ const SEOWriter = () => {
 
 
 
-  const H1 = Mark.create({
-    name: 'h1style',
-    addOptions() {
-        return {
-            HTMLAttributes: {}
-        }
-    },
-    parseHTML() {
-        return [
-            {
-                tag: 'span.h1-text'
-            }
-        ]
-    },
-    renderHTML({ HTMLAttributes }) {
-        return ['span', { class: 'h1-text' }, 0]
-    }
-});
-
-const H2 = Mark.create({
-    name: 'h2style',
-    addOptions() {
-        return {
-            HTMLAttributes: {}
-        }
-    },
-    parseHTML() {
-        return [
-            {
-                tag: 'span.h2-text'
-            }
-        ]
-    },
-    renderHTML({ HTMLAttributes }) {
-        return ['span', { class: 'h2-text' }, 0]
-    }
-});
-
-
-
   const editor = useEditor({
     extensions: [
       Document,
-      Paragraph,
+      StarterKit.configure({
+        paragraph: {
+          HTMLAttributes: {
+            class: 'paragraph-text',
+          },
+        },
+        heading: false // Disable default heading from StarterKit
+      }),
+      Heading.configure({
+        levels: [1, 2],
+        HTMLAttributes: {
+          class: 'heading-custom',
+        },
+      }),
       Text,
       Bold,
       Italic,
       Underline,
-      H1,
-      H2,
         BulletList.configure({
             HTMLAttributes: {
                 class: 'list-disc ml-4'
@@ -571,43 +542,30 @@ const H2 = Mark.create({
                   <div className="overflow-x-auto">
                     <div className="flex items-center gap-2 border-b pb-4 mb-4 min-w-max md:min-w-0">
                     <div className="flex items-center gap-2 border-l pl-2">
-    <button
-        onClick={() => {
-            editor?.chain().focus()
-                .unsetMark('h2style')
-                .toggleMark('h1style')
-                .run()
-        }}
-        className={`p-1.5 rounded hover:bg-gray-100 ${
-            editor?.isActive('h1style') ? 'bg-gray-200' : ''
-        }`}
-    >
-        H1
-    </button>
-    <button
-        onClick={() => {
-            editor?.chain().focus()
-                .unsetMark('h1style')
-                .toggleMark('h2style')
-                .run()
-        }}
-        className={`p-1.5 rounded hover:bg-gray-100 ${
-            editor?.isActive('h2style') ? 'bg-gray-200' : ''
-        }`}
-    >
-        H2
-    </button>
-    <button
-        onClick={() => {
-            editor?.chain().focus()
-                .unsetMark('h1style')
-                .unsetMark('h2style')
-                .run()
-        }}
-        className={`p-1.5 rounded hover:bg-gray-100`}
-    >
-        P
-    </button>
+  <button
+    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+    className={`p-1.5 rounded hover:bg-gray-100 ${
+      editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
+    }`}
+  >
+    H1
+  </button>
+  <button
+    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+    className={`p-1.5 rounded hover:bg-gray-100 ${
+      editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
+    }`}
+  >
+    H2
+  </button>
+  <button
+    onClick={() => editor.chain().focus().setParagraph().run()}
+    className={`p-1.5 rounded hover:bg-gray-100 ${
+      editor.isActive('paragraph') ? 'bg-gray-200' : ''
+    }`}
+  >
+    P
+  </button>
 </div>
 
                       <div className="flex items-center border-l pl-2">

@@ -25,11 +25,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     image: null
   });
 
-  const getProfileImageUrl = (imagePath) => {
-    if (!imagePath) return defaultProfileImage;
-    return `http://localhost:5000/${imagePath}`;
-  };
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -39,7 +34,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           setUserData({
             name: localUser.name,
             email: localUser.email,
-            image: localUser.profile_image ? getProfileImageUrl(localUser.profile_image) : defaultProfileImage
+            image: userService.getProfileImageUrl(localUser.profile_image)
           });
         }
 
@@ -49,7 +44,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         setUserData({
           name: user.name,
           email: user.email,
-          image: user.profile_image ? getProfileImageUrl(user.profile_image) : defaultProfileImage
+          image: userService.getProfileImageUrl(user.profile_image)
         });
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -57,6 +52,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     };
 
     fetchUserData();
+
+    // Subscribe to profile updates
+    const unsubscribe = userService.subscribeToProfileUpdates((newProfileImage) => {
+      setUserData(prev => ({
+          ...prev,
+          image: userService.getProfileImageUrl(newProfileImage)
+      }));
+  });
+
+  // Cleanup subscription on unmount
+  return () => unsubscribe();
   }, []);
 
   const mainMenuItems = [

@@ -1,25 +1,211 @@
 // src/pages/UserPages/ComplianceAI.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../../components/Shared/Sidebar';
 import { 
     Bell, 
     MenuIcon,
-    Search,
-    Filter,
-    Upload,
     Download,
     Play,
     Zap,
-    AlertTriangle,
     Check,
     X,
-    ChevronDown
+    ChevronDown,
+    AlignLeft,
+    AlignCenter,
+    AlignRight,
+    List,
+    ListOrdered,
+    Link2
 } from 'lucide-react';
 import { complianceService } from '../../api/compliance';
 import { authService } from '../../api/auth';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import Sidebar from '../../components/Shared/Sidebar';
+import { documentService } from '../../api/document';
+
+// Editor imports
+import StarterKit from '@tiptap/starter-kit';
+import Document from '@tiptap/extension-document';
+import Paragraph from '@tiptap/extension-paragraph';
+import Text from '@tiptap/extension-text';
+import Bold from '@tiptap/extension-bold';
+import Italic from '@tiptap/extension-italic';
+import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
+import { useEditor, EditorContent } from '@tiptap/react';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
+import Heading from '@tiptap/extension-heading';
+
+const ContentEditor = ({ initialContent, onChange }) => {
+    const editor = useEditor({
+        extensions: [
+            Document,
+            StarterKit.configure({
+                paragraph: {
+                    HTMLAttributes: {
+                        class: 'paragraph-text',
+                    },
+                },
+                heading: false
+            }),
+            Heading.configure({
+                levels: [1, 2],
+                HTMLAttributes: {
+                    class: 'heading-custom',
+                },
+            }),
+            Text,
+            Bold,
+            Italic,
+            Underline,
+            BulletList.configure({
+                HTMLAttributes: {
+                    class: 'list-disc ml-4'
+                }
+            }),
+            OrderedList.configure({
+                HTMLAttributes: {
+                    class: 'list-decimal ml-4'
+                }
+            }),
+            ListItem,
+            TextAlign.configure({
+                types: ['paragraph', 'heading']
+            })
+        ],
+        content: initialContent,
+        onUpdate: ({ editor }) => {
+            if (!editor) return;
+            const content = editor.getHTML();
+            onChange(content);
+        }   
+    });
+
+    useEffect(() => {
+        if (editor && initialContent) {
+            // Only set content if it's different to avoid cursor reset
+            if (editor.getHTML() !== initialContent) {
+                editor.commands.setContent(initialContent);
+            }
+        }
+    }, [editor, initialContent]);
+
+    if (!editor) {
+        return null;
+    }
+
+    return (
+        <div className="bg-white rounded-lg border">
+            <div className="border-b p-2">
+                <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 border-r pr-2">
+                        <button
+                            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            H1
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            H2
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().setParagraph().run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('paragraph') ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            P
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 border-r pr-2">
+                        <button
+                            onClick={() => editor.chain().focus().toggleBold().run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('bold') ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <strong>B</strong>
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().toggleItalic().run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('italic') ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <em>I</em>
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().toggleUnderline().run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('underline') ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <u>U</u>
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 border-r pr-2">
+                        <button
+                            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive({ textAlign: 'left' }) ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <AlignLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive({ textAlign: 'center' }) ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <AlignCenter className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive({ textAlign: 'right' }) ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <AlignRight className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 border-r pr-2">
+                        <button
+                            onClick={() => editor.chain().focus().toggleBulletList().run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('bulletList') ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <List className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                            className={`p-1.5 rounded hover:bg-gray-100 ${
+                                editor.isActive('orderedList') ? 'bg-gray-200' : ''
+                            }`}
+                        >
+                            <ListOrdered className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <EditorContent editor={editor} className="p-4 min-h-[200px] prose max-w-none" />
+        </div>
+    );
+};
 
 const AnalysisTypeDropdown = ({ selectedType, setSelectedType }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -210,6 +396,8 @@ const ComplianceAI = () => {
   const [showResults, setShowResults] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isFixing, setIsFixing] = useState(false);
+  const [currentDocumentId, setCurrentDocumentId] = useState(null);
+const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
   const [complianceId, setComplianceId] = useState(null);
   const [analysisResults, setAnalysisResults] = useState({
       score: 0,
@@ -221,6 +409,9 @@ const ComplianceAI = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
   const resultsRef = React.useRef(null);
+  // New state for editor
+  const [showEditor, setShowEditor] = useState(false);
+  const [editorContent, setEditorContent] = useState('');
 
   useEffect(() => {
       const handleResize = () => {
@@ -285,26 +476,84 @@ const ComplianceAI = () => {
       }
   };
 
-  const handleFixContent = async () => {
-      if (!complianceId) {
-          showToastMessage('Please run analysis first', 'error');
-          return;
-      }
+  const saveInitialDocument = async (content) => {
+    try {
+        const response = await documentService.saveDocument({
+            name: `Fixed ${analysisType} Content`,
+            type: 'Compliance AI',
+            content: content
+        });
 
-      setIsFixing(true);
-      try {
-          const response = await complianceService.fixContent({
-              compliance_id: complianceId
-          });
+        if (response.success) {
+            setCurrentDocumentId(response.data._id);
+            showToastMessage('Document saved successfully');
+        }
+    } catch (error) {
+        console.error('Save document error:', error);
+        showToastMessage(error.message || 'Error saving document', 'error');
+    }
+};
 
-          setContent(response.data.fixed_content);
-          showToastMessage('Content fixed and saved successfully');
-      } catch (error) {
-          showToastMessage(error.message || 'Error fixing content', 'error');
-      } finally {
-          setIsFixing(false);
-      }
-  };
+
+const autoSaveChanges = async (content) => {
+    if (!currentDocumentId) return;
+
+    try {
+        const response = await documentService.updateDocument(currentDocumentId, content);
+        if (response.success) {
+            console.log('Auto-saved successfully');
+        }
+    } catch (error) {
+        console.error('Auto-save error:', error);
+    }
+};
+
+const handleFixContent = async () => {
+    if (!complianceId) {
+        showToastMessage('Please run analysis first', 'error');
+        return;
+    }
+
+    setIsFixing(true);
+    try {
+        const response = await complianceService.fixContent({
+            compliance_id: complianceId
+        });
+
+        setEditorContent(response.data.fixed_content);
+        setShowEditor(true);
+        setShowResults(false);
+        showToastMessage('Content fixed successfully');
+        
+        // Save initial document
+        await saveInitialDocument(response.data.fixed_content);
+    } catch (error) {
+        showToastMessage(error.message || 'Error fixing content', 'error');
+    } finally {
+        setIsFixing(false);
+    }
+};
+
+useEffect(() => {
+    if (!editorContent || !showEditor) return;
+
+    if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+    }
+
+    const timeoutId = setTimeout(() => {
+        autoSaveChanges(editorContent);
+    }, 5000); // Auto-save after 5 seconds of no changes
+
+    setAutoSaveTimeout(timeoutId);
+
+    return () => {
+        if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+        }
+    };
+}, [editorContent, showEditor]);
+
 
   const handleDownload = async () => {
       if (!resultsRef.current) return;
@@ -325,6 +574,37 @@ const ComplianceAI = () => {
           showToastMessage('Error downloading report', 'error');
       }
   };
+
+  const renderContentInput = () => {
+    if (showEditor) {
+        return (
+            <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Edit Fixed Content
+                </label>
+                <ContentEditor 
+    initialContent={editorContent}
+    onChange={setEditorContent}
+/>
+            </div>
+        );
+    }
+
+    return (
+        <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+                Content Submission
+            </label>
+            <textarea
+                rows={6}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="block w-full rounded-lg border shadow-sm focus:border-[#FF5341] focus:ring-[#FF5341] sm:text-sm"
+                placeholder={`Input your content here to check for ${analysisType === 'compliance' ? 'compliance' : 'brand voice alignment'}.`}
+            />
+        </div>
+    );
+};
 
   return (
       <div className="flex min-h-screen">
@@ -442,22 +722,43 @@ const ComplianceAI = () => {
 
                      {/* Right Column */}
                      <div className="col-span-1 md:col-span-8 space-y-4 md:space-y-6">
-                            {!showResults && !isAnalyzing && (
-                                <div className="bg-[#FFFAF3] rounded-xl p-8 text-center">
-                                    <p className="text-gray-600 mb-4">
-                                        Click "Run Analysis" to check your content
-                                    </p>
-                                </div>
-                            )}
+        {!showResults && !isAnalyzing && !showEditor && (
+            <div className="bg-[#FFFAF3] rounded-xl p-8 text-center">
+                <p className="text-gray-600 mb-4">
+                    Click "Run Analysis" to check your content
+                </p>
+            </div>
+        )}
 
-                            {isAnalyzing && (
-                                <div className="bg-[#FFFAF3] rounded-xl p-8 text-center">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5341] mx-auto mb-4"></div>
-                                    <p className="text-gray-600">Analyzing content...</p>
-                                </div>
-                            )}
+        {isAnalyzing && (
+            <div className="bg-[#FFFAF3] rounded-xl p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5341] mx-auto mb-4"></div>
+                <p className="text-gray-600">Analyzing content...</p>
+            </div>
+        )}
 
-                            {showResults && !isAnalyzing && (
+{showEditor && (
+    <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
+        <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium">Fixed Content Editor</h3>
+            <button 
+                onClick={() => {
+                    setShowEditor(false);
+                    setShowResults(true);
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900"
+            >
+                Back to Analysis
+            </button>
+        </div>
+        <ContentEditor 
+            initialContent={editorContent}
+            onChange={setEditorContent}  // Use setEditorContent consistently
+        />
+    </div>
+)}
+
+        {showResults && !isAnalyzing && !showEditor && (
                                 <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
                                     {/* Card Header */}
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mb-4">

@@ -1,5 +1,8 @@
 import API, {getFullURL} from './config';
 
+const profileUpdateListeners = new Set();
+
+
 export const userService = {
 
     getProfileImageUrl: (imagePath) => {
@@ -44,6 +47,14 @@ export const userService = {
                     'Content-Type': 'multipart/form-data',
                 }
             });
+
+            // Notify listeners if update was successful
+            if (response.data.success) {
+                profileUpdateListeners.forEach(listener => {
+                    listener(response.data.data.profile_image);
+                });
+            }
+
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
@@ -57,5 +68,10 @@ export const userService = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    subscribeToProfileUpdates: (callback) => {
+        profileUpdateListeners.add(callback);
+        return () => profileUpdateListeners.delete(callback);
     }
 };

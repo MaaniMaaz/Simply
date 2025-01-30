@@ -61,30 +61,50 @@ export const documentService = {
         }
     },
 
-   // src/api/document.js - Update the downloadDocument function
-    downloadDocument: async (documentId) => {
+   downloadDocument: async (documentId) => {
         try {
+            const token = localStorage.getItem('token'); // Ensure token is included
+            
+            if (!token) {
+                throw new Error('User is not authenticated');
+            }
+
             const response = await API.get(`/documents/${documentId}/download`, {
-                responseType: 'blob'  // Important for file download
+                responseType: 'blob',
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Authorization': `Bearer ${token}`
+                }
             });
-        
-        // Create blob link to download
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', 'document.txt'); // You can set a custom filename here
-        
-        // Append to html page
-        document.body.appendChild(link);
-        
-        // Start download
-        link.click();
-        
-        // Clean up and remove the link
-        link.parentNode.removeChild(link);
-        return { success: true };
-     } catch (error) {
-        throw error.response?.data || error.message;
-     }
+
+           
+
+            // Extract filename from headers
+            let filename = 'document.txt'; // Default filename
+            if (response.headers['content-disposition']) {
+                const contentDisposition = response.headers['content-disposition'];
+                const filenameMatch = contentDisposition.match(/filename="(.+?)"/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = decodeURIComponent(filenameMatch[1]);
+                }
+            }
+
+            console.log("✅ Extracted Filename:", filename);
+
+            // Create download link
+            const url = window.URL.createObjectURL(response.data);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Download error:', error.message || error);
+            throw error;
+        }
     }
 };

@@ -46,44 +46,12 @@ const languages = [
     { code: 'ru-RU', name: 'Russian', country: 'RU' }
 ];
 
-// Custom field component with validation
-const CustomField = ({ field, value, onChange, error }) => {
-    const handleChange = (val) => {
-        onChange(field.id, val);
-    };
-
-    return (
-        <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-                {field.question}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            {field.type === 'free-text' ? (
-                <input
-                    type="text"
-                    value={value || ''}
-                    onChange={(e) => handleChange(e.target.value)}
-                    className={`w-full p-2 border rounded-lg ${error ? 'border-red-500' : ''}`}
-                    placeholder={`Enter ${field.question.toLowerCase()}...`}
-                />
-            ) : (
-                <select
-                    value={value || ''}
-                    onChange={(e) => handleChange(e.target.value)}
-                    className={`w-full p-2 border rounded-lg bg-white ${error ? 'border-red-500' : ''}`}
-                >
-                    <option value="">Select an option</option>
-                    {field.options?.map((option, index) => (
-                        <option key={index} value={option}>
-                            {option}
-                        </option>
-                    ))}
-                </select>
-            )}
-            {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-        </div>
-    );
-};
+// Content length options
+const contentLengths = [
+    { id: 'S', label: 'Short (300 words)' },
+    { id: 'M', label: 'Medium (600 words)' },
+    { id: 'L', label: 'Long (1200 words)' }
+];
 
 // Language selector component
 const LanguageSelector = ({ selectedLanguage, onChange, isOpen, setIsOpen }) => (
@@ -130,6 +98,52 @@ const LanguageSelector = ({ selectedLanguage, onChange, isOpen, setIsOpen }) => 
     </div>
 );
 
+// Custom field component
+const CustomField = ({ field, value, onChange, error }) => {
+    if (field.type === 'free-text') {
+        return (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.question} {field.required && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                    type="text"
+                    value={value || ''}
+                    onChange={(e) => onChange(field.id, e.target.value)}
+                    className={`w-full p-2 border rounded-lg ${error ? 'border-red-500' : ''}`}
+                    placeholder={`Enter ${field.question.toLowerCase()}...`}
+                />
+                {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+            </div>
+        );
+    }
+
+    if (field.type === 'dropdown') {
+        return (
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.question} {field.required && <span className="text-red-500">*</span>}
+                </label>
+                <select
+                    value={value || ''}
+                    onChange={(e) => onChange(field.id, e.target.value)}
+                    className={`w-full p-2 border rounded-lg bg-white ${error ? 'border-red-500' : ''}`}
+                >
+                    <option value="">Select an option</option>
+                    {field.options?.map((option, index) => (
+                        <option key={index} value={option}>
+                            {option}
+                        </option>
+                    ))}
+                </select>
+                {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+            </div>
+        );
+    }
+
+    return null;
+};
+
 const TemplateEditor = () => {
     const { templateId } = useParams();
     const navigate = useNavigate();
@@ -141,12 +155,14 @@ const TemplateEditor = () => {
     const [fieldErrors, setFieldErrors] = useState({});
     const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
     const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+    const [selectedLength, setSelectedLength] = useState('M');
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [currentDocumentId, setCurrentDocumentId] = useState(null);
     const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
 
+    // Editor configuration
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -163,7 +179,7 @@ const TemplateEditor = () => {
         content: '',
         onUpdate: ({ editor }) => {
             if (!currentDocumentId) return;
-            
+
             if (autoSaveTimeout) {
                 clearTimeout(autoSaveTimeout);
             }
@@ -176,6 +192,7 @@ const TemplateEditor = () => {
         }
     });
 
+    // Cleanup effect
     useEffect(() => {
         return () => {
             if (autoSaveTimeout) {
@@ -184,6 +201,7 @@ const TemplateEditor = () => {
         };
     }, [autoSaveTimeout]);
 
+    // Handle resize effect
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth >= 768) {
@@ -198,6 +216,7 @@ const TemplateEditor = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Fetch template effect
     useEffect(() => {
         const fetchTemplate = async () => {
             try {
@@ -206,10 +225,9 @@ const TemplateEditor = () => {
                 
                 // Initialize field values
                 if (response.data.fields) {
-                    const initialValues = {};
-                    response.data.fields.forEach(field => {
-                        initialValues[field.id] = '';
-                    });
+                    const initialValues = Object.fromEntries(
+                        response.data.fields.map(field => [field.id, ''])
+                    );
                     setFieldValues(initialValues);
                 }
             } catch (error) {
@@ -263,14 +281,12 @@ const TemplateEditor = () => {
         setIsGenerating(true);
 
         try {
-            // Include language in the fields object
-            const allFields = {
-                ...fieldValues,
-                language: selectedLanguage
-            };
-
             const response = await templateService.runTemplate(templateId, {
-                fields: allFields
+                fields: {
+                    ...fieldValues,
+                    language: selectedLanguage
+                },
+                resultLength: selectedLength
             });
 
             if (response.success) {
@@ -401,6 +417,8 @@ const TemplateEditor = () => {
                                         setIsOpen={setIsLanguageDropdownOpen}
                                     />
 
+                                   
+
                                     {/* Template Fields */}
                                     {template.fields && template.fields.length > 0 && (
                                         <div className="space-y-4">
@@ -415,6 +433,31 @@ const TemplateEditor = () => {
                                             ))}
                                         </div>
                                     )}
+                                     {/* Content Length Selection */}
+                                     <div className="mb-6">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Content Length
+                                        </label>
+                                        <div className="flex gap-2">
+                                            {contentLengths.map(length => (
+                                                <button
+                                                    key={length.id}
+                                                    onClick={() => setSelectedLength(length.id)}
+                                                    className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                                                        selectedLength === length.id
+                                                            ? 'bg-[#FF5341] text-white'
+                                                            : 'bg-white border hover:bg-gray-50'
+                                                    }`}
+                                                    title={length.label}
+                                                >
+                                                    {length.id}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            {contentLengths.find(l => l.id === selectedLength)?.label}
+                                        </p>
+                                    </div>
 
                                     <button
                                         onClick={handleRunTemplate}
@@ -470,6 +513,101 @@ const TemplateEditor = () => {
                                             >
                                                 <Download className="w-4 h-4" />
                                             </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Editor Toolbar */}
+                                    <div className="overflow-x-auto">
+                                        <div className="flex items-center gap-2 border-b pb-4 mb-4 min-w-max md:min-w-0">
+                                            <select
+                                                className="border rounded px-2 py-1 text-sm"
+                                                onChange={e => {
+                                                    if (e.target.value === 'Heading 1') {
+                                                        editor?.chain().focus().toggleHeading({ level: 1 }).run();
+                                                    } else if (e.target.value === 'Heading 2') {
+                                                        editor?.chain().focus().toggleHeading({ level: 2 }).run();
+                                                    } else {
+                                                        editor?.chain().focus().setParagraph().run();
+                                                    }
+                                                }}
+                                            >
+                                                <option>Paragraph</option>
+                                                <option>Heading 1</option>
+                                                <option>Heading 2</option>
+                                            </select>
+
+                                            <div className="flex items-center border-l pl-2">
+                                                <button
+                                                    onClick={() => editor?.chain().focus().toggleBold().run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 min-w-[28px] flex justify-center ${
+                                                        editor?.isActive('bold') ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <strong>B</strong>
+                                                </button>
+                                                <button
+                                                    onClick={() => editor?.chain().focus().toggleItalic().run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 min-w-[28px] flex justify-center ${
+                                                        editor?.isActive('italic') ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <em>I</em>
+                                                </button>
+                                                <button
+                                                    onClick={() => editor?.chain().focus().toggleUnderline().run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 min-w-[28px] flex justify-center ${
+                                                        editor?.isActive('underline') ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <u>U</u>
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-center border-l pl-2">
+                                                <button
+                                                    onClick={() => editor?.chain().focus().setTextAlign('left').run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 ${
+                                                        editor?.isActive({ textAlign: 'left' }) ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <AlignLeft className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => editor?.chain().focus().setTextAlign('center').run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 ${
+                                                        editor?.isActive({ textAlign: 'center' }) ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <AlignCenter className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => editor?.chain().focus().setTextAlign('right').run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 ${
+                                                        editor?.isActive({ textAlign: 'right' }) ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <AlignRight className="w-4 h-4" />
+                                                </button>
+                                            </div>
+
+                                            <div className="flex items-center border-l pl-2">
+                                                <button
+                                                    onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 ${
+                                                        editor?.isActive('bulletList') ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <List className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                                                    className={`p-1.5 rounded hover:bg-gray-100 ${
+                                                        editor?.isActive('orderedList') ? 'bg-gray-200' : ''
+                                                    }`}
+                                                >
+                                                    <ListOrdered className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 

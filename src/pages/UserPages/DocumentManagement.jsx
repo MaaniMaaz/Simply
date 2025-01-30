@@ -194,14 +194,24 @@ const DocumentManagement = () => {
     }
   };
 
-  const handleDownload = async (document) => {
-    try {
+  
+const handleDownload = async (document) => {
+  if (!document?._id) {
+      showToastMessage('Invalid document', 'error');
+      return;
+  }
+
+  try {
       await documentService.downloadDocument(document._id);
       showToastMessage('Document downloaded successfully');
-    } catch (error) {
-      showToastMessage(error.message || 'Error downloading document', 'error');
-    }
-  };
+  } catch (error) {
+      console.error('Download error:', error);
+      showToastMessage(
+          error.message || 'Error downloading document', 
+          'error'
+      );
+  }
+};
 
   const handleDelete = async (document) => {
     try {

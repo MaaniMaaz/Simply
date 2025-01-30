@@ -44,23 +44,31 @@ const ContentEditor = ({ initialContent, onChange }) => {
         extensions: [
             Document,
             StarterKit.configure({
-                paragraph: {
-                    HTMLAttributes: {
-                        class: 'paragraph-text',
-                    },
-                },
-                heading: false
+                heading: false,
+                document: false,
+                paragraph: false
             }),
-            Heading.configure({
-                levels: [1, 2],
+            Paragraph.configure({
                 HTMLAttributes: {
-                    class: 'heading-custom',
+                    class: 'text-base',
                 },
             }),
             Text,
-            Bold,
-            Italic,
-            Underline,
+            Bold.configure(),
+            Italic.configure(),
+            Underline.configure(),
+            // Update the Heading configuration to work with inline text
+            Heading.configure({
+              levels: [1, 2],
+              HTMLAttributes: {
+                h1: {
+                  class: 'h1-style text-4xl font-bold leading-normal'
+                },
+                h2: {
+                  class: 'h2-style text-2xl font-bold leading-normal'
+                }
+              }
+            }),
             BulletList.configure({
                 HTMLAttributes: {
                     class: 'list-disc ml-4'
@@ -73,10 +81,16 @@ const ContentEditor = ({ initialContent, onChange }) => {
             }),
             ListItem,
             TextAlign.configure({
-                types: ['paragraph', 'heading']
+                types: ['paragraph', 'heading'],
+                alignments: ['left', 'center', 'right'],
+                defaultAlignment: 'left',
             })
         ],
-        content: initialContent,
+        editorProps: {
+            attributes: {
+                class: 'prose max-w-none focus:outline-none min-h-[300px]'
+            }
+        },
         onUpdate: ({ editor }) => {
             if (!editor) return;
             const content = editor.getHTML();
@@ -102,30 +116,35 @@ const ContentEditor = ({ initialContent, onChange }) => {
             <div className="border-b p-2">
                 <div className="flex flex-wrap gap-2">
                     <div className="flex items-center gap-2 border-r pr-2">
-                        <button
-                            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                            className={`p-1.5 rounded hover:bg-gray-100 ${
-                                editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
-                            }`}
-                        >
-                            H1
-                        </button>
-                        <button
-                            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                            className={`p-1.5 rounded hover:bg-gray-100 ${
-                                editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
-                            }`}
-                        >
-                            H2
-                        </button>
-                        <button
-                            onClick={() => editor.chain().focus().setParagraph().run()}
-                            className={`p-1.5 rounded hover:bg-gray-100 ${
-                                editor.isActive('paragraph') ? 'bg-gray-200' : ''
-                            }`}
-                        >
-                            P
-                        </button>
+                         {/* H1 Button */}
+<button
+  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
+  }`}
+>
+  H1
+</button>
+
+{/* H2 Button */}
+<button
+  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
+  }`}
+>
+  H2
+</button>
+
+{/* Paragraph Button */}
+<button
+  onClick={() => editor.chain().focus().setParagraph().run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('paragraph') ? 'bg-gray-200' : ''
+  }`}
+>
+  P
+</button>
                     </div>
 
                     <div className="flex items-center gap-2 border-r pr-2">
@@ -202,7 +221,10 @@ const ContentEditor = ({ initialContent, onChange }) => {
                     </div>
                 </div>
             </div>
-            <EditorContent editor={editor} className="p-4 min-h-[200px] prose max-w-none" />
+             <EditorContent 
+                                  editor={editor} 
+                                  className="prose prose-sm sm:prose-base lg:prose-lg max-w-none min-h-[300px] text-sm md:text-base" 
+                              />
         </div>
     );
 };

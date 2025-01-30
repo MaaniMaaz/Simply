@@ -109,29 +109,35 @@ const SEOWriter = () => {
     return () => clearTimeout(debounceTimer);
   }, [contentDescription, selectedLanguage]);
 
-
-
   const editor = useEditor({
     extensions: [
-      Document,
-      StarterKit.configure({
-        paragraph: {
+        Document,
+        StarterKit.configure({
+            heading: false,
+            document: false,
+            paragraph: false
+        }),
+        Paragraph.configure({
+            HTMLAttributes: {
+                class: 'text-base',
+            },
+        }),
+        Text,
+        Bold.configure(),
+        Italic.configure(),
+        Underline.configure(),
+        // Update the Heading configuration to work with inline text
+        Heading.configure({
+          levels: [1, 2],
           HTMLAttributes: {
-            class: 'paragraph-text',
-          },
-        },
-        heading: false // Disable default heading from StarterKit
-      }),
-      Heading.configure({
-        levels: [1, 2],
-        HTMLAttributes: {
-          class: 'heading-custom',
-        },
-      }),
-      Text,
-      Bold,
-      Italic,
-      Underline,
+            h1: {
+              class: 'h1-style text-4xl font-bold leading-normal'
+            },
+            h2: {
+              class: 'h2-style text-2xl font-bold leading-normal'
+            }
+          }
+        }),
         BulletList.configure({
             HTMLAttributes: {
                 class: 'list-disc ml-4'
@@ -144,11 +150,29 @@ const SEOWriter = () => {
         }),
         ListItem,
         TextAlign.configure({
-          types: ['paragraph']
-      })
+            types: ['paragraph', 'heading'],
+            alignments: ['left', 'center', 'right'],
+            defaultAlignment: 'left',
+        })
     ],
-    content: ''
-    
+    editorProps: {
+        attributes: {
+            class: 'prose max-w-none focus:outline-none min-h-[300px]'
+        }
+    },
+    onUpdate: ({ editor }) => {
+        if (!currentDocumentId) return;
+
+        if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+        }
+
+        const timeoutId = setTimeout(() => {
+            autoSaveChanges(editor.getHTML());
+        }, 5000);
+
+        setAutoSaveTimeout(timeoutId);
+    }
 });
 
   useEffect(() => {
@@ -542,31 +566,36 @@ const SEOWriter = () => {
                   <div className="overflow-x-auto">
                     <div className="flex items-center gap-2 border-b pb-4 mb-4 min-w-max md:min-w-0">
                     <div className="flex items-center gap-2 border-l pl-2">
-  <button
-    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-    className={`p-1.5 rounded hover:bg-gray-100 ${
-      editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
-    }`}
-  >
-    H1
-  </button>
-  <button
-    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-    className={`p-1.5 rounded hover:bg-gray-100 ${
-      editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
-    }`}
-  >
-    H2
-  </button>
-  <button
-    onClick={() => editor.chain().focus().setParagraph().run()}
-    className={`p-1.5 rounded hover:bg-gray-100 ${
-      editor.isActive('paragraph') ? 'bg-gray-200' : ''
-    }`}
-  >
-    P
-  </button>
-</div>
+                   {/* H1 Button */}
+<button
+  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
+  }`}
+>
+  H1
+</button>
+
+{/* H2 Button */}
+<button
+  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
+  }`}
+>
+  H2
+</button>
+
+{/* Paragraph Button */}
+<button
+  onClick={() => editor.chain().focus().setParagraph().run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('paragraph') ? 'bg-gray-200' : ''
+  }`}
+>
+  P
+</button>
+                        </div>
 
                       <div className="flex items-center border-l pl-2">
                         <button
@@ -661,8 +690,8 @@ const SEOWriter = () => {
 
                   {/* Editor Content */}
                   <EditorContent 
-                    editor={editor} 
-                    className="prose max-w-none min-h-[300px] text-sm md:text-base" 
+                      editor={editor} 
+                      className="prose prose-sm sm:prose-base lg:prose-lg max-w-none min-h-[300px] text-sm md:text-base" 
                   />
                 </div>
               )}

@@ -23,8 +23,20 @@ export default {
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.3s ease-out'
+      },
+
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+          },
+        },
       }
+
+
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
 }

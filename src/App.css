@@ -43,19 +43,28 @@ body{
   color: #888;
 }
 
+.ProseMirror h1,
+.ProseMirror h2 {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.ProseMirror .h1-style {
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  display: inline !important;
+}
+
+.ProseMirror .h2-style {
+  font-size: 1.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  display: inline !important;
+}
 
 .ProseMirror {
-  h1 {
-    font-size: 2em !important;
-    font-weight: bold !important;
-    margin: 1rem 0 !important;
-  }
-
-  h2 {
-    font-size: 1.5em !important;
-    font-weight: bold !important;
-    margin: 0.75rem 0 !important;
-  }
 
   p {
     margin: 0.5rem 0 !important;

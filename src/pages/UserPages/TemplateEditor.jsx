@@ -32,6 +32,10 @@ import { templateService } from '../../api/template';
 import { documentService } from '../../api/document';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import Heading from '@tiptap/extension-heading';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
 
 // Available languages
 const languages = [
@@ -163,34 +167,72 @@ const TemplateEditor = () => {
     const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
 
     // Editor configuration
-    const editor = useEditor({
+     const editor = useEditor({
         extensions: [
-            StarterKit,
             Document,
-            Paragraph,
-            Text,
-            Bold,
-            Italic,
-            Underline,
-            TextAlign.configure({
-                types: ['heading', 'paragraph'],
+            StarterKit.configure({
+                heading: false,
+                document: false,
+                paragraph: false
             }),
+            Paragraph.configure({
+                HTMLAttributes: {
+                    class: 'text-base',
+                },
+            }),
+            Text,
+            Bold.configure(),
+            Italic.configure(),
+            Underline.configure(),
+            // Update the Heading configuration to work with inline text
+            Heading.configure({
+              levels: [1, 2],
+              HTMLAttributes: {
+                h1: {
+                  class: 'h1-style text-4xl font-bold leading-normal'
+                },
+                h2: {
+                  class: 'h2-style text-2xl font-bold leading-normal'
+                }
+              }
+            }),
+            BulletList.configure({
+                HTMLAttributes: {
+                    class: 'list-disc ml-4'
+                }
+            }),
+            OrderedList.configure({
+                HTMLAttributes: {
+                    class: 'list-decimal ml-4'
+                }
+            }),
+            ListItem,
+            TextAlign.configure({
+                types: ['paragraph', 'heading'],
+                alignments: ['left', 'center', 'right'],
+                defaultAlignment: 'left',
+            })
         ],
-        content: '',
+        editorProps: {
+            attributes: {
+                class: 'prose max-w-none focus:outline-none min-h-[300px]'
+            }
+        },
         onUpdate: ({ editor }) => {
             if (!currentDocumentId) return;
-
+    
             if (autoSaveTimeout) {
                 clearTimeout(autoSaveTimeout);
             }
-
+    
             const timeoutId = setTimeout(() => {
                 autoSaveChanges(editor.getHTML());
             }, 5000);
-
+    
             setAutoSaveTimeout(timeoutId);
         }
     });
+    
 
     // Cleanup effect
     useEffect(() => {
@@ -519,22 +561,37 @@ const TemplateEditor = () => {
                                     {/* Editor Toolbar */}
                                     <div className="overflow-x-auto">
                                         <div className="flex items-center gap-2 border-b pb-4 mb-4 min-w-max md:min-w-0">
-                                            <select
-                                                className="border rounded px-2 py-1 text-sm"
-                                                onChange={e => {
-                                                    if (e.target.value === 'Heading 1') {
-                                                        editor?.chain().focus().toggleHeading({ level: 1 }).run();
-                                                    } else if (e.target.value === 'Heading 2') {
-                                                        editor?.chain().focus().toggleHeading({ level: 2 }).run();
-                                                    } else {
-                                                        editor?.chain().focus().setParagraph().run();
-                                                    }
-                                                }}
-                                            >
-                                                <option>Paragraph</option>
-                                                <option>Heading 1</option>
-                                                <option>Heading 2</option>
-                                            </select>
+                                        <div className="flex items-center gap-2 border-l pl-2">
+                   {/* H1 Button */}
+<button
+  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
+  }`}
+>
+  H1
+</button>
+
+{/* H2 Button */}
+<button
+  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
+  }`}
+>
+  H2
+</button>
+
+{/* Paragraph Button */}
+<button
+  onClick={() => editor.chain().focus().setParagraph().run()}
+  className={`p-1.5 rounded hover:bg-gray-100 ${
+    editor.isActive('paragraph') ? 'bg-gray-200' : ''
+  }`}
+>
+  P
+</button>
+                        </div>
 
                                             <div className="flex items-center border-l pl-2">
                                                 <button
@@ -612,9 +669,9 @@ const TemplateEditor = () => {
                                     </div>
 
                                     {/* Editor Content */}
-                                    <EditorContent
-                                        editor={editor}
-                                        className="prose max-w-none min-h-[300px] text-sm md:text-base"
+                                    <EditorContent 
+                                     editor={editor} 
+                                    className="prose prose-sm sm:prose-base lg:prose-lg max-w-none min-h-[300px] text-sm md:text-base" 
                                     />
                                 </div>
                             )}

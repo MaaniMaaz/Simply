@@ -101,26 +101,27 @@ const CustomerSupport = () => {
     };
 
     const handleSendMessage = async () => {
-        if (!newMessage.trim() || !activeTicket) return;
+      if (!newMessage.trim() || !activeTicket) return;
 
-        try {
-            setIsLoading(true);
-            const response = await ticketService.sendMessage(
-                activeTicket._id,
-                newMessage
-            );
-            const updatedTicket = response.data;
-            setActiveTicket(updatedTicket);
-            setTickets(tickets.map(ticket => 
-                ticket._id === activeTicket._id ? updatedTicket : ticket
-            ));
-            setNewMessage('');
-        } catch (error) {
-            setError(error.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      try {
+          setIsLoading(true);
+          const response = await ticketService.sendMessage(
+              activeTicket._id,
+              newMessage
+          );
+
+          const updatedTicket = response.data;
+          setActiveTicket(updatedTicket);
+          setTickets(prevTickets => prevTickets.map(ticket => 
+              ticket._id === activeTicket._id ? updatedTicket : ticket
+          ));
+          setNewMessage('');
+      } catch (error) {
+          setError(error.message);
+      } finally {
+          setIsLoading(false);
+      }
+  };
 
     const handleTicketSelect = async (ticket) => {
         setActiveTicket(ticket);

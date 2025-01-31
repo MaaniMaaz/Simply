@@ -48,30 +48,28 @@ const CustomerSupport = () => {
     };
 
     const pollForUpdates = async () => {
-        try {
-            const response = await ticketService.getUserTickets();
-            const newTickets = response.data;
-            
-            if (activeTicket) {
-                const updatedActiveTicket = newTickets.find(
-                    ticket => ticket._id === activeTicket._id
-                );
-                if (updatedActiveTicket && 
-                    JSON.stringify(updatedActiveTicket) !== JSON.stringify(activeTicket)) {
-                    setActiveTicket(updatedActiveTicket);
-                }
-            }
-            
-            if (JSON.stringify(newTickets) !== JSON.stringify(tickets)) {
-                setTickets(newTickets);
-            }
-        } catch (error) {
-            console.error('Polling error:', error);
-        } finally {
-            startPolling();
-        }
-    };
-
+      try {
+          const response = await adminService.getAllTickets();
+          const newTickets = response.data;
+              
+          // Update active ticket if it exists
+          if (activeTicket) {
+              const updatedActiveTicket = newTickets.find(
+                  ticket => ticket._id === activeTicket._id
+              );
+              // Important: Update active ticket regardless of string comparison
+              if (updatedActiveTicket) {
+                  setActiveTicket(updatedActiveTicket);
+              }
+          }
+              
+          setTickets(newTickets);
+      } catch (error) {
+          console.error('Polling error:', error);
+      } finally {
+          startPolling();
+      }
+  };
     const fetchTickets = async () => {
         try {
             setIsLoading(true);

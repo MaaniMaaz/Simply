@@ -45,20 +45,19 @@ const AdminSupport = () => {
         try {
             const response = await adminService.getAllTickets();
             const newTickets = response.data;
-            
+                
+            // Update active ticket if it exists
             if (activeTicket) {
                 const updatedActiveTicket = newTickets.find(
                     ticket => ticket._id === activeTicket._id
                 );
-                if (updatedActiveTicket && 
-                    JSON.stringify(updatedActiveTicket) !== JSON.stringify(activeTicket)) {
+                // Important: Update active ticket regardless of string comparison
+                if (updatedActiveTicket) {
                     setActiveTicket(updatedActiveTicket);
                 }
             }
-            
-            if (JSON.stringify(newTickets) !== JSON.stringify(tickets)) {
-                setTickets(newTickets);
-            }
+                
+            setTickets(newTickets);
         } catch (error) {
             console.error('Polling error:', error);
         } finally {

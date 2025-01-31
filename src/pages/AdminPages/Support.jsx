@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
     MessageSquare, 
     Send, 
-    Search, 
+    Search,
     Clock,
     Circle,
     ChevronDown,
@@ -21,19 +21,57 @@ const AdminSupport = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const pollTimeoutRef = useRef(null);
     const navigate = useNavigate();
+    const POLL_INTERVAL = 3000;
 
     useEffect(() => {
         fetchTickets();
-        const interval = setInterval(fetchTickets, 30000); // Refresh every 30 seconds
-        return () => clearInterval(interval);
+        return () => {
+            if (pollTimeoutRef.current) {
+                clearTimeout(pollTimeoutRef.current);
+            }
+        };
     }, []);
+
+    const startPolling = () => {
+        if (pollTimeoutRef.current) {
+            clearTimeout(pollTimeoutRef.current);
+        }
+        pollTimeoutRef.current = setTimeout(pollForUpdates, POLL_INTERVAL);
+    };
+
+    const pollForUpdates = async () => {
+        try {
+            const response = await adminService.getAllTickets();
+            const newTickets = response.data;
+            
+            if (activeTicket) {
+                const updatedActiveTicket = newTickets.find(
+                    ticket => ticket._id === activeTicket._id
+                );
+                if (updatedActiveTicket && 
+                    JSON.stringify(updatedActiveTicket) !== JSON.stringify(activeTicket)) {
+                    setActiveTicket(updatedActiveTicket);
+                }
+            }
+            
+            if (JSON.stringify(newTickets) !== JSON.stringify(tickets)) {
+                setTickets(newTickets);
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        } finally {
+            startPolling();
+        }
+    };
 
     const fetchTickets = async () => {
         try {
             setIsLoading(true);
             const response = await adminService.getAllTickets();
             setTickets(response.data);
+            startPolling();
         } catch (error) {
             setError(error.message);
         } finally {
@@ -51,9 +89,10 @@ const AdminSupport = () => {
                 newMessage
             );
 
-            setActiveTicket(response.data);
+            const updatedTicket = response.data;
+            setActiveTicket(updatedTicket);
             setTickets(tickets.map(ticket => 
-                ticket._id === activeTicket._id ? response.data : ticket
+                ticket._id === activeTicket._id ? updatedTicket : ticket
             ));
             setNewMessage('');
         } catch (error) {
@@ -67,7 +106,7 @@ const AdminSupport = () => {
         setActiveTicket(ticket);
         try {
             await adminService.markTicketAsRead(ticket._id);
-            fetchTickets(); // Refresh tickets to update read status
+            fetchTickets();
         } catch (error) {
             console.error('Error marking messages as read:', error);
         }
@@ -84,7 +123,6 @@ const AdminSupport = () => {
             setError(error.message);
         }
     };
-
     const filteredTickets = tickets.filter(ticket => {
         const matchesSearch = 
             ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -94,7 +132,7 @@ const AdminSupport = () => {
         
         return matchesSearch && matchesStatus;
     });
-
+    // Rest of your existing JSX...
     return (
         <div className="flex min-h-screen">
             <div className={`flex-1 transition-all duration-300`}>

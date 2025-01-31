@@ -4,9 +4,90 @@ import {
     Plus, 
     X, 
     Check,
-    ChevronDown 
+    ChevronDown,
+    Pencil
 } from 'lucide-react';
 import { templateDisplayService } from '../../api/templateDisplayService';
+
+// Category Button Component
+const CategoryButton = ({ category, isSelected, onSelect, onUpdate }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(category);
+    const [showEditIcon, setShowEditIcon] = useState(false);
+
+    const handleSubmit = async () => {
+        try {
+            const response = await templateDisplayService.updateCategory(category, editValue);
+            if (response.success) {
+                onUpdate(category, editValue);
+                setIsEditing(false);
+            }
+        } catch (error) {
+            console.error('Error updating category:', error);
+        }
+    };
+
+    const handleCancel = () => {
+        setEditValue(category);
+        setIsEditing(false);
+    };
+
+    if (isEditing) {
+        return (
+            <div className="flex items-center gap-2">
+                <input
+                    type="text"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className="px-2 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5341] focus:border-transparent"
+                    autoFocus
+                />
+                <button
+                    onClick={handleSubmit}
+                    className="p-1 hover:bg-green-100 rounded-full"
+                >
+                    <Check className="w-4 h-4 text-green-600" />
+                </button>
+                <button
+                    onClick={handleCancel}
+                    className="p-1 hover:bg-red-100 rounded-full"
+                >
+                    <X className="w-4 h-4 text-red-600" />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div
+            className="relative"
+            onMouseEnter={() => setShowEditIcon(true)}
+            onMouseLeave={() => setShowEditIcon(false)}
+        >
+            <button
+                onClick={() => onSelect(category)}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                    isSelected
+                        ? 'bg-[#FF5341] text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+            >
+                {category}
+            </button>
+            {showEditIcon && category !== 'All' && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditing(true);
+                    }}
+                    className="absolute -right-6 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full"
+                >
+                    <Pencil className="w-4 h-4 text-gray-600" />
+                </button>
+            )}
+        </div>
+    );
+};
 
 // Template Card Component
 const TemplateCard = ({ template }) => (
@@ -221,6 +302,17 @@ const TemplateDisplay = () => {
         }
     };
 
+    const handleCategoryUpdate = async (oldCategory, newCategory) => {
+        setCategories(prev => 
+            prev.map(cat => cat === oldCategory ? newCategory : cat)
+        );
+        if (selectedCategory === oldCategory) {
+            setSelectedCategory(newCategory);
+        }
+        await fetchTemplates();
+        showToastMessage('Category updated successfully');
+    };
+
     const showToastMessage = (message) => {
         setToastMessage(message);
         setShowToast(true);
@@ -273,19 +365,15 @@ const TemplateDisplay = () => {
             </div>
 
             {/* Category Filters */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-6">
                 {categories.map((category) => (
-                    <button
+                    <CategoryButton
                         key={category}
-                        onClick={() => setSelectedCategory(category)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${
-                            selectedCategory === category
-                                ? 'bg-[#FF5341] text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                    >
-                        {category}
-                    </button>
+                        category={category}
+                        isSelected={selectedCategory === category}
+                        onSelect={setSelectedCategory}
+                        onUpdate={handleCategoryUpdate}
+                    />
                 ))}
             </div>
 

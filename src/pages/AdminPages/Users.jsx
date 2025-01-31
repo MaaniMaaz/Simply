@@ -12,7 +12,51 @@ import {
   Users as UsersIcon
 } from 'lucide-react';
 
-// Modals Components
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+      <div className="flex flex-1 justify-center">
+        <nav className="relative z-0 inline-flex -space-x-px rounded-md">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`relative inline-flex items-center rounded-l-md px-4 py-2 text-sm font-medium
+              ${currentPage === 1 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          >
+            Previous
+          </button>
+          
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => onPageChange(i + 1)}
+              className={`relative inline-flex items-center px-4 py-2 text-sm font-medium
+                ${currentPage === i + 1
+                  ? 'bg-[#FF5341] text-white'
+                  : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`relative inline-flex items-center rounded-r-md px-4 py-2 text-sm font-medium
+              ${currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          >
+            Next
+          </button>
+        </nav>
+      </div>
+    </div>
+  );
+};
+
 const UserModal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
@@ -65,13 +109,17 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
 };
 
 const Users = () => {
-  // State declarations
   const [users, setUsers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
+  const [pagination, setPagination] = useState({ 
+    page: 1, 
+    limit: 10, 
+    total: 0,
+    totalPages: 1 
+  });
   const [selectedDropdown, setSelectedDropdown] = useState(null);
   const [modalState, setModalState] = useState({
     create: false,
@@ -88,15 +136,13 @@ const Users = () => {
     plan_id: '',
     status: 'Active'
   });
-  const [toast, setToast] = useState({ show: false, message: '' });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-  // Fetch users and plans on component mount and search/page change
   useEffect(() => {
     fetchUsers();
     fetchPlans();
   }, [searchQuery, pagination.page]);
 
-  // Update form data when selected user changes
   useEffect(() => {
     if (selectedUser && modalState.edit) {
       setFormData({
@@ -110,7 +156,6 @@ const Users = () => {
     }
   }, [selectedUser, modalState.edit]);
 
-  // Fetch users
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -128,32 +173,29 @@ const Users = () => {
         setUsers(users);
         setPagination(prev => ({
           ...prev,
-          total: paginationData.total
+          total: paginationData.total,
+          totalPages: Math.ceil(paginationData.total / pagination.limit)
         }));
       }
     } catch (err) {
       setError(err.message || 'Error fetching users');
-      showToast('Error fetching users');
+      showToast('Error fetching users', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch plans
   const fetchPlans = async () => {
     try {
       const response = await adminUserService.getAllPlans();
       if (response.success) {
-        console.log('Fetched plans:', response.data);
         setPlans(response.data || []);
       }
     } catch (err) {
-      console.error('Error fetching plans:', err);
-      showToast('Error fetching plans');
+      showToast('Error fetching plans', 'error');
     }
   };
 
-  // Create user
   const handleCreateUser = async () => {
     try {
       const response = await adminUserService.createUser({
@@ -165,15 +207,14 @@ const Users = () => {
         setUsers([response.data.user, ...users]);
         closeModal('create');
         resetForm();
-        showToast('User created successfully');
+        showToast('User created successfully', 'success');
         fetchUsers();
       }
     } catch (err) {
-      showToast(err.message || 'Error creating user');
+      showToast(err.message || 'Error creating user', 'error');
     }
   };
 
-  // Update user
   const handleEditUser = async () => {
     try {
       const updateData = {
@@ -204,35 +245,36 @@ const Users = () => {
         
         closeModal('edit');
         resetForm();
-        showToast('User updated successfully');
+        showToast('User updated successfully', 'success');
         fetchUsers();
       }
     } catch (err) {
-      showToast(err.message || 'Error updating user');
+      showToast(err.message || 'Error updating user', 'error');
     }
   };
 
-  // Delete user
   const handleDeleteUser = async () => {
     try {
       const response = await adminUserService.deleteUser(selectedUser._id);
       if (response.success) {
         setUsers(users.filter(user => user._id !== selectedUser._id));
         closeModal('delete');
-        showToast('User deleted successfully');
+        showToast('User deleted successfully', 'success');
       }
     } catch (err) {
-      showToast(err.message || 'Error deleting user');
+      showToast(err.message || 'Error deleting user', 'error');
     }
   };
 
-  // Show toast message
-  const showToast = message => {
-    setToast({ show: true, message });
-    setTimeout(() => setToast({ show: false, message: '' }), 3000);
+  const handlePageChange = (newPage) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
-  // Modal controls
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
+
   const openModal = (type, user = null) => {
     setSelectedUser(user);
     setModalState({ ...modalState, [type]: true });
@@ -249,7 +291,6 @@ const Users = () => {
     }
   };
 
-  // Reset form
   const resetForm = () => {
     setFormData({
       name: '',
@@ -262,7 +303,6 @@ const Users = () => {
     setSelectedUser(null);
   };
 
-  // Handle form input changes
   const handleInputChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -271,7 +311,6 @@ const Users = () => {
     }));
   };
 
-  // Render user form
   const renderUserForm = () => (
     <div className="space-y-4">
       <div>
@@ -343,14 +382,27 @@ const Users = () => {
         >
           <option value="Active">Active</option>
           <option value="Inactive">Inactive</option>
+          <option value="Suspended">Suspended</option>
         </select>
       </div>
     </div>
   );
 
+  const getPlanBadgeColor = (planName) => {
+    switch(planName) {
+      case 'Professional':
+        return 'bg-blue-100 text-blue-800';
+      case 'Enterprise':
+        return 'bg-green-100 text-green-800';
+      case 'Free':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-red-50 text-red-800';
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Users</h1>
@@ -365,7 +417,6 @@ const Users = () => {
         </button>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <input
           type="text"
@@ -377,110 +428,115 @@ const Users = () => {
         <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
       </div>
 
-      {/* Users Table */}
       <div className="bg-[#FFFAF3] rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-4 text-center">Loading...</div>
         ) : error ? (
           <div className="p-4 text-center text-red-500">{error}</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Words Generated</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map(user => (
-                  <tr key={user._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                        <div className="bg-[#FF5341] bg-opacity-10 p-2 rounded-lg mr-3">
-                          <UsersIcon className="w-5 h-5 text-[#FF5341]" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">{user.name}</div>
-                          <div className="text-gray-500 text-sm">{user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.plan_id?.name === 'Professional'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {user.plan_id?.name || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.credits_left || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {user.total_words_generated || 0}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="relative inline-block text-left">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            setSelectedDropdown(prev => (prev === user._id ? null : user._id));
-                          }}
-                          className="p-2 hover:bg-gray-100 rounded-lg"
-                        >
-                          <MoreVertical className="w-5 h-5 text-gray-500" />
-                        </button>
-                        {selectedDropdown === user._id && (
-                          <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                            <div className="py-1">
-                              <button
-                                onClick={() => openModal('view', user)}
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
-                              >
-                                <Eye className="w-4 h-4 mr-3" />
-                                View Details
-                              </button>
-                              <button
-                                onClick={() => openModal('edit', user)}
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
-                              >
-                                <Edit2 className="w-4 h-4 mr-3" />
-                                Edit User
-                              </button>
-                              <button
-                                onClick={() => openModal('delete', user)}
-                                className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full"
-                              >
-                                <Trash2 className="w-4 h-4 mr-3" />
-                                Delete User
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Words Generated</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.map(user => (
+                    <tr key={user._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="bg-[#FF5341] bg-opacity-10 p-2 rounded-lg mr-3">
+                            <UsersIcon className="w-5 h-5 text-[#FF5341]" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">{user.name}</div>
+                            <div className="text-gray-500 text-sm">{user.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPlanBadgeColor(user.plan_id?.name)}`}>
+                          {user.plan_id?.name || 'No Plan'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.credits_left || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {user.total_words_generated || 0}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          user.status === 'Active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : user.status === 'Suspended'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="relative inline-block text-left">
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              setSelectedDropdown(prev => (prev === user._id ? null : user._id));
+                            }}
+                            className="p-2 hover:bg-gray-100 rounded-lg"
+                          >
+                            <MoreVertical className="w-5 h-5 text-gray-500" />
+                          </button>
+                          {selectedDropdown === user._id && (
+                            <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => openModal('view', user)}
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                                >
+                                  <Eye className="w-4 h-4 mr-3" />
+                                  View Details
+                                </button>
+                                <button
+                                  onClick={() => openModal('edit', user)}
+                                  className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                                >
+                                  <Edit2 className="w-4 h-4 mr-3" />
+                                  Edit User
+                                </button>
+                                <button
+                                  onClick={() => openModal('delete', user)}
+                                  className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-3" />
+                                  Delete User
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination 
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
         )}
       </div>
 
-      {/* Create/Edit Modal */}
       <UserModal
         isOpen={modalState.create || modalState.edit}
         onClose={() => closeModal(modalState.create ? 'create' : 'edit')}
@@ -503,7 +559,6 @@ const Users = () => {
         </div>
       </UserModal>
 
-      {/* View Modal */}
       <UserModal
         isOpen={modalState.view}
         onClose={() => closeModal('view')}
@@ -526,7 +581,9 @@ const Users = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Subscription Plan</p>
-                <p className="font-medium">{selectedUser.plan_id?.name || 'N/A'}</p>
+                <div className={`p-2 rounded ${!selectedUser.plan_id ? 'bg-red-50' : ''}`}>
+                  <p className="font-medium">{selectedUser.plan_id?.name || 'No Plan'}</p>
+                </div>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Credits Left</p>
@@ -553,17 +610,21 @@ const Users = () => {
         )}
       </UserModal>
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={modalState.delete}
         onClose={() => closeModal('delete')}
         onConfirm={handleDeleteUser}
       />
 
-      {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50">
-          <Check className="w-4 h-4" />
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 z-50 ${
+          toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}
+        >
+          {toast.type === 'success' ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <X className="w-4 h-4" />
+          )}
           <span>{toast.message}</span>
         </div>
       )}

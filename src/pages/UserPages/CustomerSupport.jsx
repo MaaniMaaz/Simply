@@ -41,28 +41,26 @@ const CustomerSupport = () => {
     }, []);
 
     const startPolling = () => {
-        if (pollTimeoutRef.current) {
-            clearTimeout(pollTimeoutRef.current);
-        }
-        pollTimeoutRef.current = setTimeout(pollForUpdates, POLL_INTERVAL);
-    };
+      if (pollTimeoutRef.current) {
+          clearTimeout(pollTimeoutRef.current);
+      }
+      pollTimeoutRef.current = setTimeout(pollForUpdates, POLL_INTERVAL);
+  };
 
-    const pollForUpdates = async () => {
+  const pollForUpdates = async () => {
       try {
-          const response = await adminService.getAllTickets();
+          const response = await ticketService.getUserTickets();
           const newTickets = response.data;
-              
-          // Update active ticket if it exists
+          
           if (activeTicket) {
               const updatedActiveTicket = newTickets.find(
                   ticket => ticket._id === activeTicket._id
               );
-              // Important: Update active ticket regardless of string comparison
               if (updatedActiveTicket) {
                   setActiveTicket(updatedActiveTicket);
               }
           }
-              
+          
           setTickets(newTickets);
       } catch (error) {
           console.error('Polling error:', error);

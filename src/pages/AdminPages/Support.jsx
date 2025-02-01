@@ -20,11 +20,17 @@ const AdminSupport = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const pollTimeoutRef = useRef(null);
-    const navigate = useNavigate();
+    const chatContainerRef = useRef(null);
     const POLL_INTERVAL = 3000;
 
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [activeTicket?.messages]);
+
+    // Initialize polling
     useEffect(() => {
         fetchTickets();
         return () => {
@@ -34,30 +40,52 @@ const AdminSupport = () => {
         };
     }, []);
 
+
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [activeTicket?.messages]);
+
+    // Initialize polling
+    useEffect(() => {
+        fetchTickets();
+        return () => {
+            if (pollTimeoutRef.current) {
+                clearTimeout(pollTimeoutRef.current);
+            }
+        };
+    }, []);
+
+
+    
     const startPolling = () => {
         if (pollTimeoutRef.current) {
             clearTimeout(pollTimeoutRef.current);
         }
         pollTimeoutRef.current = setTimeout(pollForUpdates, POLL_INTERVAL);
     };
-
     const pollForUpdates = async () => {
         try {
             const response = await adminService.getAllTickets();
             const newTickets = response.data;
-                
-            // Update active ticket if it exists
+
+            // Update tickets list
+            setTickets(newTickets);
+
+            // If there's an active ticket, find its updated version
             if (activeTicket) {
-                const updatedActiveTicket = newTickets.find(
-                    ticket => ticket._id === activeTicket._id
-                );
-                // Important: Update active ticket regardless of string comparison
-                if (updatedActiveTicket) {
-                    setActiveTicket(updatedActiveTicket);
+                const updatedTicket = newTickets.find(t => t._id === activeTicket._id);
+                if (updatedTicket) {
+                    // Compare messages length to check for new messages
+                    const hasNewMessages = updatedTicket.messages.length !== activeTicket.messages.length;
+                    
+                    // Update active ticket if there are new messages or other changes
+                    if (hasNewMessages || JSON.stringify(updatedTicket) !== JSON.stringify(activeTicket)) {
+                        setActiveTicket(updatedTicket);
+                    }
                 }
             }
-                
-            setTickets(newTickets);
         } catch (error) {
             console.error('Polling error:', error);
         } finally {
@@ -69,7 +97,17 @@ const AdminSupport = () => {
         try {
             setIsLoading(true);
             const response = await adminService.getAllTickets();
-            setTickets(response.data);
+            const newTickets = response.data;
+            setTickets(newTickets);
+
+            // If there's an active ticket, update it with fresh data
+            if (activeTicket) {
+                const updatedActiveTicket = newTickets.find(t => t._id === activeTicket._id);
+                if (updatedActiveTicket) {
+                    setActiveTicket(updatedActiveTicket);
+                }
+            }
+
             startPolling();
         } catch (error) {
             setError(error.message);
@@ -88,36 +126,60 @@ const AdminSupport = () => {
                 newMessage
             );
 
+            // Immediately update UI
             const updatedTicket = response.data;
             setActiveTicket(updatedTicket);
-            setTickets(tickets.map(ticket => 
-                ticket._id === activeTicket._id ? updatedTicket : ticket
-            ));
+            setTickets(prevTickets => 
+                prevTickets.map(ticket =>
+                    ticket._id === updatedTicket._id ? updatedTicket : ticket
+                )
+            );
             setNewMessage('');
+
+            // Force fetch to ensure consistency
+            fetchTickets();
         } catch (error) {
             setError(error.message);
         } finally {
             setIsLoading(false);
         }
     };
-
     const handleTicketSelect = async (ticket) => {
+        // First update UI immediately for better UX
         setActiveTicket(ticket);
+        
         try {
+            // Mark as read in background
             await adminService.markTicketAsRead(ticket._id);
-            fetchTickets();
+            
+            // Get fresh data
+            const response = await adminService.getAllTickets();
+            const updatedTickets = response.data;
+            
+            // Find the selected ticket in the fresh data
+            const updatedTicket = updatedTickets.find(t => t._id === ticket._id);
+            if (updatedTicket) {
+                setActiveTicket(updatedTicket);
+                setTickets(updatedTickets);
+            }
         } catch (error) {
-            console.error('Error marking messages as read:', error);
+            console.error('Error selecting ticket:', error);
+            setError('Error updating ticket status');
         }
     };
 
     const handleUpdateStatus = async (ticketId, status) => {
         try {
             const response = await adminService.updateTicketStatus(ticketId, status);
-            setActiveTicket(response.data);
-            setTickets(tickets.map(ticket => 
-                ticket._id === ticketId ? response.data : ticket
-            ));
+            const updatedTicket = response.data;
+            
+            // Update both active ticket and tickets list
+            setActiveTicket(updatedTicket);
+            setTickets(prevTickets => 
+                prevTickets.map(ticket =>
+                    ticket._id === ticketId ? updatedTicket : ticket
+                )
+            );
         } catch (error) {
             setError(error.message);
         }
@@ -131,9 +193,9 @@ const AdminSupport = () => {
         
         return matchesSearch && matchesStatus;
     });
-    // Rest of your existing JSX...
+    
     return (
-        <div className="flex min-h-screen">
+        <div className="flex ">
             <div className={`flex-1 transition-all duration-300`}>
            
 
@@ -235,7 +297,7 @@ const AdminSupport = () => {
                                         </div>
 
                                         {/* Messages */}
-                                        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                                        <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatContainerRef}>
                                             {activeTicket.messages.map((msg) => (
                                                 <div
                                                     key={msg._id}

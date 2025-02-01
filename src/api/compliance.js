@@ -1,4 +1,3 @@
-// src/api/compliance.js
 import API from './config';
 
 export const complianceService = {
@@ -11,18 +10,36 @@ export const complianceService = {
         }
     },
 
-    analyzeContent: async (data) => {
+    analyzeContent: async ({ content, document_id, analysis_type }) => {
+        if (!content || !document_id || !analysis_type) {
+            throw new Error('Missing required fields for analysis');
+        }
+
         try {
-            const response = await API.post('/compliance/analyze', data);
+            const response = await API.post('/compliance/analyze', {
+                content,
+                document_id,
+                analysis_type
+            });
             return response.data;
         } catch (error) {
-            throw error.response?.data || error.message;
+            if (error.response?.data) {
+                throw error.response.data;
+            }
+            throw new Error(error.message || 'Error analyzing content');
         }
     },
 
+
     fixContent: async (data) => {
+        if (!data.compliance_id) {
+            throw new Error('Compliance ID is required');
+        }
+
         try {
-            const response = await API.post('/compliance/fix', data); 
+            const response = await API.post('/compliance/fix', {
+                compliance_id: data.compliance_id
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

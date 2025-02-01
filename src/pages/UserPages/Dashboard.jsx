@@ -332,37 +332,44 @@ const Dashboard = () => {
       <LineChart data={wordStats}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
         <XAxis 
-          dataKey="date"
-          tick={{ fontSize: 12, fill: '#6B7280' }}
-          tickLine={false}
-          axisLine={{ stroke: '#E5E7EB' }}
-          tickFormatter={(value) => {
-            if (!value) return '';
-            
-            // For hour format (single day view)
-            if (value.includes(':')) {
-              return new Date(value).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                hour12: true
-              });
-            }
-            
-            // For different date formats
-            const date = new Date(value);
-            const timeDiff = dateRange.endDate - dateRange.startDate;
-            const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-            
-            if (daysDiff <= 1) {
-              return date.toLocaleTimeString('en-US', { hour: 'numeric' });
-            } else if (daysDiff <= 31) {
-              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            } else if (daysDiff <= 365) {
-              return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            } else {
-              return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-            }
-          }}
-        />
+  dataKey="date"
+  tick={{ fontSize: 12, fill: '#6B7280' }}
+  tickLine={false}
+  axisLine={{ stroke: '#E5E7EB' }}
+  tickFormatter={(value) => {
+    if (!value) return '';
+
+    const formattedDate = new Date(value);
+    if (isNaN(formattedDate)) return '';
+
+    // Get the difference in days between start and end date
+    const start = new Date(dateRange.startDate);
+    const end = new Date(dateRange.endDate);
+    const timeDiff = end.getTime() - start.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    // If value includes a time (single-day view), format as time
+    if (value.includes(':')) {
+      return formattedDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    }
+
+    // Format the date based on the selected range
+    if (daysDiff <= 1) {
+      return formattedDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+    } else if (daysDiff <= 31) {
+      return formattedDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    } else if (daysDiff <= 365) {
+      return formattedDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    } else {
+      return formattedDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+  }}
+/>
+
         <YAxis
           tick={{ fontSize: 12, fill: '#6B7280' }}
           tickLine={false}

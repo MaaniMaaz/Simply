@@ -5,137 +5,172 @@ import { ticketService } from '../../api/ticket';
 import Sidebar from '../../components/Shared/Sidebar';
 
 const CustomerSupport = () => {
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [tickets, setTickets] = useState([]);
-    const [activeTicket, setActiveTicket] = useState(null);
-    const [newMessage, setNewMessage] = useState('');
-    const [newTicket, setNewTicket] = useState({ subject: '', message: '' });
-    const [isLoading, setIsLoading] = useState(false);
-    const [showNewTicketForm, setShowNewTicketForm] = useState(false);
-    const [error, setError] = useState(null);
-    const pollTimeoutRef = useRef(null);
-    const POLL_INTERVAL = 3000;
-    const navigate = useNavigate();
+  const [tickets, setTickets] = useState([]);
+  const [activeTicket, setActiveTicket] = useState(null);
+  const [newMessage, setNewMessage] = useState('');
+  const [newTicket, setNewTicket] = useState({ subject: '', message: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [showNewTicketForm, setShowNewTicketForm] = useState(false);
+  const [error, setError] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const pollTimeoutRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const navigate = useNavigate();
+  const POLL_INTERVAL = 3000;
 
-    useEffect(() => {
-        fetchTickets();
-        return () => {
-            if (pollTimeoutRef.current) {
-                clearTimeout(pollTimeoutRef.current);
-            }
-        };
-    }, []);
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [activeTicket?.messages]);
 
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth >= 768) {
-                setIsSidebarCollapsed(false);
-            } else {
-                setIsSidebarCollapsed(true);
-            }
-        };
-
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const startPolling = () => {
+  // Initialize polling
+  useEffect(() => {
+    fetchTickets();
+    return () => {
       if (pollTimeoutRef.current) {
-          clearTimeout(pollTimeoutRef.current);
+        clearTimeout(pollTimeoutRef.current);
       }
-      pollTimeoutRef.current = setTimeout(pollForUpdates, POLL_INTERVAL);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsSidebarCollapsed(false);
+      } else {
+        setIsSidebarCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const startPolling = () => {
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current);
+    }
+    pollTimeoutRef.current = setTimeout(pollForUpdates, POLL_INTERVAL);
   };
 
   const pollForUpdates = async () => {
-      try {
-          const response = await ticketService.getUserTickets();
-          const newTickets = response.data;
+    try {
+      const response = await ticketService.getUserTickets();
+      const newTickets = response.data;
+
+      setTickets(newTickets);
+
+      if (activeTicket) {
+        const updatedTicket = newTickets.find(t => t._id === activeTicket._id);
+        if (updatedTicket) {
+          const hasNewMessages = updatedTicket.messages.length !== activeTicket.messages.length;
           
-          if (activeTicket) {
-              const updatedActiveTicket = newTickets.find(
-                  ticket => ticket._id === activeTicket._id
-              );
-              if (updatedActiveTicket) {
-                  setActiveTicket(updatedActiveTicket);
-              }
+          if (hasNewMessages || JSON.stringify(updatedTicket) !== JSON.stringify(activeTicket)) {
+            setActiveTicket(updatedTicket);
           }
-          
-          setTickets(newTickets);
-      } catch (error) {
-          console.error('Polling error:', error);
-      } finally {
-          startPolling();
-      }
-  };
-    const fetchTickets = async () => {
-        try {
-            setIsLoading(true);
-            const response = await ticketService.getUserTickets();
-            setTickets(response.data);
-            startPolling();
-        } catch (error) {
-            setError(error.message);
-        } finally {
-            setIsLoading(false);
         }
-    };
-
-    const handleCreateTicket = async (e) => {
-        e.preventDefault();
-        try {
-            setIsLoading(true);
-            const response = await ticketService.createTicket(
-                newTicket.subject,
-                newTicket.message
-            );
-            setTickets([response.data, ...tickets]);
-            setActiveTicket(response.data);
-            setShowNewTicketForm(false);
-            setNewTicket({ subject: '', message: '' });
-        } catch (error) {
-            setError(error.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSendMessage = async () => {
-      if (!newMessage.trim() || !activeTicket) return;
-
-      try {
-          setIsLoading(true);
-          const response = await ticketService.sendMessage(
-              activeTicket._id,
-              newMessage
-          );
-
-          const updatedTicket = response.data;
-          setActiveTicket(updatedTicket);
-          setTickets(prevTickets => prevTickets.map(ticket => 
-              ticket._id === activeTicket._id ? updatedTicket : ticket
-          ));
-          setNewMessage('');
-      } catch (error) {
-          setError(error.message);
-      } finally {
-          setIsLoading(false);
       }
+    } catch (error) {
+      console.error('Polling error:', error);
+    } finally {
+      startPolling();
+    }
   };
 
-    const handleTicketSelect = async (ticket) => {
-        setActiveTicket(ticket);
-        try {
-            await ticketService.markAsRead(ticket._id);
-            fetchTickets();
-        } catch (error) {
-            console.error('Error marking messages as read:', error);
-        }
-    };
+  const fetchTickets = async () => {
+    try {
+      setIsLoading(true);
+      const response = await ticketService.getUserTickets();
+      const newTickets = response.data;
+      setTickets(newTickets);
 
-    return (
+      if (activeTicket) {
+        const updatedActiveTicket = newTickets.find(t => t._id === activeTicket._id);
+        if (updatedActiveTicket) {
+          setActiveTicket(updatedActiveTicket);
+        }
+      }
+
+      startPolling();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCreateTicket = async (e) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      const response = await ticketService.createTicket(
+        newTicket.subject,
+        newTicket.message
+      );
+      const newTicketData = response.data;
+      setTickets(prevTickets => [newTicketData, ...prevTickets]);
+      setActiveTicket(newTicketData);
+      setShowNewTicketForm(false);
+      setNewTicket({ subject: '', message: '' });
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !activeTicket) return;
+
+    try {
+      setIsLoading(true);
+      const response = await ticketService.sendMessage(
+        activeTicket._id,
+        newMessage
+      );
+
+      const updatedTicket = response.data;
+      setActiveTicket(updatedTicket);
+      setTickets(prevTickets => 
+        prevTickets.map(ticket =>
+          ticket._id === updatedTicket._id ? updatedTicket : ticket
+        )
+      );
+      setNewMessage('');
+
+      fetchTickets();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTicketSelect = async (ticket) => {
+    setActiveTicket(ticket);
+    
+    try {
+      await ticketService.markAsRead(ticket._id);
+      
+      const response = await ticketService.getUserTickets();
+      const updatedTickets = response.data;
+      
+      const updatedTicket = updatedTickets.find(t => t._id === ticket._id);
+      if (updatedTicket) {
+        setActiveTicket(updatedTicket);
+        setTickets(updatedTickets);
+      }
+    } catch (error) {
+      console.error('Error selecting ticket:', error);
+      setError('Error updating ticket status');
+    }
+  };
+
+  return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
       <div className="hidden md:block md:fixed md:left-0 md:h-screen z-50">
         <Sidebar 
           isCollapsed={isSidebarCollapsed} 
@@ -143,9 +178,7 @@ const CustomerSupport = () => {
         />
       </div>
 
-      {/* Main Content */}
       <div className={`flex-1 w-full ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} transition-all duration-300`}>
-        {/* Navbar */}
         <div className="sticky top-0 w-full bg-[#FDF8F6] py-4 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex justify-between items-center">
@@ -168,22 +201,24 @@ const CustomerSupport = () => {
           </div>
         </div>
 
-        {/* Chat Interface */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="max-w-8xl mx-4   py-4">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="flex h-[calc(100vh-16rem)]">
-              {/* Tickets List */}
-              <div className="w-full md:w-80 border-r">
-                <div className="p-4">
+            <div className="flex h-[calc(100vh-8rem)]">
+              {/* Tickets List with Fixed Header and Scrollable Content */}
+              <div className="w-full md:w-80 border-r flex flex-col">
+                {/* Fixed New Ticket Button */}
+                <div className="p-4 border-b">
                   <button
                     onClick={() => setShowNewTicketForm(true)}
-                    className="w-full bg-[#FF5341] text-white px-4 py-2 rounded-lg mb-4 hover:bg-[#FF5341]/90"
+                    className="w-full bg-[#FF5341] text-white px-4 py-2 rounded-lg hover:bg-[#FF5341]/90"
                   >
                     New Ticket
                   </button>
+                </div>
 
-                  {/* Tickets List */}
-                  <div className="space-y-2 overflow-y-auto">
+                {/* Scrollable Tickets List */}
+                <div className="flex-1 overflow-y-auto">
+                  <div className="p-4 space-y-2">
                     {tickets.map((ticket) => (
                       <div
                         key={ticket._id}
@@ -209,11 +244,9 @@ const CustomerSupport = () => {
                 </div>
               </div>
 
-              {/* Chat Area */}
               <div className="flex-1 flex flex-col">
                 {activeTicket ? (
                   <>
-                    {/* Chat Header */}
                     <div className="p-4 border-b">
                       <h3 className="font-bold text-lg">{activeTicket.subject}</h3>
                       <p className="text-sm text-gray-500">
@@ -221,8 +254,7 @@ const CustomerSupport = () => {
                       </p>
                     </div>
 
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatContainerRef}>
                       {activeTicket.messages.map((msg) => (
                         <div
                           key={msg._id}
@@ -242,7 +274,6 @@ const CustomerSupport = () => {
                       ))}
                     </div>
 
-                    {/* Message Input */}
                     <div className="p-4 border-t">
                       <div className="flex space-x-2">
                         <input
@@ -279,7 +310,6 @@ const CustomerSupport = () => {
         </div>
       </div>
 
-      {/* New Ticket Modal */}
       {showNewTicketForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
@@ -331,7 +361,6 @@ const CustomerSupport = () => {
         </div>
       )}
 
-      {/* Error Toast */}
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
           {error}
@@ -342,3 +371,4 @@ const CustomerSupport = () => {
 };
 
 export default CustomerSupport;
+

@@ -7,32 +7,81 @@ import {
     Check,
     X,
     AlertTriangle,
-    ChevronDown
+    ChevronDown,
+    Link as LinkIcon,
+    Plus
 } from 'lucide-react';
+
+// Keep all your imports the same...
 
 const NotificationTemplateCard = ({ template, onSave }) => {
     const [isEditing, setIsEditing] = useState(false);
-    // Update state when template prop changes
     const [message, setMessage] = useState(template?.message_template || '');
     const [isActive, setIsActive] = useState(template?.is_active || false);
+    const [links, setLinks] = useState(template?.links || []);
+    const [showLinkForm, setShowLinkForm] = useState(false);
+    const [newLink, setNewLink] = useState({ url: '', placeholder: '' });
 
-    // Add useEffect to update state when template changes
+    // Update state when template changes
     useEffect(() => {
         setMessage(template?.message_template || '');
         setIsActive(template?.is_active || false);
-    }, [template]); // Dependency on template prop
+        setLinks(template?.links || []);
+    }, [template]);
+
+    const handleAddLink = () => {
+        if (newLink.url && newLink.placeholder) {
+            // Add link to the message and links array
+            const linkText = `[${newLink.placeholder}](${newLink.url})`;
+            setMessage(prevMessage => prevMessage + (prevMessage ? ' ' : '') + linkText);
+            setLinks([...links, { ...newLink }]);
+            setNewLink({ url: '', placeholder: '' });
+            setShowLinkForm(false);
+        }
+    };
+
+    const handleRemoveLink = (index) => {
+        const linkToRemove = links[index];
+        const linkText = `[${linkToRemove.placeholder}](${linkToRemove.url})`;
+        setMessage(prevMessage => prevMessage.replace(linkText, '').trim());
+        setLinks(links.filter((_, i) => i !== index));
+    };
 
     const handleSave = async () => {
         await onSave({
             trigger_type: template.trigger_type,
             message_template: message,
-            is_active: isActive
+            is_active: isActive,
+            links: links
         });
         setIsEditing(false);
     };
 
+    // Function to render message with clickable links
+    const renderMessageWithLinks = (messageText) => {
+        if (!messageText) return '';
+        
+        let renderedMessage = messageText;
+        links.forEach(link => {
+            const linkPattern = `\\[${link.placeholder}\\]\\(${link.url}\\)`;
+            const regex = new RegExp(linkPattern, 'g');
+            renderedMessage = renderedMessage.replace(
+                regex,
+                `<a href="${link.url}" target="_blank" rel="noopener noreferrer" class="text-[#FF5341] hover:underline">${link.placeholder}</a>`
+            );
+        });
+
+        return (
+            <div className="text-gray-700" 
+                 dangerouslySetInnerHTML={{ __html: renderedMessage }} 
+            />
+        );
+    };
+
+
     return (
         <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all">
+            {/* Header section - keep the same */}
             <div className="flex items-start justify-between mb-4">
                 <div>
                     <h3 className="font-medium text-lg capitalize mb-1">
@@ -62,14 +111,89 @@ const NotificationTemplateCard = ({ template, onSave }) => {
                 )}
             </div>
 
+            {/* Edit Mode */}
             {isEditing ? (
                 <div className="space-y-4">
-                    <textarea
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        className="w-full p-3 border rounded-lg resize-none focus:ring-[#FF5341] focus:border-[#FF5341]"
-                        rows={3}
-                    />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Message Content (Including Links)
+                        </label>
+                        <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            className="w-full p-3 border rounded-lg resize-none focus:ring-[#FF5341] focus:border-[#FF5341]"
+                            rows={3}
+                        />
+                    </div>
+
+                    {/* Links Section */}
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                            <h4 className="font-medium">Add Link to Message</h4>
+                            <button
+                                onClick={() => setShowLinkForm(true)}
+                                className="flex items-center text-[#FF5341] text-sm hover:opacity-80"
+                            >
+                                <Plus className="w-4 h-4 mr-1" />
+                                Add Link
+                            </button>
+                        </div>
+
+                        {/* Show current links in message */}
+                        {links.map((link, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                <div className="flex items-center space-x-2">
+                                    <LinkIcon className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm text-[#FF5341]">{link.placeholder}</span>
+                                    <span className="text-sm text-gray-400">({link.url})</span>
+                                </div>
+                                <button
+                                    onClick={() => handleRemoveLink(index)}
+                                    className="p-1 hover:bg-gray-200 rounded-lg"
+                                >
+                                    <X className="w-4 h-4 text-gray-500" />
+                                </button>
+                            </div>
+                        ))}
+
+                        {/* Add Link Form */}
+                        {showLinkForm && (
+                            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                                <input
+                                    type="url"
+                                    value={newLink.url}
+                                    onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
+                                    placeholder="Enter URL"
+                                    className="w-full p-2 border rounded-lg text-sm focus:ring-[#FF5341] focus:border-[#FF5341]"
+                                />
+                                <input
+                                    type="text"
+                                    value={newLink.placeholder}
+                                    onChange={(e) => setNewLink({ ...newLink, placeholder: e.target.value })}
+                                    placeholder="Enter link text"
+                                    className="w-full p-2 border rounded-lg text-sm focus:ring-[#FF5341] focus:border-[#FF5341]"
+                                />
+                                <div className="flex justify-end space-x-2">
+                                    <button
+                                        onClick={() => setShowLinkForm(false)}
+                                        className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-200 rounded-lg"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleAddLink}
+                                        disabled={!newLink.url || !newLink.placeholder}
+                                        className="px-3 py-1 text-sm bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90 disabled:opacity-50"
+                                    >
+                                        Add Link
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {/* Active Checkbox */}
                     <div className="flex items-center">
                         <label className="flex items-center cursor-pointer">
                             <input
@@ -81,29 +205,32 @@ const NotificationTemplateCard = ({ template, onSave }) => {
                             <span className="ml-2 text-sm text-gray-600">Active</span>
                         </label>
                     </div>
-                </div>
-            ) : (
-                <p className="text-gray-700">{message}</p>
-            )}
 
-            {isEditing && (
-                <div className="mt-4 p-4 bg-yellow-50 rounded-lg flex items-start">
-                    <AlertTriangle className="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-yellow-700">
-                        <p className="font-medium mb-1">Available Variables:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li>{'{{username}}'} - User's name</li>
-                          <li>{'{{planName}}'} - Subscription plan name</li>
-                          <li>{'{{expiryDate}}'} - Plan expiry date</li>
-                          <li>{'{{creditsLeft}}'} - Remaining credits</li>
-                          <li>{'{{templateName}}'} - Template name</li>
-                      </ul>
+                    {/* Variables Info */}
+                    <div className="mt-4 p-4 bg-yellow-50 rounded-lg flex items-start">
+                        <AlertTriangle className="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-yellow-700">
+                            <p className="font-medium mb-1">Available Variables & Links:</p>
+                            <ul className="list-disc list-inside space-y-1">
+                                <li>{'{{username}}'} - User's name</li>
+                                <li>{'{{planName}}'} - Subscription plan name</li>
+                                <li>{'{{expiryDate}}'} - Plan expiry date</li>
+                                <li>{'{{creditsLeft}}'} - Remaining credits</li>
+                                <li>{'{{templateName}}'} - Template name</li>
+                                <li>Add links using the "Add Link" button above</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
+            ) : (
+                // Preview Mode - using the new render function
+                renderMessageWithLinks(message)
             )}
         </div>
     );
 };
+
+// Rest of your Notifications component remains the same...
 
 const Notifications = () => {
     const [templates, setTemplates] = useState([]);

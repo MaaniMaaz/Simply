@@ -42,7 +42,10 @@ const NotificationCard = ({ notification, onMarkAsRead }) => (
                 {getNotificationIcon(notification.trigger_type)}
             </div>
             <div className="flex-1">
-                <p className="text-gray-800 mb-2">{notification.message}</p>
+                <p 
+                    className="text-gray-800 mb-2"
+                    dangerouslySetInnerHTML={{ __html: notification.message }}
+                />
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                         <div className="flex items-center text-sm text-gray-500">

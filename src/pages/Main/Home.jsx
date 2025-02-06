@@ -15,12 +15,15 @@ import secureContent from '../../assets/h2.svg';
 import PricingSection from '../../components/UserComponents/HomeComponents/PricingSection';
 import SocialGrid from '../../components/UserComponents/HomeComponents/SocialGrid';
 import { homepageService } from '../../api/homepageService';
+import LoadingScreen from '../../components/Shared/LoadingScreen';
 
 const Home = () => {
   const navigate = useNavigate();
   const [content, setContent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [openIndex, setOpenIndex] = useState(0);
+  const [error, setError] = useState(null);
+  const [plans, setPlans] = useState([]);
 
   useEffect(() => {
     fetchContent();
@@ -31,10 +34,17 @@ const Home = () => {
       setLoading(true);
       const response = await homepageService.getContent();
       setContent(response.data);
+      // Set plans from the response
+      if (response.data.plans) {
+        // Filter only active plans and sort by price
+        const activePlans = response.data.plans
+          .filter(plan => plan.is_active)
+          .sort((a, b) => a.price - b.price);
+        setPlans(activePlans);
+      }
     } catch (error) {
       console.error('Error fetching homepage content:', error);
-      // Use default content on error
-      setContent(null);
+      setError(error.message || 'Error loading content');
     } finally {
       setLoading(false);
     }
@@ -76,6 +86,38 @@ const Home = () => {
       );
     });
   };
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  // If error, show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#FFFAF3] flex flex-col items-center justify-center">
+        <div className="text-red-500 text-lg">
+          {error}
+        </div>
+        <button 
+          onClick={fetchContent}
+          className="mt-4 px-6 py-2 bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // If no content, show error
+  if (!content) {
+    return (
+      <div className="min-h-screen bg-[#FFFAF3] flex flex-col items-center justify-center">
+        <div className="text-gray-600 text-lg">
+          No content available
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FFFAF3]">
@@ -261,7 +303,7 @@ const Home = () => {
         </div>
       </section>
 
-      <PricingSection />
+      <PricingSection plans={plans} />
 
       {/* FAQ Section */}
       <section id="faq" className="bg-white py-12 md:py-20">

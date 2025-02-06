@@ -1,5 +1,5 @@
 // src/pages/auth/Login.jsx
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '../../assets/logo.png';
@@ -14,7 +14,16 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,6 +31,13 @@ const Login = () => {
     setLoading(true);
 
     try {
+
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+
       // Check for admin credentials
       if (email === 'admin@mail.com') {
         const response = await adminService.login({ email, password });
@@ -32,7 +48,7 @@ const Login = () => {
       }
 
       // Regular user login
-      const response = await authService.login({ email, password });
+      const response = await authService.login({ email, password, rememberMe });
       if (response.success) {
         navigate('/dashboard');
       }
@@ -130,17 +146,19 @@ const Login = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-[#FF5341] focus:ring-[#FF5341] border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
-              </div>
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            name="remember-me"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 text-[#FF5341] focus:ring-[#FF5341] border-gray-300 rounded"
+          />
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+            Remember me
+          </label>
+        </div>
 
               <div className="text-sm">
                 <Link 

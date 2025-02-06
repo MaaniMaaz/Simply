@@ -16,6 +16,10 @@ export const authService = {
                 // Only set user tokens, never admin tokens
                 localStorage.setItem('token', response.data.data.token);
                 localStorage.setItem('user', JSON.stringify(response.data.data.user));
+
+                if (!credentials.rememberMe) {
+                    localStorage.removeItem('rememberedEmail');
+                }
             }
             return response.data;
         } catch (error) {
@@ -89,6 +93,11 @@ sendVerificationCode: async (userData) => {
             console.error('Logout error:', error);
         } finally {
             // Always clear user tokens on logout, regardless of API success
+            const rememberedEmail = localStorage.getItem('rememberedEmail');
+            localStorage.clear();
+            if (rememberedEmail) {
+                localStorage.setItem('rememberedEmail', rememberedEmail);
+            }
             localStorage.removeItem('token');
             localStorage.removeItem('user');
         }

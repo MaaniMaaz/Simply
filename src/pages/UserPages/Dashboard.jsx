@@ -32,7 +32,7 @@ const formatDateToYYYYMMDD = (date) => {
 const getDefaultDateRange = () => {
   const end = new Date();
   const start = new Date();
-  start.setMonth(start.getMonth() - 1); // Default to last month
+  start.setDate(start.getDate() - 6); 
   
   return {
       startDate: formatDateToYYYYMMDD(start),

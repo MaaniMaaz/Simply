@@ -80,6 +80,11 @@ const Translation = () => {
       return;
     }
 
+    if (!toneOfVoice.trim()) {
+      showToastMessage('Please enter a Tone of Voice before translating', 'error');
+      return;
+    }
+
     setIsTranslating(true);
     setError(null);
 
@@ -88,7 +93,7 @@ const Translation = () => {
         content: inputText,
         sourceLanguage,
         targetLanguage,
-        toneOfVoice: toneOfVoice.trim() || null
+        toneOfVoice: toneOfVoice.trim()
       });
 
       setOutputText(response.data.translatedContent);
@@ -266,6 +271,9 @@ const Translation = () => {
           className="w-full p-2 border rounded-lg"
           placeholder="E.g., Professional, Friendly, Informative"
           />
+           {!toneOfVoice.trim() && (
+    <p className="text-red-600 text-sm mt-1">Tone of Voice is required</p>
+  )}
         </div>
         </div>
 

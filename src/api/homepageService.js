@@ -3,11 +3,20 @@ import API from './config';
 
 // src/api/homepageService.js
 export const homepageService = {
-    getContent: async () => {
+   getContent: async () => {
         try {
-            // Remove the admin prefix from the URL for public access
-            const response = await API.get('/homepage');
-            return response.data;
+            const [contentResponse, plansResponse] = await Promise.all([
+                API.get('/homepage'),
+                API.get('/subscriptions/plans') // Get plans data
+            ]);
+            
+            return {
+                success: true,
+                data: {
+                    ...contentResponse.data.data,
+                    plans: plansResponse.data.data // Include plans in the response
+                }
+            };
         } catch (error) {
             throw error.response?.data || error.message;
         }

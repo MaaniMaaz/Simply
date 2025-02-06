@@ -107,10 +107,11 @@ const InputField = ({ field, onDelete, onUpdate }) => {
   );
 };
 
-const predefinedCategories = ['Email', 'Website', 'Blog', 'Article', 'Ecommerce', 'Video', 'Ads'];
 
 const TemplateBuilder = () => {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -137,6 +138,21 @@ const TemplateBuilder = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    fetchCategories();
+}, []);
+
+const fetchCategories = async () => {
+    try {
+        const response = await templateService.getCategories();
+        setCategories(response.data || []);
+    } catch (error) {
+        showToastMessage(error.message || 'Error fetching categories', 'error');
+    } finally {
+        setLoading(false);
+    }
+};
 
   const handleAddField = (type) => {
     const newField = {
@@ -289,22 +305,22 @@ const TemplateBuilder = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                     Category
-                  </label>
-                  <select
+                </label>
+                <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341] bg-white"
-                  >
+                >
                     <option value="">Select a category</option>
-                    {predefinedCategories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
+                    {categories.map((category) => (
+                        <option key={category} value={category}>
+                            {category}
+                        </option>
                     ))}
-                  </select>
-                </div>
+                </select>
+            </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

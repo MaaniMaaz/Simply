@@ -10,6 +10,7 @@ import { authService } from '../../api/auth';
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -49,6 +50,12 @@ const Signup = () => {
 
 // In your Signup component
 const handleSendVerification = async () => {
+
+  if (!termsAccepted) {
+    showToastMessage('You must agree to the Terms of Service and Privacy Policy.', 'error');
+    return;
+  }
+
   if (!formData.email || !formData.name) {
     showToastMessage('Please provide both name and email', 'error');
     return;
@@ -79,6 +86,11 @@ const handleSendVerification = async () => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+
+    if (!termsAccepted) {
+      showToastMessage('You must agree to the Terms of Service and Privacy Policy.', 'error');
+      return;
+    }
 
     if (!formData.verificationCode) {
       showToastMessage('Please enter verification code', 'error');
@@ -243,20 +255,21 @@ const handleSendVerification = async () => {
             </div>
 
             <div className="flex items-center">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 text-[#FF5341] focus:ring-[#FF5341] border-gray-300 rounded"
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                I agree to the{' '}
-                <a href="#" className="text-[#FF5341] hover:text-[#FF5341]/80">Terms of Service</a>
-                {' '}and{' '}
-                <a href="#" className="text-[#FF5341] hover:text-[#FF5341]/80">Privacy Policy</a>
-              </label>
-            </div>
+            <input
+              id="terms"
+              name="terms"
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="h-4 w-4 text-[#FF5341] focus:ring-[#FF5341] border-gray-300 rounded cursor-pointer"
+            />
+            <label htmlFor="terms" className="ml-2 block text-sm text-gray-900 cursor-pointer select-none">
+              I agree to the{' '}
+              <a href="#" className="text-[#FF5341] hover:text-[#FF5341]/80 font-medium">Terms of Service</a>
+              {' '}and{' '}
+              <a href="#" className="text-[#FF5341] hover:text-[#FF5341]/80 font-medium">Privacy Policy</a>
+            </label>
+          </div>
 
             <button
               type={verificationSent ? "submit" : "button"}

@@ -2,6 +2,18 @@
 import API from './config';
 
 export const templateService = {
+
+
+    getCategories: async () => {
+        try {
+            const response = await API.get('/templates/categories');
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+
     createTemplate: async (templateData) => {
         try {
             const response = await API.post('/templates', templateData);

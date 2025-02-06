@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 
-const PricingSection = () => {
- 
+const PricingSection = ({ plans = [] }) => {
   const navigate = useNavigate();
 
   return (
@@ -24,146 +23,52 @@ const PricingSection = () => {
             </span>
             {' '}for you
           </h2>
-
-          {/* Plan Toggle */}
-          <div className="">
-            
-           
-          </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* Professional Plan */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-black">
-            <h3 className="text-lg font-medium mb-2">Professional Plan</h3>
-            <div className="text-4xl font-bold mb-8">$19 / Month</div>
-            <button 
-            onClick={() => navigate('/signup')}
-            className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90">
-              Select Plan
-            </button>
-            
-            <div className="space-y-6">
-              <div className="text-gray-600">Everything in Professional Plus</div>
+        {/* Pricing Cards Grid */}
+        <div className={`grid grid-cols-1 ${
+          plans.length === 2 ? 'md:grid-cols-2' : 
+          plans.length === 3 ? 'md:grid-cols-3' : 
+          plans.length >= 4 ? 'md:grid-cols-4' : ''
+        } gap-6`}>
+          {plans.map((plan, index) => (
+            <div 
+              key={plan._id || index}
+              className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-black"
+            >
+              <h3 className="text-lg font-medium mb-2">{plan.name}</h3>
+              <div className="text-4xl font-bold mb-8">${plan.price} / Month</div>
               
-              <div className="space-y-4">
-                <div>
-                  <div className="font-medium mb-2">Content Creation</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">25,000 Credits</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Custom Template & Editor</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Keyword Optimisation for SEO</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-medium mb-2">Collaboration</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Team Collaboration tools</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Real-Time Document Editing</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-medium mb-2">Admin</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Version History</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Shared & Private Content Libraries</span>
+              <button 
+                onClick={() => navigate('/signup')}
+                className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90"
+              >
+                {plan.price === 49 ? 'Contact Sales' : 'Select Plan'}
+              </button>
+              
+              <div className="space-y-6">
+                <div className="text-gray-600">Everything in {plan.name}</div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="font-medium mb-2">Content Creation</div>
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <Check className="w-5 h-5 text-emerald-500 mr-3" />
+                        <span className="text-gray-600">{plan.credits_per_month.toLocaleString()} Credits</span>
+                      </div>
+                      {plan.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-center">
+                          <Check className="w-5 h-5 text-emerald-500 mr-3" />
+                          <span className="text-gray-600">{feature}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Enterprise Plan */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-black">
-            <h3 className="text-lg font-medium mb-2">Enterprise Plan</h3>
-            <div className="text-4xl font-bold mb-8">$49 / Month</div>
-            <button 
-            onClick={() => navigate('/signup')}
-            className="w-full bg-[#FF5341] text-white py-3 rounded-lg mb-8 hover:bg-opacity-90">
-              Contact Sales
-            </button>
-            
-            <div className="space-y-6">
-              <div className="text-gray-600">Everything in Professional Plus</div>
-              
-              <div className="space-y-4">
-                <div>
-                  <div className="font-medium mb-2">Content Management</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">50,000 Credits</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Multilingual Content Translation</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Keyword Optimisation for SEO</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-medium mb-2">Advanced Features</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Automated Brand Voice Validation</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Integrated With Third-Party Tools</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-medium mb-2">Admin</div>
-                  <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Dedicated Account Manager</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Analytics & Reporting Dashboard</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Check className="w-5 h-5 text-emerald-500 mr-3" />
-                      <span className="text-gray-600">Advanced User Permissions</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

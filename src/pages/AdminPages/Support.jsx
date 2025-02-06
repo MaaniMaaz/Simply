@@ -276,6 +276,9 @@ const AdminSupport = () => {
                                                     <h3 className="font-bold text-lg">
                                                         {activeTicket.user_id.name}
                                                     </h3>
+                                                    <p className="text-sm text-gray-700">
+                                                        {activeTicket.user_id.email}
+                                                    </p>
                                                     <p className="text-sm text-gray-500">
                                                         Ticket #{activeTicket._id.substring(0, 8)}
                                                     </p>

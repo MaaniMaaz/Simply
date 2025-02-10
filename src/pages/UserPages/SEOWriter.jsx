@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Editor from './Editor';  // Adjust the path as needed
 import Sidebar from '../../components/Shared/Sidebar';
 import { authService } from '../../api/auth';
 import { 
@@ -23,21 +24,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import StarterKit from '@tiptap/starter-kit';
-import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
-import Bold from '@tiptap/extension-bold';
-import Italic from '@tiptap/extension-italic';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
-import { useEditor, EditorContent } from '@tiptap/react';
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-import ListItem from '@tiptap/extension-list-item';
-import Heading from '@tiptap/extension-heading';
-import TextStyle from '@tiptap/extension-text-style'
-import { Mark } from '@tiptap/core'
+
 
 import { seoService } from '../../api/seo';
 import html2canvas from 'html2canvas';
@@ -68,7 +55,7 @@ const SEOWriter = () => {
   const [focusIdeas, setFocusIdeas] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
-  const [resultLength, setResultLength] = useState('M');
+  const [wordCount, setWordCount] = useState("600"); 
   const [isGenerating, setIsGenerating] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -77,6 +64,7 @@ const SEOWriter = () => {
   const [userCredits, setUserCredits] = useState(0);
   const [currentDocumentId, setCurrentDocumentId] = useState(null);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
+  const [generatedContent, setGeneratedContent] = useState('');
 
   useEffect(() => {
     const user = authService.getUser();
@@ -109,71 +97,7 @@ const SEOWriter = () => {
     return () => clearTimeout(debounceTimer);
   }, [contentDescription, selectedLanguage]);
 
-  const editor = useEditor({
-    extensions: [
-        Document,
-        StarterKit.configure({
-            heading: false,
-            document: false,
-            paragraph: false
-        }),
-        Paragraph.configure({
-            HTMLAttributes: {
-                class: 'text-base',
-            },
-        }),
-        Text,
-        Bold.configure(),
-        Italic.configure(),
-        Underline.configure(),
-        // Update the Heading configuration to work with inline text
-        Heading.configure({
-          levels: [1, 2],
-          HTMLAttributes: {
-            h1: {
-              class: 'h1-style text-4xl font-bold leading-normal'
-            },
-            h2: {
-              class: 'h2-style text-2xl font-bold leading-normal'
-            }
-          }
-        }),
-        BulletList.configure({
-            HTMLAttributes: {
-                class: 'list-disc ml-4'
-            }
-        }),
-        OrderedList.configure({
-            HTMLAttributes: {
-                class: 'list-decimal ml-4'
-            }
-        }),
-        ListItem,
-        TextAlign.configure({
-            types: ['paragraph', 'heading'],
-            alignments: ['left', 'center', 'right'],
-            defaultAlignment: 'left',
-        })
-    ],
-    editorProps: {
-        attributes: {
-            class: 'prose max-w-none focus:outline-none min-h-[300px]'
-        }
-    },
-    onUpdate: ({ editor }) => {
-        if (!currentDocumentId) return;
-
-        if (autoSaveTimeout) {
-            clearTimeout(autoSaveTimeout);
-        }
-
-        const timeoutId = setTimeout(() => {
-            autoSaveChanges(editor.getHTML());
-        }, 5000);
-
-        setAutoSaveTimeout(timeoutId);
-    }
-});
+ 
 
   useEffect(() => {
     const handleResize = () => {
@@ -188,6 +112,27 @@ const SEOWriter = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const validateWordCount = (value) => {
+    // Allow empty string during typing
+    if (value === "") return "";
+    
+    const numValue = parseInt(value);
+    if (isNaN(numValue)) return "100";
+    if (numValue < 100) return "100";
+    if (numValue > 1600) return "1600";
+    return String(numValue); // Convert back to string
+  };
+
+  const handleWordCountChange = (e) => {
+    // Allow any input initially
+    setWordCount(e.target.value);
+  };
+  
+  const handleWordCountBlur = () => {
+    // Validate on blur
+    setWordCount(validateWordCount(wordCount));
+  };
 
   const showToastMessage = (message, type = 'success') => {
     setToastMessage(message);
@@ -228,52 +173,51 @@ const SEOWriter = () => {
   };
 
   const handleRunSEOWriter = async () => {
-    if (!contentDescription || !selectedKeywords.length) {
-      showToastMessage('Please provide content description and select keywords', 'error');
-      return;
+    if (!contentDescription || !selectedKeywords || !selectedKeywords.length) {  // Changed rankFor to contentDescription
+        showToastMessage('Please provide content description and select keywords', 'error');
+        return;
     }
-
+  
     setIsGenerating(true);
     try {
-      const response = await seoService.generateContent({
-        rankFor: contentDescription,
-        selectedKeywords,
-        focusIdeas,
-        resultLength,
-        language: selectedLanguage
-      });
-
-      editor?.commands.setContent(response.data.content);
-      setShowResults(true);
-      showToastMessage('Content generated successfully');
-        
-      await saveInitialDocument(response.data.content);
+        const response = await seoService.generateContent({
+            rankFor: contentDescription,  // Pass contentDescription as rankFor
+            selectedKeywords,
+            focusIdeas,
+            wordCount: parseInt(wordCount) || 600,
+            language: selectedLanguage
+        });
+  
+        if (response.success) {
+            setGeneratedContent(response.data.content);
+            setShowResults(true);
+            await saveInitialDocument(response.data.content);
+            showToastMessage('Content generated successfully');
+        }
     } catch (error) {
-      showToastMessage(error.message || 'Error generating content', 'error');
+        showToastMessage(error.message || 'Error generating content', 'error');
     } finally {
-      setIsGenerating(false);
+        setIsGenerating(false);
     }
-  };
+};
 
-  const handleDownload = async () => {
-    if (!editor?.getHTML()) return;
+const handleDownload = async () => {
+  try {
+    const element = document.querySelector('.ProseMirror');
+    if (!element) return;
 
-    try {
-      const element = document.querySelector('.ProseMirror');
-      if (!element) return;
-
-      const canvas = await html2canvas(element);
-      const pdf = new jsPDF();
-      const imgData = canvas.toDataURL('image/png');
-      
-      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
-      pdf.save(`seo-content-${Date.now()}.pdf`);
-      
-      showToastMessage('Content downloaded successfully');
-    } catch (error) {
-      showToastMessage('Error downloading content', 'error');
-    }
-  };
+    const canvas = await html2canvas(element);
+    const pdf = new jsPDF();
+    const imgData = canvas.toDataURL('image/png');
+    
+    pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
+    pdf.save(`seo-content-${Date.now()}.pdf`);
+    
+    showToastMessage('Content downloaded successfully');
+  } catch (error) {
+    showToastMessage('Error downloading content', 'error');
+  }
+};
 
   const toggleKeyword = (keyword) => {
     setSelectedKeywords(prev => 
@@ -283,29 +227,6 @@ const SEOWriter = () => {
     );
   };
 
-  useEffect(() => {
-    if (!editor) return;
-
-    editor.on('update', ({ editor }) => {
-      if (!currentDocumentId) return;
-
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-
-      const timeoutId = setTimeout(() => {
-        autoSaveChanges(editor.getHTML());
-      }, 5000);
-
-      setAutoSaveTimeout(timeoutId);
-    });
-
-    return () => {
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-    };
-  }, [editor, currentDocumentId]);
 
   return (
     <div className="flex min-h-screen">
@@ -483,24 +404,43 @@ const SEOWriter = () => {
                   />
                 </div>
 
+                {/* AI Model Selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    AI Model
+                  </label>
+                  <select 
+                    className="w-full p-2 border rounded-lg bg-white"
+                    defaultValue="gpt4"
+                  >
+                    <option value="gpt4">GPT-4</option>
+                    <option value="claude">Claude-Sonnet</option>
+                    <option value="deepseek">Deep-Seek</option>
+                  </select>
+                </div>
+
                 {/* Result Length */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Result Length</label>
-                  <div className="flex gap-2">
-                    {['S', 'M', 'L'].map((length) => (
-                      <button
-                        key={length}
-                        onClick={() => setResultLength(length)}
-                        className={`px-4 py-2 rounded-lg flex-1 ${
-                          resultLength === length
-                            ? 'bg-[#FF5341] text-white'
-                            : 'bg-white border hover:bg-gray-50'
-                        }`}
-                      >
-                        {length}
-                      </button>
-                    ))}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Content Length (words)
+                  </label>
+                  <div className="block">
+                  <input
+                    type="number"
+                    value={wordCount}
+                    onChange={handleWordCountChange}
+                    onBlur={handleWordCountBlur}
+                    className="w-full p-2 border rounded-lg focus:ring-[#FF5341] focus:border-[#FF5341]"
+                    min="100"
+                    max="1600"
+                    step="1"
+                  />
+                    <span className="block mt-2 text-sm text-gray-500">
+                      Max: 1600 words
+                    </span>
                   </div>
+                </div>
                 </div>
 
                 <button 
@@ -545,156 +485,38 @@ const SEOWriter = () => {
                 </div>
               )}
 
-              {showResults && !isGenerating && (
-                <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
-                  {/* Card Header */}
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mb-4">
-                    <div className="flex items-center">
-                      <h3 className="font-medium text-sm md:text-base">Generated Content</h3>
-                    </div>
-                    <div className="grid grid-cols-2 md:flex items-center gap-2">
-                      <button 
-                        onClick={handleDownload}
-                        className="p-1.5 rounded-lg text-sm bg-[#FF5341] text-white hover:bg-[#FF5341]/90"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+{showResults && !isGenerating && (
+  <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 mb-4">
+      <div className="flex items-center">
+        <h3 className="font-medium text-sm md:text-base">Generated Content</h3>
+      </div>
+      <div className="grid grid-cols-2 md:flex items-center gap-2">
+        <button 
+          onClick={handleDownload}
+          className="p-1.5 rounded-lg text-sm bg-[#FF5341] text-white hover:bg-[#FF5341]/90"
+        >
+          <Download className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
 
-                  {/* Editor Toolbar */}
-                  <div className="overflow-x-auto">
-                    <div className="flex items-center gap-2 border-b pb-4 mb-4 min-w-max md:min-w-0">
-                    <div className="flex items-center gap-2 border-l pl-2">
-                   {/* H1 Button */}
-<button
-  onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-  className={`p-1.5 rounded hover:bg-gray-100 ${
-    editor.isActive('heading', { level: 1 }) ? 'bg-gray-200' : ''
-  }`}
->
-  H1
-</button>
-
-{/* H2 Button */}
-<button
-  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-  className={`p-1.5 rounded hover:bg-gray-100 ${
-    editor.isActive('heading', { level: 2 }) ? 'bg-gray-200' : ''
-  }`}
->
-  H2
-</button>
-
-{/* Paragraph Button */}
-<button
-  onClick={() => editor.chain().focus().setParagraph().run()}
-  className={`p-1.5 rounded hover:bg-gray-100 ${
-    editor.isActive('paragraph') ? 'bg-gray-200' : ''
-  }`}
->
-  P
-</button>
-                        </div>
-
-                      <div className="flex items-center border-l pl-2">
-                        <button
-                          onClick={() => editor?.chain().focus().toggleBold().run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 min-w-[28px] flex justify-center ${
-                            editor?.isActive('bold') ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <strong>B</strong>
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().toggleItalic().run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 min-w-[28px] flex justify-center ${
-                            editor?.isActive('italic') ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <em>I</em>
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().toggleUnderline().run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 min-w-[28px] flex justify-center ${
-                            editor?.isActive('underline') ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <u>U</u>
-                        </button>
-                      </div>
-
-                      <div className="flex items-center border-l pl-2">
-                        <button
-                          onClick={() => editor?.chain().focus().setTextAlign('left').run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 ${
-                            editor?.isActive({ textAlign: 'left' }) ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <AlignLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().setTextAlign('center').run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 ${
-                            editor?.isActive({ textAlign: 'center' }) ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <AlignCenter className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => editor?.chain().focus().setTextAlign('right').run()}
-                          className={`p-1.5 rounded hover:bg-gray-100 ${
-                            editor?.isActive({ textAlign: 'right' }) ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <AlignRight className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center border-l pl-2">
-                          <button
-                              onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                              className={`p-1.5 rounded hover:bg-gray-100 ${
-                                  editor?.isActive('bulletList') ? 'bg-gray-200' : ''
-                              }`}
-                          >
-                              <List className="w-4 h-4" />
-                          </button>
-                          <button
-                              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                              className={`p-1.5 rounded hover:bg-gray-100 ${
-                                  editor?.isActive('orderedList') ? 'bg-gray-200' : ''
-                              }`}
-                          >
-                              <ListOrdered className="w-4 h-4" />
-                          </button>
-                      </div>
-
-                      <div className="flex items-center border-l pl-2">
-                        <button
-                          onClick={() => {
-                            const url = window.prompt('Enter the URL:')
-                            if (url) {
-                              editor?.chain().focus().setLink({ href: url }).run()
-                            }
-                          }}
-                          className={`p-1.5 rounded hover:bg-gray-100 ${
-                            editor?.isActive('link') ? 'bg-gray-200' : ''
-                          }`}
-                        >
-                          <Link2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Editor Content */}
-                  <EditorContent 
-                      editor={editor} 
-                      className="prose prose-sm sm:prose-base lg:prose-lg max-w-none min-h-[300px] text-sm md:text-base" 
-                  />
-                </div>
-              )}
+    <Editor 
+  content={generatedContent} 
+  onChange={(html) => {
+    if (currentDocumentId) {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+      }
+      const timeoutId = setTimeout(() => {
+        autoSaveChanges(html);
+      }, 5000);
+      setAutoSaveTimeout(timeoutId);
+    }
+  }}
+/>
+  </div>
+)}
             </div>
           </div>
         </div>

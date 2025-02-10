@@ -79,6 +79,7 @@ const dummyTransactions = [
 ];
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
+
   const [formData, setFormData] = useState({
       currentPassword: '',
       newPassword: ''
@@ -113,7 +114,9 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
+
   return (
+    
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Change Password</h3>
@@ -220,7 +223,8 @@ const Profile = () => {
     name: '',
     email: '',
     phone: '',
-    image: null
+    image: defaultProfileImage,
+    googleId: null
   });
 
   const [subscriptionData, setSubscriptionData] = useState({
@@ -248,11 +252,12 @@ const Profile = () => {
         try {
             const userData = await userService.getProfile();
             setProfileData({
-                name: userData.data.user.name,
-                email: userData.data.user.email,
-                phone: userData.data.user.phone_number,
-                image: userService.getProfileImageUrl(userData.data.user.profile_image)
-            });
+              name: userData.data.user.name || '',  // Add fallbacks
+              email: userData.data.user.email || '',
+              phone: userData.data.user.phone_number || '',  // Changed to match backend
+              image: userService.getProfileImageUrl(userData.data.user.profile_image),
+              googleId: userData.data.user.googleId || null
+          });
 
             const subscriptionStatus = await subscriptionService.getStatus();
             setSubscriptionData({
@@ -574,22 +579,23 @@ const handleUpgrade = async (planName) => {
               </div>
 
               {/* Password & Security Section */}
-              <div className="bg-[#FFFAF3] rounded-xl p-6 mb-6">
-                    <h3 className="text-lg font-semibold mb-4">Password & Security</h3>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-600">Change password for security purpose</p>
-                        </div>
-                        <button
-                            onClick={() => setIsPasswordModalOpen(true)}
-                            className="px-4 py-2 bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90 flex items-center"
-                        >
-                            <Lock className="w-4 h-4 mr-2" />
-                            Change Password
-                        </button>
+              {!profileData.googleId || profileData.googleId === "" ? (  // Only show if user doesn't have a googleId
+                <div className="bg-[#FFFAF3] rounded-xl p-6 mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Password & Security</h3>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-gray-600">Change password for security purpose</p>
                     </div>
+                    <button
+                      onClick={() => setIsPasswordModalOpen(true)}
+                      className="px-4 py-2 bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90 flex items-center"
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Change Password
+                    </button>
+                  </div>
                 </div>
-
+              ):null }
                 {/* Password Change Modal */}
                 <ChangePasswordModal
                     isOpen={isPasswordModalOpen}
@@ -609,7 +615,7 @@ const handleUpgrade = async (planName) => {
                 </div>
               )}
 
-              {/* Danger Zone */}
+              {/* Log out */}
               <div className="bg-red-50 rounded-xl p-6 border border-red-100">
                 <h3 className="text-red-600 font-medium mb-2">Log out of your account</h3>
                 <div className="flex space-x-4">

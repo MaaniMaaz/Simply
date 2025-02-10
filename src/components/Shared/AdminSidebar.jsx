@@ -25,6 +25,7 @@ const AdminSidebar = ({ isCollapsed, setIsCollapsed }) => {
     { icon: <BarChart2 size={20} />, label: 'Analytics', link: '/admin/analytics' },
     { icon: <Layout size={20} />, label: 'Frontend', link: '/admin/frontend' },
     { icon: <MessageSquare size={20} />, label: 'Support Tickets', link: '/admin/support' },
+    { icon: <HelpCircle size={20} />, label: 'Help Center', link: '/admin/help-center' },
   ];
 
   return (

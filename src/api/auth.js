@@ -30,6 +30,31 @@ export const authService = {
         }
     },
 
+    googleLogin: async (tokenResponse) => {
+        try {
+            // Clear any existing tokens before login
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin');
+
+            const response = await API.post('/users/google-auth', {
+                token: tokenResponse.credential
+            });
+            
+            if (response.data.success) {
+                localStorage.setItem('token', response.data.data.token);
+                localStorage.setItem('user', JSON.stringify(response.data.data.user));
+            }
+            return response.data;
+        } catch (error) {
+            // Clear any tokens on error
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            throw error.response?.data || error.message;
+        }
+    },
+
 
 
    // src/api/auth.js

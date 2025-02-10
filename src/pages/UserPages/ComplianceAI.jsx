@@ -22,6 +22,7 @@ import { authService } from '../../api/auth';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Sidebar from '../../components/Shared/Sidebar';
+import Editor from './Editor';
 
 const AnalysisTypeDropdown = ({ selectedType, setSelectedType }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -227,6 +228,8 @@ const ComplianceAI = () => {
     const [showEditor, setShowEditor] = useState(false);
     const [editorContent, setEditorContent] = useState('');
     const resultsRef = React.useRef(null);
+    const [currentDocumentId, setCurrentDocumentId] = useState(null);
+    const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
 
     useEffect(() => {
         const handleResize = () => {
@@ -241,6 +244,14 @@ const ComplianceAI = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        return () => {
+            if (autoSaveTimeout) {
+                clearTimeout(autoSaveTimeout);
+            }
+        };
+    }, [autoSaveTimeout]);
 
     useEffect(() => {
         fetchUserDocuments();
@@ -316,17 +327,20 @@ const ComplianceAI = () => {
             showToastMessage('Please run analysis first', 'error');
             return;
         }
-
+    
         setIsFixing(true);
         try {
             const response = await complianceService.fixContent({
                 compliance_id: complianceId
             });
-
+    
             setEditorContent(response.data.fixed_content);
             setShowEditor(true);
             setShowResults(false);
             showToastMessage('Content fixed successfully');
+            
+            // Save the fixed content as a document
+            await saveInitialDocument(response.data.fixed_content);
         } catch (error) {
             showToastMessage(error.message || 'Error fixing content', 'error');
         } finally {
@@ -353,6 +367,39 @@ const ComplianceAI = () => {
             showToastMessage('Error downloading report', 'error');
         }
     };
+
+
+    const saveInitialDocument = async (content) => {
+        try {
+            const response = await documentService.saveDocument({
+                name: selectedDocument?.name ? `Compliance Check - ${selectedDocument.name}` : 'Compliance Content',
+                type: 'Compliance AI',
+                content: content
+            });
+    
+            if (response.success) {
+                setCurrentDocumentId(response.data._id);
+                showToastMessage('Document saved successfully');
+            }
+        } catch (error) {
+            console.error('Save document error:', error);
+            showToastMessage(error.message || 'Error saving document', 'error');
+        }
+    };
+    
+    const autoSaveChanges = async (content) => {
+        if (!currentDocumentId) return;
+    
+        try {
+            const response = await documentService.updateDocument(currentDocumentId, content);
+            if (response.success) {
+                console.log('Auto-saved successfully');
+            }
+        } catch (error) {
+            console.error('Auto-save error:', error);
+        }
+    };
+
 
     return (
         <div className="flex min-h-screen">
@@ -428,6 +475,21 @@ const ComplianceAI = () => {
                                     setSelectedDocument={setSelectedDocument}
                                 />
                             </div>
+
+                              {/* AI Model Selection */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    AI Model
+                  </label>
+                  <select 
+                    className="w-full p-2 border rounded-lg bg-white"
+                    defaultValue="gpt4"
+                  >
+                    <option value="gpt4">GPT-4</option>
+                    <option value="claude">Claude-Sonnet</option>
+                    <option value="deepseek">Deep-Seek</option>
+                  </select>
+                </div>
 
                             {/* Content Input */}
                             <div className="mb-6">
@@ -513,25 +575,37 @@ const ComplianceAI = () => {
                                 </div>
                             )}
 
-                            {showEditor && (
-                                <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-medium">Fixed Content Preview</h3>
-                                        <button 
-                                            onClick={() => {
-                                                setShowEditor(false);
-                                                setShowResults(true);
+                                {showEditor && (
+                                    <div className="bg-[#FFFAF3] rounded-xl p-4 md:p-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="font-medium">Fixed Content</h3>
+                                            <button 
+                                                onClick={() => {
+                                                    setShowEditor(false);
+                                                    setShowResults(true);
+                                                }}
+                                                className="text-sm text-gray-600 hover:text-gray-900"
+                                            >
+                                                Back to Analysis
+                                            </button>
+                                        </div>
+                                        
+                                        <Editor 
+                                            content={editorContent} 
+                                            onChange={(html) => {
+                                                if (currentDocumentId) {
+                                                    if (autoSaveTimeout) {
+                                                        clearTimeout(autoSaveTimeout);
+                                                    }
+                                                    const timeoutId = setTimeout(() => {
+                                                        autoSaveChanges(html);
+                                                    }, 5000);
+                                                    setAutoSaveTimeout(timeoutId);
+                                                }
                                             }}
-                                            className="text-sm text-gray-600 hover:text-gray-900"
-                                        >
-                                            Back to Analysis
-                                        </button>
+                                        />
                                     </div>
-                                    <div className="prose max-w-none">
-                                        {editorContent}
-                                    </div>
-                                </div>
-                            )}
+                                )}
                         </div>
                     </div>
                 </div>

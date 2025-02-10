@@ -13,6 +13,7 @@ import Analytics from '../AdminPages/Analytics';
 import Frontend from '../AdminPages/Frontend';
 import Notifications from '../AdminPages/Notifications';
 import AdminSupport from '../AdminPages/Support';
+import HelpCenter from '../AdminPages/HelpCenter';
 
 const Admin = () => {
   return (
@@ -31,6 +32,7 @@ const Admin = () => {
           <Route path="/frontend" element={<Frontend />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/support" element={<AdminSupport />} />
+          <Route path="/help-center" element={<HelpCenter />} />
         </Routes>
       </AdminLayout>
     </AdminProtectedRoute>

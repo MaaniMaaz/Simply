@@ -1,4 +1,4 @@
-// src/pages/HelpCenter.jsx
+// src/pages/UserPages/HelpCenter.jsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
 import { useNavigate } from 'react-router-dom';
@@ -7,110 +7,31 @@ import {
   MenuIcon, 
   Search,
   BookOpen,
-  Code,
   FileText,
-  Settings,
+  Code,
   Users,
-  MessageSquare,
   ChevronRight,
   PlayCircle,
-  FileQuestion,
   Bot,
   Lightbulb,
-  ArrowRight
+  ArrowRight,
+  X
 } from 'lucide-react';
+import { helpCenterService } from '../../api/helpCenter';
 
-// Quick start guide data
+// Quick start guide data (static as per requirements)
 const quickStartGuides = [
   { icon: PlayCircle, title: 'Getting Started with Simply' },
   { icon: Bot, title: 'AI Writing Guide' },
   { icon: Lightbulb, title: 'Best Practices & Tips' }
 ];
 
-// Help categories data
-const helpCategories = [
-  {
-    icon: BookOpen,
-    title: 'Getting Started',
-    description: 'Learn the basics and get up and running with Simply',
-    items: [
-      'Account Setup Guide',
-      'Creating Your First Content',
-      'Understanding Credits System',
-      'Workspace Configuration'
-    ]
-  },
-  {
-    icon: FileText,
-    title: 'Content Creation',
-    description: 'Master content creation with our AI tools',
-    items: [
-      'Using AI Writer Templates',
-      'SEO Optimization Tips',
-      'Content Style Guidelines',
-      'Editing and Formatting'
-    ]
-  },
-  {
-    icon: Code,
-    title: 'Technical Guides',
-    description: 'Technical documentation and API integration help',
-    items: [
-      'API Documentation',
-      'Integration Guides',
-      'Webhook Setup',
-      'Developer Resources'
-    ]
-  },
-  {
-    icon: Users,
-    title: 'Team Collaboration',
-    description: 'Learn how to work effectively with your team',
-    items: [
-      'Team Roles & Permissions',
-      'Sharing & Collaboration',
-      'Project Management',
-      'Team Analytics'
-    ]
-  },
-  {
-    icon: Settings,
-    title: 'Account & Billing',
-    description: 'Manage your account and subscription',
-    items: [
-      'Subscription Plans',
-      'Payment Methods',
-      'Credits Management',
-      'Account Security'
-    ]
-  }
-];
-
-const HelpCard = ({ icon: Icon, title, description, items }) => (
-  <div className="bg-white rounded-xl p-6 hover:shadow-md transition-shadow">
-    <div className="flex items-start">
-      <div className="bg-[#FF5341] bg-opacity-10 p-3 rounded-lg">
-        <Icon className="w-6 h-6 text-[#FF5341]" />
-      </div>
-      <div className="ml-4">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-gray-600 text-sm mb-4">{description}</p>
-        <div className="space-y-2">
-          {items.map((item, index) => (
-            <a
-              key={index}
-              href="#"
-              className="flex items-center text-gray-600 hover:text-[#FF5341] text-sm group"
-            >
-              <ChevronRight className="w-4 h-4 mr-1 text-gray-400 group-hover:text-[#FF5341]" />
-              {item}
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-);
+const iconComponents = {
+  BookOpen,
+  FileText,
+  Code,
+  Users
+};
 
 const QuickStartCard = ({ icon: Icon, title }) => (
   <div className="bg-white rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer group">
@@ -126,9 +47,70 @@ const QuickStartCard = ({ icon: Icon, title }) => (
   </div>
 );
 
+const HelpCard = ({ icon, title, description, pages, onPageClick }) => {
+  const Icon = iconComponents[icon];
+  
+  return (
+    <div className="bg-white rounded-xl p-6 hover:shadow-md transition-shadow">
+      <div className="flex items-start">
+        <div className="bg-[#FF5341] bg-opacity-10 p-3 rounded-lg">
+          <Icon className="w-6 h-6 text-[#FF5341]" />
+        </div>
+        <div className="ml-4">
+          <h3 className="text-lg font-semibold mb-2">{title}</h3>
+          <p className="text-gray-600 text-sm mb-4">{description}</p>
+          <div className="space-y-2">
+            {pages.map((page, index) => (
+              <button
+                key={index}
+                onClick={() => onPageClick(page)}
+                className="flex items-center text-gray-600 hover:text-[#FF5341] text-sm group w-full text-left"
+              >
+                <ChevronRight className="w-4 h-4 mr-1 text-gray-400 group-hover:text-[#FF5341]" />
+                {page.title}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PageModal = ({ page, isOpen, onClose }) => {
+  if (!isOpen || !page) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center overflow-y-auto py-8">
+      <div className="bg-white rounded-xl w-full max-w-3xl mx-4 my-auto">
+        <div className="flex justify-between items-center p-6 border-b">
+          <h3 className="text-xl font-semibold">{page.title}</h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="p-6">
+          <div className="prose max-w-none">
+            {page.description.split('\n').map((paragraph, index) => (
+              <p key={index} className="mb-4">{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HelpCenter = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [content, setContent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedPage, setSelectedPage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -145,23 +127,42 @@ const HelpCenter = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Filter function for help categories
-  const filteredHelpCategories = helpCategories.filter(category => {
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      setLoading(true);
+      const response = await helpCenterService.getContent();
+      setContent(response.data);
+    } catch (error) {
+      setError('Error loading help center content');
+      console.error('Fetch error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter help cards based on search query
+  const filteredCards = content?.cards.filter(card => {
     const search = searchQuery.toLowerCase();
     if (!search) return true;
 
     return (
-      category.title.toLowerCase().includes(search) ||
-      category.description.toLowerCase().includes(search) ||
-      category.items.some(item => item.toLowerCase().includes(search))
+      card.title.toLowerCase().includes(search) ||
+      card.description.toLowerCase().includes(search) ||
+      card.pages.some(page => 
+        page.title.toLowerCase().includes(search) ||
+        page.description.toLowerCase().includes(search)
+      )
     );
   });
 
-  // Filter function for quick start guides
+  // Filter quick start guides based on search
   const filteredQuickStartGuides = quickStartGuides.filter(guide => {
     const search = searchQuery.toLowerCase();
     if (!search) return true;
-
     return guide.title.toLowerCase().includes(search);
   });
 
@@ -185,14 +186,14 @@ const HelpCenter = () => {
                 <MenuIcon className="h-6 w-6" />
               </button>
               <div className="relative ml-auto">
-                              <button 
-                              onClick={() => navigate('/notifications')}
-                              className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
-                              >
-                              <Bell className="w-6 h-6 text-gray-600" />
-                              <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-                              </button>
-                              </div>
+                <button 
+                  onClick={() => navigate('/notifications')}
+                  className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                >
+                  <Bell className="w-6 h-6 text-gray-600" />
+                  <span className="absolute top-1 right-2 w-2 h-2 bg-[#FF5341] rounded-full"></span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -226,46 +227,65 @@ const HelpCenter = () => {
             </div>
           </div>
 
-          {/* Quick Start Guides */}
-          {(filteredQuickStartGuides.length > 0 || !searchQuery) && (
-            <div className="mb-12">
-              <h2 className="text-xl font-semibold mb-6 ml-6">Quick Start Guides</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {filteredQuickStartGuides.map((guide, index) => (
-                  <QuickStartCard 
-                    key={index}
-                    icon={guide.icon} 
-                    title={guide.title} 
-                  />
-                ))}
-              </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="w-8 h-8 border-4 border-[#FF5341] border-t-transparent rounded-full animate-spin"></div>
             </div>
-          )}
-
-          {/* Help Categories */}
-          {(filteredHelpCategories.length > 0 || !searchQuery) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredHelpCategories.map((category, index) => (
-                <HelpCard
-                  key={index}
-                  icon={category.icon}
-                  title={category.title}
-                  description={category.description}
-                  items={category.items}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* No Results Message */}
-          {searchQuery && filteredHelpCategories.length === 0 && filteredQuickStartGuides.length === 0 && (
+          ) : error ? (
             <div className="text-center py-12">
-              <FileQuestion className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No results found</h3>
-              <p className="text-gray-600">
-                Try adjusting your search. We suggest checking spelling or using more general terms.
-              </p>
+              <p className="text-red-500">{error}</p>
+              <button
+                onClick={fetchContent}
+                className="mt-4 px-4 py-2 bg-[#FF5341] text-white rounded-lg hover:bg-[#FF5341]/90"
+              >
+                Try Again
+              </button>
             </div>
+          ) : (
+            <>
+              {/* Quick Start Guides */}
+              {(filteredQuickStartGuides.length > 0 || !searchQuery) && (
+                <div className="mb-12">
+                  <h2 className="text-xl font-semibold mb-6 ml-6">Quick Start Guides</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {filteredQuickStartGuides.map((guide, index) => (
+                      <QuickStartCard 
+                        key={index}
+                        icon={guide.icon} 
+                        title={guide.title} 
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Help Categories */}
+              {(filteredCards?.length > 0 || !searchQuery) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {filteredCards?.map((card) => (
+                    <HelpCard
+                      key={card._id}
+                      icon={card.icon}
+                      title={card.title}
+                      description={card.description}
+                      pages={card.pages}
+                      onPageClick={(page) => setSelectedPage(page)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* No Results Message */}
+              {searchQuery && (!filteredCards?.length && !filteredQuickStartGuides.length) && (
+                <div className="text-center py-12">
+                  <FileQuestion className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No results found</h3>
+                  <p className="text-gray-600">
+                    Try adjusting your search. We suggest checking spelling or using more general terms.
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Live Support Banner */}
@@ -278,10 +298,16 @@ const HelpCenter = () => {
                 </p>
               </div>
               <div className="flex space-x-4">
-                <button className="bg-[#FF5341] px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors">
+                <button
+                  onClick={() => navigate('/support')}
+                  className="bg-[#FF5341] px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors"
+                >
                   Contact Support
                 </button>
-                <button className="bg-white text-black px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors">
+                <button
+                  onClick={() => navigate('/support')}
+                  className="bg-white text-black px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors"
+                >
                   Live Chat
                 </button>
               </div>
@@ -289,6 +315,13 @@ const HelpCenter = () => {
           </div>
         </div>
       </div>
+
+      {/* Page Content Modal */}
+      <PageModal
+        page={selectedPage}
+        isOpen={!!selectedPage}
+        onClose={() => setSelectedPage(null)}
+      />
     </div>
   );
 };

@@ -79,7 +79,12 @@ export const templateService = {
 
     runTemplate: async (templateId, data) => {
         try {
-            const response = await API.post(`/templates/${templateId}/run`, data);
+            // Update to use wordCount instead of resultLength
+            const response = await API.post(`/templates/${templateId}/run`, {
+                fields: data.fields,
+                wordCount: data.wordCount,
+                language: data.language
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

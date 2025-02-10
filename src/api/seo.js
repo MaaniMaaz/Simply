@@ -18,7 +18,15 @@ export const seoService = {
 
     generateContent: async (data) => {
         try {
-            const response = await API.post('/seo/generate', data);
+            // Ensure wordCount is passed instead of resultLength
+            const { rankFor, selectedKeywords, focusIdeas, wordCount, language } = data;
+            const response = await API.post('/seo/generate', {
+                rankFor,
+                selectedKeywords,
+                focusIdeas,
+                wordCount,
+                language
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

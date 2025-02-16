@@ -35,6 +35,9 @@ const Login = () => {
 
     try {
 
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin');
+
       if (rememberMe) {
         localStorage.setItem('rememberedEmail', email);
       } else {

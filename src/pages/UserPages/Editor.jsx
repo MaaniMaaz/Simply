@@ -14,6 +14,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
+import { useEffect } from 'react';
 import { 
   AlignLeft, 
   AlignCenter, 
@@ -121,6 +122,18 @@ const Editor = ({ content, onChange }) => {
           }
         }
       });
+
+
+      useEffect(() => {
+        if (editor && content) {
+            // Only update if the content has changed
+            if (editor.getHTML() !== content) {
+                editor.commands.setContent(content);
+            }
+        }
+    }, [editor, content]);
+
+
 
       const increaseFontSize = () => {
         if (!editor) return;

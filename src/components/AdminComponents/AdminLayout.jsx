@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import AdminSidebar from '../Shared/AdminSidebar';
-import { Bell, MenuIcon } from 'lucide-react';
+import { LogOut, MenuIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { adminService } from '../../api/admin';
 
 const AdminLayout = ({ children }) => {
+  const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
@@ -18,6 +21,17 @@ const AdminLayout = ({ children }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await adminService.logout();
+      // Redirect to login page after logout
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Optional: Show error toast
+    }
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -42,9 +56,14 @@ const AdminLayout = ({ children }) => {
                 <MenuIcon className="h-6 w-6" />
               </button>
               <div className="relative ml-auto">
-                <Bell className="w-6 h-6 text-gray-600" />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF5341] rounded-full"></span>
-              </div>
+              <button 
+                onClick={handleLogout}
+                className="hover:bg-gray-100 p-2 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
             </div>
           </div>
         </div>

@@ -1,45 +1,11 @@
 import API from './config';
 
-
-const dummyTransactions = [
-    {
-        plan: "Enterprise Plan",
-        amount: "$490.00",
-        date: "2024-01-30",
-        status: "completed"
-    },
-    {
-        plan: "Enterprise Plan",
-        amount: "$490.00",
-        date: "2023-12-30",
-        status: "completed"
-    },
-    {
-        plan: "Professional Plan",
-        amount: "$39.00",
-        date: "2023-11-30",
-        status: "completed"
-    },
-    {
-        plan: "Professional Plan",
-        amount: "$39.00",
-        date: "2023-10-30",
-        status: "completed"
-    },
-    {
-        plan: "Professional Plan",
-        amount: "$39.00",
-        date: "2023-09-30",
-        status: "completed"
-    }
-];
-
 export const subscriptionService = {
     getStatus: async () => {
         try {
             const response = await API.get('/subscriptions/status');
             return {
-                success: true,  // Ensure this matches expected structure
+                success: true,
                 data: {
                     current_plan: response.data.data?.current_plan || null,
                     stats: response.data.data?.stats || {
@@ -47,7 +13,7 @@ export const subscriptionService = {
                         credits_left: 0,
                         total_documents_saved: 0
                     },
-                    billing_history: dummyTransactions  // Add dummy transactions
+                    billing_history: response.data.data?.billing_history || []
                 }
             };
         } catch (error) {
@@ -58,24 +24,53 @@ export const subscriptionService = {
     getPlans: async () => {
         try {
             const response = await API.get('/subscriptions/plans');
+            console.log('Plans response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching plans:', error);
+            throw error.response?.data || error;
+        }
+    },
+
+    upgradePlan: async (planId, paymentMethodId) => {
+        try {
+            console.log('Upgrade plan request:', { planId, paymentMethodId });
+            const response = await API.post('/subscriptions/upgrade', {
+                plan_id: planId,
+                payment_method_id: paymentMethodId
+            });
+            console.log('Upgrade plan response:', response.data);
+            return response;
+        } catch (error) {
+            console.error('Upgrade plan error:', error.response?.data || error);
+            throw error.response?.data || error;
+        }
+    },
+    
+      cancelSubscription: async () => {
+        try {
+          const response = await API.post('/subscriptions/cancel');
+          return response.data;
+        } catch (error) {
+          console.error('Cancel subscription error:', error);
+          throw error.response?.data || error.message;
+        }
+      },
+
+    getSubscriptionDetails: async () => {
+        try {
+            const response = await API.get('/subscriptions/details');
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
 
-    upgradePlan: async (planId) => {
+    updatePaymentMethod: async (paymentMethodId) => {
         try {
-            const response = await API.post('/subscriptions/upgrade', { plan_id: planId });
-            return response.data;
-        } catch (error) {
-            throw error.response?.data || error.message;
-        }
-    },
-
-    cancelPlan: async () => {
-        try {
-            const response = await API.post('/subscriptions/cancel');
+            const response = await API.post('/subscriptions/update-payment', {
+                payment_method_id: paymentMethodId
+            });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

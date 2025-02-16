@@ -84,7 +84,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       isCollapsed ? 'w-20' : 'w-64'
     }`}>
       <div className="flex items-center justify-between px-4 py-5">
-        <button onClick={() => navigate('/')}>
+      {/* onClick={() => navigate('/')} */}
+        <button>
           <img src={logo} alt="Simply Logo" className={`h-6 ${isCollapsed ? 'hidden' : 'block'}`} />
         </button>
         <button 

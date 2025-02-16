@@ -1,22 +1,16 @@
 import React from 'react';
 import { CreditCard, Calendar, Check } from 'lucide-react';
 
+// In Plans.jsx
 const PlanCard = ({ plan, isActive, onUpgrade }) => {
-  const features = {
-    Professional: ['25,000 Credits', 'Team Collaboration', 'Advanced SEO'],
-    Enterprise: ['50,000 Credits', 'Dedicated Support', 'Custom Features']
-  };
+  if (!plan) return null;
 
   return (
     <div className={`p-6 rounded-xl border ${isActive ? 'border-[#FF5341]' : 'border-gray-200'} bg-white`}>
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="font-semibold text-lg">{plan}</h3>
-          <p className="text-gray-600 text-sm">
-            {plan === 'Starter' ? 'Free' : 
-             plan === 'Professional' ? '$19/month' : 
-             '$49/month'}
-          </p>
+          <h3 className="font-semibold text-lg">{plan.name}</h3>
+          <p className="text-gray-600 text-sm">${plan.price}/month</p>
         </div>
         {isActive && (
           <span className="bg-[#FF5341] bg-opacity-10 text-[#FF5341] px-3 py-1 rounded-full text-sm">
@@ -26,26 +20,25 @@ const PlanCard = ({ plan, isActive, onUpgrade }) => {
       </div>
       
       <div className="space-y-3 mb-6">
-        {features[plan].map((feature, index) => (
-          <div key={index} className="flex items-center text-sm">
+        {plan.features.map((feature, index) => (
+          <div key={index} className="flex items-center">
             <Check className="w-4 h-4 text-[#FF5341] mr-2" />
-            <span>{feature}</span>
+            <span className="text-sm">{feature}</span>
           </div>
         ))}
       </div>
 
       {!isActive && (
         <button
-          onClick={() => onUpgrade(plan)}
+          onClick={() => onUpgrade(plan)} // Pass the entire plan object
           className="w-full bg-[#FF5341] text-white py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors"
         >
-          Upgrade to {plan}
+          Upgrade to {plan.name}
         </button>
       )}
     </div>
   );
 };
-
 
 const BillingHistory = ({ transactions }) => (
   <div className="bg-[#FFFAF3] rounded-xl p-6">

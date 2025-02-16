@@ -1,6 +1,15 @@
 // src/pages/UserPages/TemplateEditor.jsx
 import React, { useEffect, useState } from 'react';
 import Sidebar from '../../components/Shared/Sidebar';
+import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import Flags from 'country-flag-icons/react/3x2';
+import { templateService } from '../../api/template';
+import { documentService } from '../../api/document';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import Editor from './Editor';
+import RegenerationInput from './RegenerationInput';
 import { 
     Bell, 
     MenuIcon, 
@@ -16,14 +25,7 @@ import {
     X,
     Check 
 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import Flags from 'country-flag-icons/react/3x2';
-import { templateService } from '../../api/template';
-import { documentService } from '../../api/document';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import Editor from './Editor';
+
 
 // Available languages
 const languages = [
@@ -149,6 +151,8 @@ const TemplateEditor = () => {
     const [currentDocumentId, setCurrentDocumentId] = useState(null);
     const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
     const [generatedContent, setGeneratedContent] = useState('');
+    const [selectedModel, setSelectedModel] = useState('gpt');
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     // Editor configuration
      
@@ -200,6 +204,31 @@ const TemplateEditor = () => {
             fetchTemplate();
         }
     }, [templateId]);
+
+
+    const getModelIdentifier = (modelName) => {
+        // Add console.log to debug
+        console.log('Original model selection:', modelName);
+        
+        // Convert to lowercase and trim
+        const model = modelName.toLowerCase().trim();
+        
+        // Map frontend display names to backend model identifiers
+        switch (model) {
+            case 'gpt-4':
+            case 'gpt':
+                return 'gpt';
+            case 'claude-sonnet':
+            case 'claude':
+                return 'claude';
+            case 'deep-seek':
+            case 'deepseek':
+                return 'deepseek';
+            default:
+                return 'gpt'; // Default fallback
+        }
+    };
+
 
     const validateFields = () => {
         if (!template?.fields) return true;
@@ -259,33 +288,71 @@ const TemplateEditor = () => {
 
     const handleRunTemplate = async () => {
         if (!validateFields()) {
-          showToastMessage('Please fill in all required fields', 'error');
-          return;
+            showToastMessage('Please fill in all required fields', 'error');
+            return;
         }
-      
+    
         setIsGenerating(true);
-      
+    
         try {
-          const response = await templateService.runTemplate(templateId, {
-            fields: {
-              ...fieldValues,
-              language: selectedLanguage
-            },
-            wordCount: parseInt(wordCount) || 600 // Use wordCount instead of resultLength
-          });
-      
-          if (response.success) {
-            setGeneratedContent(response.data.content);
-            setShowResults(true);
-            await saveInitialDocument(response.data.content);
-            showToastMessage('Content generated successfully');
-          }
+
+            console.log('Selected model for template generation:', selectedModel);
+            const response = await templateService.runTemplate(templateId, {
+                fields: {
+                    ...fieldValues,
+                    language: selectedLanguage
+                },
+                wordCount: parseInt(wordCount) || 600,
+                model: getModelIdentifier(selectedModel) // Add model to the request
+            });
+    
+            if (response.success) {
+                setGeneratedContent(response.data.content);
+                setShowResults(true);
+                await saveInitialDocument(response.data.content);
+                showToastMessage('Content generated successfully');
+            }
         } catch (error) {
-          showToastMessage(error.message || 'Error generating content', 'error');
+            showToastMessage(error.message || 'Error generating content', 'error');
         } finally {
-          setIsGenerating(false);
+            setIsGenerating(false);
         }
-      };
+    };
+
+    const handleRegenerate = async (regenerationPrompt) => {
+        if (!generatedContent) {
+            showToastMessage('No content to regenerate', 'error');
+            return;
+        }
+    
+        setIsRegenerating(true);
+        try {
+            const response = await templateService.regenerateTemplate(templateId, {
+                previousContent: generatedContent,
+                regenerationPrompt,
+                originalParams: {
+                    fields: fieldValues,
+                    wordCount: parseInt(wordCount),
+                    language: selectedLanguage
+                },
+                model: selectedModel
+            });
+    
+            if (response.success) {
+                setGeneratedContent(response.data.content);
+                showToastMessage('Content regenerated successfully');
+                
+                // If we're tracking document ID, update it
+                if (currentDocumentId) {
+                    await documentService.updateDocument(currentDocumentId, response.data.content);
+                }
+            }
+        } catch (error) {
+            showToastMessage(error.message || 'Error regenerating content', 'error');
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
 
     const saveInitialDocument = async (content) => {
         try {
@@ -421,17 +488,26 @@ const TemplateEditor = () => {
 
                                     {/* AI Model Selection */}
                                     <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        AI Model
-                                    </label>
-                                    <select 
-                                        className="w-full p-2 border rounded-lg bg-white"
-                                        defaultValue="gpt4"
-                                    >
-                                        <option value="gpt4">GPT-4</option>
-                                        <option value="claude">Claude-Sonnet</option>
-                                        <option value="deepseek">Deep-Seek</option>
-                                    </select>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            AI Model
+                                        </label>
+                                        <select 
+                                            className="w-full p-2 border rounded-lg bg-white"
+                                            value={selectedModel}
+                                            onChange={(e) => {
+                                                setSelectedModel(e.target.value);
+                                                console.log('Model selected:', e.target.value); // Debug log
+                                            }}
+                                        >
+                                            <option value="gpt">GPT-4</option>
+                                            <option value="claude">Claude-Sonnet</option>
+                                            {/* <option value="deepseek">Deep-Seek</option> */}
+                                        </select>
+                                        {selectedModel !== 'gpt' && (
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Note: {selectedModel === 'claude' ? '1.5x' : '1.2x'} credit consumption rate applies
+                                            </p>
+                                        )}
                                     </div>
 
 
@@ -528,6 +604,15 @@ const TemplateEditor = () => {
         }
       }}
     />
+
+
+        <div className="mt-6 border-t pt-6">
+            <RegenerationInput
+                onRegenerate={handleRegenerate}
+                isRegenerating={isRegenerating}
+            />
+        </div>
+
   </div>
 )}
                         </div>

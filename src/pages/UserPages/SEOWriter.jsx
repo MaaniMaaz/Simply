@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Editor from './Editor';  // Adjust the path as needed
 import Sidebar from '../../components/Shared/Sidebar';
 import { authService } from '../../api/auth';
+import { seoService } from '../../api/seo';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { documentService } from '../../api/document';
+import Flags from 'country-flag-icons/react/3x2';
+import { useNavigate } from 'react-router-dom';
+import RegenerationInput from './RegenerationInput'; 
+
 import { 
   Bell, 
   Star, 
@@ -26,12 +34,6 @@ import {
 } from 'lucide-react';
 
 
-import { seoService } from '../../api/seo';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import { documentService } from '../../api/document';
-import Flags from 'country-flag-icons/react/3x2';
-import { useNavigate } from 'react-router-dom';
 
 const languages = [
   { code: 'en-US', name: 'English (US)', country: 'US' },
@@ -65,6 +67,8 @@ const SEOWriter = () => {
   const [currentDocumentId, setCurrentDocumentId] = useState(null);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState(null);
   const [generatedContent, setGeneratedContent] = useState('');
+  const [selectedModel, setSelectedModel] = useState('gpt');
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   useEffect(() => {
     const user = authService.getUser();
@@ -76,26 +80,27 @@ const SEOWriter = () => {
   // SEO keyword generation effect
   useEffect(() => {
     const debounceTimer = setTimeout(async () => {
-      if (contentDescription.trim().length >= 10) {
-        setIsLoadingKeywords(true);
-        try {
-          const response = await seoService.getKeywordSuggestions(
-            contentDescription,
-            selectedLanguage
-          );
-          setSuggestedKeywords(response.data);
-        } catch (error) {
-          showToastMessage(error.message || 'Error fetching keywords', 'error');
-        } finally {
-          setIsLoadingKeywords(false);
+        if (contentDescription.trim().length >= 10) {
+            setIsLoadingKeywords(true);
+            try {
+                const response = await seoService.getKeywordSuggestions(
+                    contentDescription,
+                    selectedLanguage,
+                    getModelIdentifier(selectedModel) // Add model to the request
+                );
+                setSuggestedKeywords(response.data);
+            } catch (error) {
+                showToastMessage(error.message || 'Error fetching keywords', 'error');
+            } finally {
+                setIsLoadingKeywords(false);
+            }
+        } else {
+            setSuggestedKeywords([]);
         }
-      } else {
-        setSuggestedKeywords([]);
-      }
     }, 1000);
 
     return () => clearTimeout(debounceTimer);
-  }, [contentDescription, selectedLanguage]);
+}, [contentDescription, selectedLanguage, selectedModel]);
 
  
 
@@ -112,6 +117,32 @@ const SEOWriter = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+
+  const getModelIdentifier = (modelName) => {
+    // Add console.log to debug
+    console.log('Original model selection:', modelName);
+    
+    // Convert to lowercase and trim
+    const model = modelName.toLowerCase().trim();
+    
+    // Map frontend display names to backend model identifiers
+    switch (model) {
+        case 'gpt-4':
+        case 'gpt':
+            return 'gpt';
+        case 'claude-sonnet':
+        case 'claude':
+            return 'claude';
+        case 'deep-seek':
+        case 'deepseek':
+            return 'deepseek';
+        default:
+            return 'gpt'; // Default fallback
+    }
+};
+
+
 
   const validateWordCount = (value) => {
     // Allow empty string during typing
@@ -173,21 +204,22 @@ const SEOWriter = () => {
   };
 
   const handleRunSEOWriter = async () => {
-    if (!contentDescription || !selectedKeywords || !selectedKeywords.length) {  // Changed rankFor to contentDescription
+    if (!contentDescription || !selectedKeywords || !selectedKeywords.length) {
         showToastMessage('Please provide content description and select keywords', 'error');
         return;
     }
-  
+
     setIsGenerating(true);
     try {
         const response = await seoService.generateContent({
-            rankFor: contentDescription,  // Pass contentDescription as rankFor
+            rankFor: contentDescription,
             selectedKeywords,
             focusIdeas,
             wordCount: parseInt(wordCount) || 600,
-            language: selectedLanguage
+            language: selectedLanguage,
+            model: getModelIdentifier(selectedModel) // Add model to the request
         });
-  
+
         if (response.success) {
             setGeneratedContent(response.data.content);
             setShowResults(true);
@@ -217,6 +249,48 @@ const handleDownload = async () => {
   } catch (error) {
     showToastMessage('Error downloading content', 'error');
   }
+};
+
+
+const handleRegenerate = async (regenerationPrompt) => {
+  if (!generatedContent) {
+      showToastMessage('No content to regenerate', 'error');
+      return;
+  }
+
+  setIsRegenerating(true);
+  try {
+      const response = await seoService.regenerateContent({
+          previousContent: generatedContent,
+          regenerationPrompt,
+          originalParams: {
+              rankFor: contentDescription,
+              selectedKeywords,
+              focusIdeas,
+              wordCount: parseInt(wordCount),
+              language: selectedLanguage
+          },
+          model: selectedModel
+      });
+
+      if (response.success) {
+        // Update the editor content with the new regenerated content
+        console.log('Previous content:', generatedContent);
+        console.log('New regenerated content:', response.data.content);
+        setGeneratedContent(response.data.content);
+        
+        // If using a document ID, update it
+        if (currentDocumentId) {
+            await documentService.updateDocument(currentDocumentId, response.data.content);
+        }
+        
+        showToastMessage('Content regenerated successfully');
+    }
+} catch (error) {
+    showToastMessage(error.message || 'Error regenerating content', 'error');
+} finally {
+    setIsRegenerating(false);
+}
 };
 
   const toggleKeyword = (keyword) => {
@@ -406,18 +480,27 @@ const handleDownload = async () => {
 
                 {/* AI Model Selection */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                     AI Model
-                  </label>
-                  <select 
-                    className="w-full p-2 border rounded-lg bg-white"
-                    defaultValue="gpt4"
-                  >
-                    <option value="gpt4">GPT-4</option>
-                    <option value="claude">Claude-Sonnet</option>
-                    <option value="deepseek">Deep-Seek</option>
-                  </select>
-                </div>
+                </label>
+                <select 
+                className="w-full p-2 border rounded-lg bg-white"
+                value={selectedModel}
+                onChange={(e) => {
+                    setSelectedModel(e.target.value);
+                    console.log('Model selected:', e.target.value); // Debug log
+                }}
+            >
+                <option value="gpt">GPT-4</option>
+                <option value="claude">Claude-Sonnet</option>
+                {/* <option value="deepseek">Deep-Seek</option> */}
+            </select>
+                {selectedModel !== 'gpt' && (
+                    <p className="mt-1 text-sm text-gray-500">
+                        Note: {selectedModel === 'claude' ? '1.5x' : '1.2x'} credit consumption rate applies
+                    </p>
+                )}
+            </div>
 
                 {/* Result Length */}
                 <div>
@@ -515,6 +598,14 @@ const handleDownload = async () => {
     }
   }}
 />
+
+<div className="mt-6 border-t pt-6">
+<RegenerationInput
+                onRegenerate={handleRegenerate}
+                isRegenerating={isRegenerating}
+            />
+  </div>
+
   </div>
 )}
             </div>

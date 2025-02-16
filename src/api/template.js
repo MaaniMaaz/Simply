@@ -79,22 +79,34 @@ export const templateService = {
 
     runTemplate: async (templateId, data) => {
         try {
-            // Update to use wordCount instead of resultLength
+            // Log the data being sent to verify the model parameter
+            console.log('Running template with data:', data);
+
             const response = await API.post(`/templates/${templateId}/run`, {
                 fields: data.fields,
                 wordCount: data.wordCount,
-                language: data.language
+                language: data.language,
+                model: data.model // Ensure model is included in the request
             });
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }
     },
-
+    
     getTemplateFields: async (templateId) => {
         try {
             const response = await this.getTemplateById(templateId);
             return response.data.fields || [];
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    regenerateTemplate: async (templateId, data) => {
+        try {
+            const response = await API.post(`/templates/${templateId}/regenerate`, data);
+            return response.data;
         } catch (error) {
             throw error.response?.data || error.message;
         }

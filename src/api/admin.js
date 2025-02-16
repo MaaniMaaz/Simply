@@ -30,17 +30,24 @@ export const adminService = {
         }
     },
 
-    logout: async () => {
-        try {
-            await API.post('/admin/logout');
-        } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            localStorage.removeItem('admin_token');
-            localStorage.removeItem('admin');
-            delete API.defaults.headers.common['Authorization'];
-        }
-    },
+
+        logout: async () => {
+            try {
+                await API.post('/admin/logout');
+                
+                // Clear admin tokens and user data from local storage
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin');
+                
+                // Remove authorization header
+                delete API.defaults.headers.common['Authorization'];
+
+                return { success: true };
+            } catch (error) {
+                console.error('Logout error:', error);
+                throw error.response?.data || error.message;
+            }
+        },
 
     isAdminAuthenticated: () => {
         const token = localStorage.getItem('admin_token');

@@ -24,6 +24,9 @@ import { useNavigate } from 'react-router-dom';
 import { userService } from '../../api/user';
 import { subscriptionService } from '../../api/subscription';
 import { authService } from '../../api/auth';
+import PaymentForm from '../../components/Shared/PaymentForm';
+import PaymentFormWrapper from '../../components/Shared/PaymentForm';
+
 
 const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
@@ -45,38 +48,55 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
-const dummyTransactions = [
-  {
-    plan: "Enterprise Plan",
-    amount: "$490.00",
-    date: "2024-01-30",  // Most recent first
-    status: "completed"
-  },
-  {
-    plan: "Enterprise Plan",
-    amount: "$490.00",
-    date: "2023-12-30",
-    status: "completed"
-  },
-  {
-    plan: "Professional Plan",
-    amount: "$39.00",
-    date: "2023-11-30",
-    status: "completed"
-  },
-  {
-    plan: "Professional Plan",
-    amount: "$39.00",
-    date: "2023-10-30",
-    status: "completed"
-  },
-  {
-    plan: "Professional Plan",
-    amount: "$39.00",
-    date: "2023-09-30",
-    status: "completed"
-  }
-];
+const SubscriptionModal = ({ isOpen, onClose, plan, onSuccess }) => {
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
+
+  const handleSuccess = () => {
+    showToastMessage('Subscription updated successfully');
+    onSuccess();
+    onClose();
+  };
+
+  const handleError = (error) => {
+    showToastMessage(error.message || 'Error processing payment', 'error');
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Subscribe to ${plan?.name}`}
+    >
+      <div className="p-6">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Plan Details</h3>
+          <div className="space-y-2 text-gray-600">
+            <p>Price: ${plan?.price}/month</p>
+            <p>Credits: {plan?.credits_per_month.toLocaleString()} per month</p>
+          </div>
+        </div>
+
+        <PaymentForm 
+          plan={plan}
+          onSuccess={handleSuccess}
+          onError={handleError}
+        />
+      </div>
+
+      {/* Toast Message */}
+      {showToast && (
+        <div className={`fixed bottom-4 right-4 ${
+          toastType === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white px-4 py-2 rounded-lg shadow-lg`}>
+          {toastMessage}
+        </div>
+      )}
+    </Modal>
+  );
+};
+
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
 
@@ -217,7 +237,9 @@ const Profile = () => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success'); // success or error
+  const [availablePlans, setAvailablePlans] = useState([]);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: '',
@@ -229,7 +251,7 @@ const Profile = () => {
 
   const [subscriptionData, setSubscriptionData] = useState({
     currentPlan: null,
-    transactions: dummyTransactions,
+    transactions: [],
     stats: {
       total_words_generated: 0,
       credits_left: 0,
@@ -245,6 +267,47 @@ const Profile = () => {
     // Assuming your backend is running on localhost:5000
     return `http://localhost:5000/${imagePath}`;
   };
+
+
+
+  useEffect(() => {
+    fetchPlans();
+}, []);
+
+
+const fetchPlans = async () => {
+    try {
+        setIsLoading(true);
+        const response = await subscriptionService.getPlans();
+        setAvailablePlans(response.data);
+    } catch (error) {
+        console.error('Error fetching plans:', error);
+        showToastMessage('Error loading plans', 'error');
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+const handleManagePlan = () => {
+  setIsUpgradeModalOpen(true);
+};
+
+
+const fetchSubscriptionData = async () => {
+  try {
+      const subscriptionStatus = await subscriptionService.getStatus();
+      setSubscriptionData({
+          currentPlan: subscriptionStatus.data.current_plan,
+          transactions: subscriptionStatus.data.billing_history,
+          stats: subscriptionStatus.data.stats
+      });
+  } catch (error) {
+      showToastMessage('Error refreshing subscription data', 'error');
+  }
+};
+
+
+
 
   // Fetch user profile and subscription data
   useEffect(() => {
@@ -336,24 +399,35 @@ const Profile = () => {
   };
 
 // In handleUpgrade function of Profile.jsx
-const handleUpgrade = async (planName) => {
-  try {
-    // First get the available plans
-    const plansResponse = await subscriptionService.getPlans();
-    const plans = plansResponse.data;
-    
-    // Find the plan by name
-    const selectedPlan = plans.find(plan => plan.name === planName);
-    
-    if (!selectedPlan) {
-      showToastMessage('Selected plan not found', 'error');
-      return;
-    }
+// In Profile.jsx
 
-    // Now upgrade using the plan's ID
-    await subscriptionService.upgradePlan(selectedPlan._id);
-    setIsUpgradeModalOpen(false);
+// In Profile.jsx
+const handleUpgrade = async (plan) => {
+  try {
+    console.log('Selected plan for upgrade:', plan);
+    setSelectedPlan(plan);
+    const response = await subscriptionService.upgradePlan(plan._id, paymentMethodId);
+    
+    // Refresh subscription data after upgrade
+    const subscriptionStatus = await subscriptionService.getStatus();
+    setSubscriptionData({
+      currentPlan: subscriptionStatus.data.current_plan,
+      transactions: subscriptionStatus.data.billing_history,
+      stats: subscriptionStatus.data.stats
+    });
+
     showToastMessage('Subscription upgraded successfully');
+  } catch (error) {
+    showToastMessage('Error upgrading subscription', 'error');
+  }
+};
+
+
+const handleCancelPlan = async () => {
+  try {
+    await subscriptionService.cancelSubscription();
+    setIsCancelModalOpen(false);
+    showToastMessage('Subscription cancelled successfully');
     
     // Refresh subscription data
     const subscriptionStatus = await subscriptionService.getStatus();
@@ -362,26 +436,9 @@ const handleUpgrade = async (planName) => {
       currentPlan: subscriptionStatus.data.current_plan
     }));
   } catch (error) {
-    showToastMessage('Error upgrading subscription', 'error');
+    showToastMessage('Error cancelling subscription', 'error');
   }
 };
-
-  const handleCancelPlan = async () => {
-    try {
-      await subscriptionService.cancelPlan();
-      setIsCancelModalOpen(false);
-      showToastMessage('Subscription cancelled successfully');
-      
-      // Refresh subscription data
-      const subscriptionStatus = await subscriptionService.getStatus();
-      setSubscriptionData(prev => ({
-        ...prev,
-        currentPlan: subscriptionStatus.data.current_plan
-      }));
-    } catch (error) {
-      showToastMessage('Error cancelling subscription', 'error');
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -674,22 +731,83 @@ const handleUpgrade = async (planName) => {
         </Modal>
 
         {/* Upgrade Plan Modal */}
+        
         <Modal
-          isOpen={isUpgradeModalOpen}
-          onClose={() => setIsUpgradeModalOpen(false)}
-          title="Choose a Plan"
-        >
-          <div className="space-y-4">
-            {['Professional', 'Enterprise'].map((plan) => (
-             <PlanCard
-             key={plan}
-             plan={plan}
-             isActive={subscriptionData.currentPlan?.name === `${plan} Plan`}
-             onUpgrade={() => handleUpgrade(plan)} // Just pass the plan name
-         />
-            ))}
-          </div>
-        </Modal>
+        isOpen={isUpgradeModalOpen}
+        onClose={() => {
+            setIsUpgradeModalOpen(false);
+            setSelectedPlan(null);
+        }}
+        title="Choose a Plan"
+    >
+        <div className="p-6">
+            {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                    <div className="w-8 h-8 border-4 border-[#FF5341] border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-2">Loading plans...</span>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {availablePlans.map((plan) => (
+                        <div
+                            key={plan._id}
+                            className={`p-6 rounded-xl border ${
+                                subscriptionData.currentPlan?._id === plan._id
+                                    ? 'border-[#FF5341]'
+                                    : 'border-gray-200'
+                            } bg-white`}
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold">{plan.name}</h3>
+                                    <p className="text-gray-600">${plan.price}/month</p>
+                                </div>
+                                {subscriptionData.currentPlan?._id === plan._id && (
+                                    <span className="bg-[#FF5341] bg-opacity-10 text-[#FF5341] px-3 py-1 rounded-full text-sm">
+                                        Current Plan
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="space-y-3 mb-6">
+                                {plan.features.map((feature, index) => (
+                                    <div key={index} className="flex items-center">
+                                        <Check className="w-4 h-4 text-[#FF5341] mr-2" />
+                                        <span className="text-sm">{feature}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {subscriptionData.currentPlan?._id !== plan._id && (
+                                <button
+                                    onClick={() => handleUpgrade(plan)}
+                                    className="w-full bg-[#FF5341] text-white py-2 rounded-lg hover:bg-[#FF5341]/90 transition-colors"
+                                >
+                                    Upgrade to {plan.name}
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {selectedPlan && (
+                <div className="mt-6">
+                    <PaymentFormWrapper
+                    plan={selectedPlan}
+                    onSuccess={() => {
+                        setIsUpgradeModalOpen(false);
+                        showToastMessage('Subscription upgraded successfully');
+                        fetchSubscriptionData(); // Now this function exists
+                    }}
+                    onError={(error) => {
+                        showToastMessage(error.message || 'Error processing payment', 'error');
+                    }}
+                />
+                </div>
+            )}
+        </div>
+    </Modal>
 
         {/* Toast Notification */}
         {showToast && (
